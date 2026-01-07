@@ -1,0 +1,16 @@
+# Build outputs
+target/
+*.log
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Test artifacts
+tmp/
+
+# Superego
+.superego/
