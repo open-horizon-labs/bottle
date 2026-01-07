@@ -20,42 +20,42 @@ claude plugin marketplace add cloud-atlas-ai/bottle
 
 ### 2. Install Plugins
 
-Install any or all:
+Install bottle and any tools you want:
 
 ```bash
+# Core stack (recommended):
+claude plugin install bottle@bottle
 claude plugin install ba@bottle
 claude plugin install wm@bottle
 claude plugin install superego@bottle
+
+# Optional:
 claude plugin install oh-mcp@bottle
 claude plugin install miranda@bottle
 ```
 
 ### 3. Initialize in Your Project
 
-Each plugin provides init commands:
+Run the unified init command:
 
 ```bash
 # In Claude Code:
-/ba:init
-/superego:init
-# ... etc
+/bottle:init
 ```
 
-Or via CLI:
-```bash
-ba init
-wm init
-sg init
-```
-
-The init commands check for binaries and offer to install them if missing.
+This will:
+- Initialize all installed tools (ba, wm, superego)
+- Set recommended defaults (e.g., superego pull mode)
+- Create/update AGENTS.md with tool guidance
+- Offer to install binaries if missing
 
 ## Core Stack
 
-Start with these three for immediate 10-100x leverage:
+Start with these for immediate 10-100x leverage:
 
 ```bash
 claude plugin marketplace add cloud-atlas-ai/bottle
+claude plugin install bottle@bottle
 claude plugin install ba@bottle
 claude plugin install wm@bottle
 claude plugin install superego@bottle
@@ -63,11 +63,10 @@ claude plugin install superego@bottle
 
 Then in your project:
 ```bash
-/ba:init
-/superego:init
+/bottle:init
 ```
 
-wm works automatically once installed.
+That's it - one command initializes everything with recommended defaults.
 
 ## What Each Tool Does
 

@@ -10,6 +10,14 @@
   },
   "plugins": [
     {
+      "name": "bottle",
+      "source": "./",
+      "description": "Unified installer and orchestrator for Cloud Atlas AI stack",
+      "author": {
+        "name": "Cloud Atlas AI"
+      }
+    },
+    {
       "name": "ba",
       "source": "./plugins/ba",
       "description": "Task tracking for AI sessions",
