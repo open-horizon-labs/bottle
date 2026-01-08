@@ -4,6 +4,7 @@
  * Two things:
  * 1. npm meta-package - pulls in ba-opencode, wm-opencode, superego-opencode as dependencies
  * 2. OpenCode plugin - provides setup/orchestration tools (bottle-init, bottle-install, bottle-status)
+ *    AND re-exports child plugins so users get all tools in one package
  */
 
 import type { Plugin } from "@opencode-ai/plugin";
@@ -11,6 +12,14 @@ import { tool } from "@opencode-ai/plugin";
 import { existsSync, writeFileSync } from "fs";
 import { join } from "path";
 import { spawnSync } from "child_process";
+
+// Import child plugins to re-export
+// @ts-expect-error - ba-opencode doesn't generate .d.ts files yet
+import BA from "ba-opencode";
+// @ts-expect-error - wm-opencode doesn't generate .d.ts files yet
+import WM from "wm-opencode";
+// @ts-expect-error - superego-opencode doesn't generate .d.ts files yet
+import Superego from "superego-opencode";
 
 // Helper: Check if a binary is available
 function checkBinary(name: string): boolean {
@@ -30,7 +39,7 @@ function detectPackageManagers(): { homebrew: boolean; cargo: boolean } {
   };
 }
 
-const Bottle: Plugin = async ({ directory }) => {
+const BottleOrchestration: Plugin = async ({ directory }) => {
   return {
     tool: {
       "bottle-init": tool({
@@ -182,59 +191,44 @@ This project uses Cloud Atlas AI tools. Follow these protocols:
       }),
 
       "bottle-install": tool({
-        description: "Install a Cloud Atlas AI binary (ba, wm, or sg) via homebrew or cargo",
+        description: "Get installation commands for Cloud Atlas AI binaries (ba, wm, sg) via homebrew or cargo",
         args: {
           binary: tool.schema.enum(["ba", "wm", "sg"]).describe("Which binary to install"),
           method: tool.schema.enum(["homebrew", "cargo"]).describe("Installation method"),
         },
         async execute({ binary, method }) {
-          const results: string[] = [];
-
           // Package names for each method
+          // Note: Not all homebrew taps exist yet - ba and wm need to be published
           const packages = {
             homebrew: {
-              ba: "cloud-atlas-ai/ba/ba",
-              wm: "cloud-atlas-ai/wm/wm",
-              sg: "cloud-atlas-ai/superego/superego",
+              ba: "cloud-atlas-ai/ba/ba",  // TODO: Publish tap
+              wm: "cloud-atlas-ai/wm/wm",  // TODO: Publish tap
+              sg: "cloud-atlas-ai/superego/superego",  // ✓ Published
             },
             cargo: {
-              ba: "ba",
-              wm: "wm",
-              sg: "superego",
+              ba: "ba",  // ✓ Published
+              wm: "working-memory",  // ✓ Published as working-memory
+              sg: "superego",  // ✓ Published
             },
           };
 
           const pkg = packages[method][binary];
+          const binaryNames = { ba: "ba", wm: "wm", sg: "superego" };
 
-          results.push(`Installing ${binary} via ${method}...`);
+          const results: string[] = [];
+          results.push(`Installation command for ${binary} (${binaryNames[binary]}):`);
           results.push("");
 
-          try {
-            if (method === "homebrew") {
-              const install = spawnSync("brew", ["install", pkg], { encoding: "utf-8", timeout: 120000 });
-              if (install.status === 0) {
-                results.push(`✓ ${binary} installed successfully`);
-                if (install.stdout) results.push(install.stdout);
-              } else {
-                results.push(`✗ Installation failed`);
-                if (install.stderr) results.push(install.stderr);
-              }
-            } else if (method === "cargo") {
-              const install = spawnSync("cargo", ["install", pkg], { encoding: "utf-8", timeout: 300000 });
-              if (install.status === 0) {
-                results.push(`✓ ${binary} installed successfully`);
-                if (install.stdout) results.push(install.stdout);
-              } else {
-                results.push(`✗ Installation failed`);
-                if (install.stderr) results.push(install.stderr);
-              }
-            }
-          } catch (e) {
-            results.push(`✗ Installation failed: ${e}`);
+          if (method === "homebrew") {
+            results.push(`  brew install ${pkg}`);
+          } else {
+            results.push(`  cargo install ${pkg}`);
           }
 
           results.push("");
-          results.push("After installation completes, run 'bottle-init' again to initialize.");
+          results.push("Run this command in your terminal, then run 'bottle-init' again to initialize.");
+          results.push("");
+          results.push("Note: Cargo installations build from source and may take 5-10 minutes.");
 
           return results.join("\n");
         },
@@ -272,5 +266,9 @@ Use 'bottle-init' to initialize all components.`;
     },
   };
 };
+
+// Export orchestration plugin + child plugins as array
+// This ensures users get bottle-* tools AND ba-*/wm-*/superego-* tools
+export const Bottle: Plugin[] = [BottleOrchestration, BA, WM, Superego];
 
 export default Bottle;
