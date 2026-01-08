@@ -3,7 +3,7 @@
 Initialize datasphere for this project, building a searchable knowledge graph from Claude Code sessions.
 
 ## Step 1: Check current state
-- Check if `~/.datasphere/` already exists with data - if so, tell user it's already initialized and offer to re-scan with `ds scan` or show stats with `ds stats`
+- Check if `~/.datasphere/` already exists with data - if so, tell user it's already initialized and offer to show stats with `ds stats` or restart the daemon with `ds start`
 - Check if `ds` binary is available (`command -v ds`) - if yes, skip to Step 3
 
 ## Step 2: Install ds binary
@@ -33,21 +33,26 @@ cargo install --path /path/to/datasphere
 # or: ~/.cargo/bin/cargo install --path /path/to/datasphere
 ```
 
-## Step 3: Run initial scan
+## Step 3: Start datasphere daemon
 
-After `ds` binary is available, run initial scan of Claude Code sessions:
+After `ds` binary is available, start the daemon to watch all Claude Code sessions:
 ```bash
-ds scan
+ds start
 ```
 
-This scans sessions in `~/.claude/projects/` and builds the knowledge graph in `~/.datasphere/`.
+This runs continuously and:
+- Watches `~/.claude/projects/` for all projects
+- Automatically processes new and modified sessions
+- Builds the knowledge graph in `~/.datasphere/`
+
+Note: `ds scan` only processes the current project once. For ongoing knowledge graph updates across all projects, use `ds start`.
 
 ## Step 4: Confirm
 
-Tell user datasphere is now initialized. They can:
+Tell user datasphere is now running. They can:
 - `ds query "your question"` - Search the knowledge graph
 - `ds stats` - View database statistics
-- `ds start` - Run daemon mode to watch for new sessions
+- `ds scan` - One-shot scan of current project only
 
 ---
 Be concise. Detect what's available, offer appropriate options, guide user through setup.
