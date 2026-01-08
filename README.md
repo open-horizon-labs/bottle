@@ -7,6 +7,7 @@ Bottle is a Claude Code plugin marketplace that provides access to the complete 
 - **ba** - Task tracking for AI sessions
 - **wm** - Working memory for automatic tacit knowledge extraction
 - **superego** - Metacognitive advisor
+- **datasphere** - Knowledge graph from Claude Code sessions
 - **oh-mcp** - Open Horizons MCP for strategic alignment
 - **miranda** - Telegram bot for remote orchestration
 
@@ -30,6 +31,7 @@ claude plugin install wm@bottle
 claude plugin install superego@bottle
 
 # Optional:
+claude plugin install datasphere@bottle
 claude plugin install oh-mcp@bottle
 claude plugin install miranda@bottle
 ```
@@ -85,6 +87,11 @@ Monitors Claude's work and provides feedback before finishing or making large ch
 
 **Commands:** `/superego:init`, `/superego:review`, `/superego:prompt`
 
+### datasphere - Knowledge Graph
+Builds a searchable knowledge graph from Claude Code sessions, making insights from past sessions queryable.
+
+**Commands:** `/datasphere:init`, `/datasphere:setup`
+
 ### oh-mcp - Strategic Alignment
 Connects Claude Code to Open Horizons for strategic context.
 
@@ -111,6 +118,7 @@ Each tool has its own repo with detailed documentation:
 - [ba](https://github.com/cloud-atlas-ai/ba)
 - [wm](https://github.com/cloud-atlas-ai/wm)
 - [superego](https://github.com/cloud-atlas-ai/superego)
+- [datasphere](https://github.com/cloud-atlas-ai/datasphere)
 - [oh-mcp-server](https://github.com/cloud-atlas-ai/oh-mcp-server)
 - [miranda](https://github.com/cloud-atlas-ai/miranda)
 
