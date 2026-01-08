@@ -15,7 +15,7 @@ import { spawnSync } from "child_process";
 const Bottle: Plugin = async ({ directory }) => {
   return {
     tool: {
-      "bottle:init": tool({
+      "bottle-init": tool({
         description: "Initialize the full Cloud Atlas AI stack (ba, wm, superego) in one command",
         args: {},
         async execute() {
@@ -81,7 +81,7 @@ Initialized with bottle.
         },
       }),
 
-      "bottle:status": tool({
+      "bottle-status": tool({
         description: "Check initialization status of all Cloud Atlas AI components",
         args: {},
         async execute() {
@@ -89,7 +89,7 @@ Initialized with bottle.
           const wm = existsSync(join(directory, ".wm")) ? "✓ initialized" : "✗ not initialized";
           const sg = existsSync(join(directory, ".superego")) ? "✓ initialized" : "✗ not initialized";
 
-          return `Cloud Atlas AI Stack Status:\n\nba: ${ba}\nwm: ${wm}\nsuperego: ${sg}\n\nUse 'bottle:init' to initialize all components.`;
+          return `Cloud Atlas AI Stack Status:\n\nba: ${ba}\nwm: ${wm}\nsuperego: ${sg}\n\nUse 'bottle-init' to initialize all components.`;
         },
       }),
     },
