@@ -1,0 +1,27 @@
+{
+  "name": "@cloud-atlas-ai/bottle",
+  "version": "0.1.0",
+  "description": "Cloud Atlas AI core stack for OpenCode - ba, wm, and superego in one package",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["opencode", "opencode-plugin", "ai", "task-tracking", "working-memory", "metacognition"],
+  "author": {
+    "name": "Cloud Atlas AI",
+    "email": "hello@cloudatlas.ai"
+  },
+  "repository": "https://github.com/cloud-atlas-ai/bottle",
+  "license": "MIT",
+  "devDependencies": {
+    "@opencode-ai/plugin": "^1.0.61",
+    "@types/bun": "^1.2.4",
+    "typescript": "^5.7.0"
+  },
+  "peerDependencies": {
+    "bun": ">=1.0.0"
+  }
+}
