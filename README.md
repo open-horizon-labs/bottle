@@ -1,17 +1,59 @@
 # Bottle
 
-**Cloud Atlas AI Marketplace - One entry point for all the tools**
+**Cloud Atlas AI - One entry point for all the tools**
 
-Bottle is a Claude Code plugin marketplace that provides access to the complete Cloud Atlas AI stack:
+Bottle provides the complete Cloud Atlas AI stack for both **Claude Code** and **OpenCode**:
 
 - **ba** - Task tracking for AI sessions
 - **wm** - Working memory for automatic tacit knowledge extraction
 - **superego** - Metacognitive advisor
-- **datasphere** - Knowledge graph from Claude Code sessions
-- **oh-mcp** - Open Horizons MCP for strategic alignment
-- **miranda** - Telegram bot for remote orchestration
+- **datasphere** - Knowledge graph from Claude Code sessions (Claude Code only)
+- **oh-mcp** - Open Horizons MCP for strategic alignment (Claude Code only)
+- **miranda** - Telegram bot for remote orchestration (Claude Code only)
 
-## Installation
+---
+
+## OpenCode Installation
+
+**One npm package, full stack:**
+
+```bash
+npm install @cloud-atlas-ai/bottle
+```
+
+Add to your `opencode.json`:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["@cloud-atlas-ai/bottle"]
+}
+```
+
+**Install binaries** (ba, wm, and superego require their CLI binaries):
+
+```bash
+# via Homebrew
+brew install cloud-atlas-ai/ba/ba
+brew install cloud-atlas-ai/wm/wm
+brew install cloud-atlas-ai/superego/superego
+
+# or via Cargo
+cargo install ba
+cargo install working-memory  # (published as 'working-memory')
+cargo install superego
+```
+
+**Initialize tools** - Ask the AI:
+- "use ba-init to set up task tracking"
+- "initialize wm for working memory"
+- "set up superego for metacognition"
+
+See [opencode-plugin/README.md](./opencode-plugin/README.md) for full OpenCode documentation.
+
+---
+
+## Claude Code Installation
 
 ### 1. Add the Marketplace
 
