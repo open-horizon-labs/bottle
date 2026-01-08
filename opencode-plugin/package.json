@@ -1,12 +1,12 @@
 {
   "name": "@cloud-atlas-ai/bottle",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Cloud Atlas AI core stack for OpenCode - ba, wm, and superego in one package",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "bun build src/index.ts --outdir dist --target bun",
+    "build": "bun build src/index.ts --outdir dist --target bun --external ba-opencode --external wm-opencode --external superego-opencode",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
