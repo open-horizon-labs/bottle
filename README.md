@@ -30,24 +30,15 @@ Add to your `opencode.json`:
 }
 ```
 
-**Install binaries** (ba, wm, and superego require their CLI binaries):
+**Initialize** - Ask the AI to initialize the stack:
+- "use bottle-init to set up the full Cloud Atlas AI stack"
 
-```bash
-# via Homebrew
-brew install cloud-atlas-ai/ba/ba
-brew install cloud-atlas-ai/wm/wm
-brew install cloud-atlas-ai/superego/superego
-
-# or via Cargo
-cargo install ba
-cargo install working-memory  # (published as 'working-memory')
-cargo install superego
-```
-
-**Initialize tools** - Ask the AI:
-- "use ba-init to set up task tracking"
-- "initialize wm for working memory"
-- "set up superego for metacognition"
+Bottle will automatically:
+- Detect missing binaries (ba, wm, sg)
+- Offer to install them via homebrew or cargo
+- Initialize each tool
+- Set recommended defaults (e.g., superego pull mode)
+- Create AGENTS.md with usage guidance
 
 See [opencode-plugin/README.md](./opencode-plugin/README.md) for full OpenCode documentation.
 
@@ -87,11 +78,11 @@ Run the unified init command:
 /bottle:init
 ```
 
-This will:
-- Initialize all installed tools (ba, wm, superego)
+Bottle will automatically:
+- Detect and install missing binaries (ba, wm, sg) via homebrew or cargo
+- Initialize all tools
 - Set recommended defaults (e.g., superego pull mode)
 - Create/update AGENTS.md with tool guidance
-- Offer to install binaries if missing
 
 ## Core Stack
 

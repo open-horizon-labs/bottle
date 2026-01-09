@@ -1,27 +1,63 @@
 # Bottle Init - Unified Cloud Atlas AI Setup
 
-Initialize all installed Cloud Atlas AI tools with recommended defaults.
+Initialize all installed Cloud Atlas AI tools with recommended defaults. Handles binary installation automatically.
 
-## Step 1: Initialize individual tools
+## Step 1: Check and install binaries
 
-Run the init command for each installed tool:
+For each tool (ba, wm, sg), check if binary exists:
+
+**If binary missing:**
+
+1. **Detect available package managers:**
+   - Homebrew: `command -v brew`
+   - Cargo: `command -v cargo` OR `test -f ~/.cargo/bin/cargo`
+
+2. **Offer installation:**
+
+   If **Homebrew** available (preferred for macOS):
+   ```bash
+   brew install cloud-atlas-ai/ba/ba
+   brew install cloud-atlas-ai/wm/wm
+   brew install cloud-atlas-ai/superego/superego
+   ```
+
+   If **Cargo** available:
+   ```bash
+   cargo install ba
+   cargo install working-memory  # (published as 'working-memory', provides 'wm' binary)
+   cargo install superego
+   ```
+
+   If **neither available**, offer to install a package manager:
+   - **Install Homebrew** (macOS/Linux):
+     ```bash
+     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+     ```
+
+   - **Install Rust** (cross-platform):
+     ```bash
+     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+     ```
+
+3. After installation, verify binaries are available before proceeding
+
+## Step 2: Initialize individual tools
+
+Once binaries are available, initialize each:
 
 **ba:**
-- Check if ba binary exists: `command -v ba`
-- If yes and `.ba/` doesn't exist, run: `ba init`
+- If `.ba/` doesn't exist, run: `ba init`
 - This creates `.ba/` directory and initial configuration
 
 **superego:**
-- Check if sg binary exists: `command -v sg`
-- If yes and `.superego/` doesn't exist, run: `sg init`
+- If `.superego/` doesn't exist, run: `sg init`
 - This creates `.superego/` directory and sets up metacognitive monitoring
 
 **wm:**
-- Check if wm binary exists: `command -v wm`
-- If yes and `.wm/` doesn't exist, run: `wm init`
+- If `.wm/` doesn't exist, run: `wm init`
 - This creates `.wm/` directory and enables working memory capture
 
-## Step 2: Apply recommended defaults
+## Step 3: Apply recommended defaults
 
 After individual inits complete:
 
@@ -32,14 +68,14 @@ After individual inits complete:
 - Command: `sed -i.bak 's/^mode: always/mode: pull/' .superego/config.yaml && rm .superego/config.yaml.bak`
 - Explain: "Pull mode is less intrusive - superego reviews when you request it or before commits/PRs, rather than at every checkpoint"
 
-## Step 3: Create/update AGENTS.md
+## Step 4: Create/update AGENTS.md
 
 Create AGENTS.md with guidance for all initialized tools:
 - Add sections for ba, wm, and superego
 - Include "When to use" and "Protocol" guidance for each
 - If AGENTS.md already exists, preserve user content while updating tool sections
 
-## Step 4: Confirm completion
+## Step 5: Confirm completion
 
 Tell user:
 ```bash
