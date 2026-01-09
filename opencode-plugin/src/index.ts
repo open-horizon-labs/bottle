@@ -54,7 +54,12 @@ const BottleOrchestration: Plugin = async ({ directory }) => {
               if (missingPlugins.length > 0) {
                 results.push("⚠️  Child plugins missing from opencode.json");
                 results.push("");
-                results.push(`AI: Add ${missingPlugins.join(", ")} to the plugin array in opencode.json, then tell the user to restart OpenCode and run bottle-init again.`);
+                results.push("📋 Setup Steps:");
+                results.push(`1. AI will now add ${missingPlugins.join(", ")} to opencode.json`);
+                results.push("2. User: Restart OpenCode to load the new plugins");
+                results.push("3. Run 'bottle-init' again to complete initialization");
+                results.push("");
+                results.push(`AI: Add ${missingPlugins.join(", ")} to the plugin array in opencode.json`);
                 return results.join("\n");
               }
             } catch (e) {
