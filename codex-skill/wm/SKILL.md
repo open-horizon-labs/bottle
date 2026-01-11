@@ -9,25 +9,76 @@ Captures tacit knowledge from sessions and provides relevant context for current
 
 ## $wm dive [intent]
 
-**Start every session with a dive.** Prepares context based on your intent.
+**Start every session with a dive.** This is an agent flow, not a single CLI command.
 
 **Intent options:**
 - `fix` - Bug fix session
 - `plan` - Design/architecture work
 - `explore` - Understanding code
 - `ship` - Getting changes merged
+- `review` - Reflect on recent work
 
-**Run:**
-```bash
-wm dive prep --intent <intent>
+### Dive Prep Flow
+
+**Step 1:** If intent not provided, ask user:
+```
+What's your intent for this session?
+[ ] fix - Fix a bug or issue
+[ ] plan - Design an approach
+[ ] explore - Understand something
+[ ] ship - Get something deployed
 ```
 
-This creates `.wm/dive_context.md` with:
-- Your explicit intent
-- Relevant context from accumulated knowledge
-- Suggested workflow
+**Step 2:** Gather context from available sources:
+```bash
+# Check git state
+git status
+git log --oneline -5
 
-**Tell user:** "Dive prepped. Intent: [intent]. Context in .wm/dive_context.md"
+# Check for project instructions
+cat AGENTS.md 2>/dev/null || cat CLAUDE.md 2>/dev/null
+
+# Get accumulated knowledge
+wm compile
+```
+
+**Step 3:** Build and write the dive manifest:
+
+Create `.wm/dive_context.md` with:
+```markdown
+# Dive Session
+
+**Intent:** [intent]
+**Started:** [timestamp]
+
+## Context
+[Project instructions, git state, relevant knowledge]
+
+## Focus
+[What we're working on]
+
+## Workflow
+[Steps for this intent type]
+```
+
+**Step 4:** Confirm to user:
+```
+✓ Dive session prepared
+  Intent: [intent]
+  Context: .wm/dive_context.md
+
+Ready to work.
+```
+
+### Named Dive Preps (CLI)
+
+After creating a dive context, save it as a named prep:
+```bash
+wm dive save my-feature    # Save current context as named prep
+wm dive list               # List all preps (* marks current)
+wm dive switch my-feature  # Switch to a named prep
+wm dive show               # Show current prep content
+```
 
 **No dive is too small.** Even a quick bug fix benefits from 30 seconds of explicit intent.
 

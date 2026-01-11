@@ -213,23 +213,25 @@ fi
 
 Start a focused work session with explicit intent. This is the **recommended way to begin any work**.
 
+This is a shortcut to `$wm dive [intent]` - see that skill for the full agent flow.
+
 **Intent options:**
 - `fix` - Bug fix session
 - `plan` - Design/architecture work
 - `explore` - Understanding code
 - `ship` - Getting changes merged
 
-**Run:**
+**Quick version:**
+
+1. Gather context:
 ```bash
-wm dive-prep --intent <intent>
+git status && git log --oneline -3
+wm compile
 ```
 
-This creates `.wm/dive_context.md` with:
-- Your explicit intent
-- Relevant context from working memory
-- Suggested workflow for this type of work
+2. Write `.wm/dive_context.md` with intent, context, and workflow
 
-**Tell user:** "Dive prepped. Intent: [intent]. Context loaded to .wm/dive_context.md"
+3. Confirm: "Dive prepped. Intent: [intent]. Ready to work."
 
 **No dive is too small.** Even a quick bug fix benefits from 30 seconds of explicit intent.
 
