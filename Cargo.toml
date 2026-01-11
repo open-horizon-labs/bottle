@@ -1,0 +1,27 @@
+[package]
+name = "bottle"
+version = "0.1.0"
+edition = "2021"
+description = "Curated snapshot manager for the Cloud Atlas AI tool stack"
+license = "MIT"
+repository = "https://github.com/cloud-atlas-ai/bottle"
+keywords = ["claude", "ai", "cli", "installer"]
+categories = ["command-line-utilities", "development-tools"]
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", features = ["blocking", "json"] }
+indicatif = "0.17"
+console = "0.15"
+dialoguer = "0.11"
+dirs = "5"
+chrono = { version = "0.4", features = ["serde"] }
+thiserror = "2"
+anyhow = "1"
+which = "7"
+
+[profile.release]
+strip = true
+lto = true
