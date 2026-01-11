@@ -60,40 +60,33 @@ echo ""
 # Install skills
 echo "Installing Codex skills..."
 SKILL_BASE="$HOME/.codex/skills"
+BOTTLE_RAW="https://raw.githubusercontent.com/open-horizon-labs/bottle/main/codex-skill"
+SUPEREGO_RAW="https://raw.githubusercontent.com/cloud-atlas-ai/superego/main/codex-skill"
 
-install_skill() {
-  local name=$1
-  local repo=$2
-  local files=$3
+# Install ba skill (from bottle repo)
+mkdir -p "$SKILL_BASE/ba"
+curl -fsSL -o "$SKILL_BASE/ba/SKILL.md" "$BOTTLE_RAW/ba/SKILL.md" 2>/dev/null && \
+  echo "  ✓ \$ba skill installed" || echo "  ✗ Failed to install \$ba"
 
-  mkdir -p "$SKILL_BASE/$name"
+# Install wm skill (from bottle repo)
+mkdir -p "$SKILL_BASE/wm"
+curl -fsSL -o "$SKILL_BASE/wm/SKILL.md" "$BOTTLE_RAW/wm/SKILL.md" 2>/dev/null && \
+  echo "  ✓ \$wm skill installed" || echo "  ✗ Failed to install \$wm"
 
-  for file in $files; do
-    curl -fsSL -o "$SKILL_BASE/$name/$file" \
-      "https://raw.githubusercontent.com/cloud-atlas-ai/$repo/main/codex-skill/$file" 2>/dev/null || \
-      echo "  Warning: Could not download $file for $name"
-  done
-  echo "  ✓ \$$name skill installed"
-}
-
-# Install individual skills
-install_skill "ba" "ba" "SKILL.md"
-install_skill "wm" "wm" "SKILL.md"
-
-# Superego has additional files
+# Install superego skill (from superego repo)
 mkdir -p "$SKILL_BASE/superego/agents"
-curl -fsSL -o "$SKILL_BASE/superego/SKILL.md" \
-  "https://raw.githubusercontent.com/cloud-atlas-ai/superego/main/codex-skill/SKILL.md" 2>/dev/null
-curl -fsSL -o "$SKILL_BASE/superego/AGENTS.md.snippet" \
-  "https://raw.githubusercontent.com/cloud-atlas-ai/superego/main/codex-skill/AGENTS.md.snippet" 2>/dev/null
+curl -fsSL -o "$SKILL_BASE/superego/SKILL.md" "$SUPEREGO_RAW/SKILL.md" 2>/dev/null
+curl -fsSL -o "$SKILL_BASE/superego/AGENTS.md.snippet" "$SUPEREGO_RAW/AGENTS.md.snippet" 2>/dev/null
 for agent in code.md writing.md learning.md; do
-  curl -fsSL -o "$SKILL_BASE/superego/agents/$agent" \
-    "https://raw.githubusercontent.com/cloud-atlas-ai/superego/main/codex-skill/agents/$agent" 2>/dev/null
+  curl -fsSL -o "$SKILL_BASE/superego/agents/$agent" "$SUPEREGO_RAW/agents/$agent" 2>/dev/null
 done
 echo "  ✓ \$superego skill installed"
 
-# Install bottle skill
-install_skill "bottle" "bottle" "SKILL.md AGENTS.md.snippet"
+# Install bottle skill (from bottle repo)
+mkdir -p "$SKILL_BASE/bottle"
+curl -fsSL -o "$SKILL_BASE/bottle/SKILL.md" "$BOTTLE_RAW/SKILL.md" 2>/dev/null
+curl -fsSL -o "$SKILL_BASE/bottle/AGENTS.md.snippet" "$BOTTLE_RAW/AGENTS.md.snippet" 2>/dev/null && \
+  echo "  ✓ \$bottle skill installed" || echo "  ✗ Failed to install \$bottle"
 
 echo ""
 

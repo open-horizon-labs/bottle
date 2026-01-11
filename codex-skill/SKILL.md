@@ -1,6 +1,6 @@
 ---
 name: bottle
-description: Cloud Atlas AI orchestration. "$bottle init" for full setup, "$bottle status" to check tools, "$bottle dive" to start a session.
+description: Cloud Atlas AI orchestration. "$bottle init" for setup, "$bottle dive" to start sessions, "$bottle web-context" for fresh docs.
 ---
 
 # Bottle - Cloud Atlas AI Orchestration
@@ -56,29 +56,27 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 ```bash
 SKILL_BASE="$HOME/.codex/skills"
+BOTTLE_RAW="https://raw.githubusercontent.com/open-horizon-labs/bottle/main/codex-skill"
+SUPEREGO_RAW="https://raw.githubusercontent.com/cloud-atlas-ai/superego/main/codex-skill"
 
 echo "Installing Cloud Atlas AI skills..."
 
-# Install ba skill
+# Install ba skill (from bottle repo)
 mkdir -p "$SKILL_BASE/ba"
-curl -fsSL -o "$SKILL_BASE/ba/SKILL.md" \
-  "https://raw.githubusercontent.com/cloud-atlas-ai/ba/main/codex-skill/SKILL.md"
+curl -fsSL -o "$SKILL_BASE/ba/SKILL.md" "$BOTTLE_RAW/ba/SKILL.md"
 
-# Install wm skill
+# Install wm skill (from bottle repo)
 mkdir -p "$SKILL_BASE/wm"
-curl -fsSL -o "$SKILL_BASE/wm/SKILL.md" \
-  "https://raw.githubusercontent.com/cloud-atlas-ai/wm/main/codex-skill/SKILL.md"
+curl -fsSL -o "$SKILL_BASE/wm/SKILL.md" "$BOTTLE_RAW/wm/SKILL.md"
 
-# Install superego skill
+# Install superego skill (from superego repo)
 mkdir -p "$SKILL_BASE/superego"
 for file in SKILL.md AGENTS.md.snippet; do
-  curl -fsSL -o "$SKILL_BASE/superego/$file" \
-    "https://raw.githubusercontent.com/cloud-atlas-ai/superego/main/codex-skill/$file"
+  curl -fsSL -o "$SKILL_BASE/superego/$file" "$SUPEREGO_RAW/$file"
 done
 mkdir -p "$SKILL_BASE/superego/agents"
 for agent in code.md writing.md learning.md; do
-  curl -fsSL -o "$SKILL_BASE/superego/agents/$agent" \
-    "https://raw.githubusercontent.com/cloud-atlas-ai/superego/main/codex-skill/agents/$agent"
+  curl -fsSL -o "$SKILL_BASE/superego/agents/$agent" "$SUPEREGO_RAW/agents/$agent"
 done
 
 echo "✓ Skills installed"
@@ -318,3 +316,59 @@ rm -rf .ba/ .wm/ .superego/
 **Step 2:** Remove Cloud Atlas AI section from AGENTS.md if present.
 
 **Step 3:** Confirm: "Cloud Atlas AI removed from this project. Binaries and user skills preserved."
+
+---
+
+## Codex-Native Features
+
+These features leverage Codex-specific capabilities not available in Claude Code or OpenCode.
+
+### $bottle codex-sync
+
+Sync knowledge from recent Codex sessions into working memory.
+
+**Steps:**
+1. Find recent Codex sessions:
+```bash
+SESSIONS_DIR="$HOME/.codex/sessions"
+find "$SESSIONS_DIR" -name "rollout-*.jsonl" -mtime -7 | tail -5
+```
+
+2. Parse sessions for decisions, learnings, and context
+3. Feed to `wm distill` for knowledge extraction
+
+**When to use:**
+- After productive Codex sessions
+- Before resuming work (`codex resume`)
+- Weekly knowledge consolidation
+
+### $bottle web-context <query>
+
+Augment working memory with fresh web results (uses Codex web search).
+
+**Steps:**
+1. Get accumulated knowledge: `wm compile`
+2. Search web for: `<query>`
+3. Combine project knowledge with fresh documentation
+
+**Example:**
+```
+$bottle web-context "rust async patterns 2026"
+```
+
+**When to use:**
+- Working with unfamiliar libraries
+- Need current API documentation
+- Combining project history with best practices
+
+### $bottle resume
+
+Prepare context for resuming a previous Codex session.
+
+**Steps:**
+1. Find the most recent Codex session
+2. Parse what was being worked on
+3. Combine with `wm compile` output
+4. Show summary of where you left off
+
+Integrates with `codex resume` for seamless continuity.
