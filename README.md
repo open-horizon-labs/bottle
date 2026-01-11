@@ -2,7 +2,7 @@
 
 **Cloud Atlas AI - One entry point for all the tools**
 
-Bottle provides the complete Cloud Atlas AI stack for both **Claude Code** and **OpenCode**.
+Bottle provides the complete Cloud Atlas AI stack for **Claude Code**, **OpenCode**, and **Codex**.
 
 ---
 
@@ -150,6 +150,48 @@ Then in your project:
 ```
 
 That's it - one command initializes everything with recommended defaults.
+
+---
+
+## Codex Installation
+
+**Install the skill:**
+
+```bash
+mkdir -p ~/.codex/skills/bottle
+curl -fsSL -o ~/.codex/skills/bottle/SKILL.md \
+  https://raw.githubusercontent.com/cloud-atlas-ai/bottle/main/codex-skill/SKILL.md
+curl -fsSL -o ~/.codex/skills/bottle/AGENTS.md.snippet \
+  https://raw.githubusercontent.com/cloud-atlas-ai/bottle/main/codex-skill/AGENTS.md.snippet
+```
+
+**Initialize in Codex:**
+
+```
+$bottle init
+```
+
+Bottle will automatically:
+- Install binaries (ba, wm, sg) via Homebrew or Cargo
+- Install child skills ($ba, $wm, $superego)
+- Initialize tool directories (.ba/, .wm/, .superego/)
+- Set recommended defaults (superego pull mode)
+- Create AGENTS.md with usage protocols
+
+**Usage:**
+
+```
+$bottle dive fix       # Start a bug fix session
+$bottle dive plan      # Start a planning session
+$ba status             # Check your tasks
+$superego              # Get feedback at decision points
+```
+
+**Note:** Codex skills are advisory-only (no event hooks). The guidance in AGENTS.md tells Codex when to invoke skills.
+
+See [codex-skill/README.md](./codex-skill/README.md) for full Codex documentation.
+
+---
 
 ## What Each Tool Does
 

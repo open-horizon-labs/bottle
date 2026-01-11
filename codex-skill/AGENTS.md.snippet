@@ -1,0 +1,87 @@
+# Cloud Atlas AI Guidance for AGENTS.md
+
+Add this to your project's AGENTS.md (or ~/.codex/AGENTS.md for global):
+
+---
+
+# Cloud Atlas AI Stack
+
+## Quick Start: Dive First
+
+**No dive is too small for a dive prep.** The metaphor comes from scuba diving: you prep before you dive, you don't just splash in. Even a quick bug fix benefits from explicit intent.
+
+Start every session with a dive:
+```
+$bottle dive fix       # Bug fix
+$bottle dive plan      # Design work
+$bottle dive explore   # Understanding code
+$bottle dive ship      # Getting changes merged
+```
+
+This creates `.wm/dive_context.md` with your intent, relevant context, and suggested workflow. The 30 seconds of setup prevents 30 minutes of drift.
+
+---
+
+## Task Tracking ($ba)
+
+**When to use:**
+- At session start: `$ba status` to see active tasks
+- Before starting work: Check what's ready to claim
+- When creating tasks: `ba create` for each distinct piece of work
+- During work: `ba claim` to take ownership, `ba finish` when done
+- For dependencies: `ba block` to mark blockers
+
+**Protocol:** Always track non-trivial work in ba. If a task has multiple steps or will take >5 minutes, create a task.
+
+## Working Memory ($wm)
+
+**When to use:**
+- Starting work: `$bottle dive <intent>` to prep context
+- Need context: `wm compile` for relevant knowledge
+- Don't know why/how something works: Check `wm show state` first
+- After completing work: `wm distill` to extract learnings
+- Questions about past work: Check `wm compile` before answering
+
+**Dive terminology:**
+- **dive-prep** = the action of preparing context before work
+- **dive pack** = a reusable bundle of context for a type of work
+- **dive context** = the session-specific manifest created by dive-prep
+
+**Protocol:** Treat wm as your external memory. Don't guess at past decisions - check wm first.
+
+## Metacognition ($superego)
+
+**Mode:** Pull mode - evaluates only when explicitly requested, not automatically.
+
+**When to use $superego:**
+- Before committing to a plan or approach
+- When choosing between alternatives
+- Before non-trivial implementations
+- When the task feels complex or uncertain
+- Before claiming work is "done"
+
+**How to use:**
+1. Invoke `$superego` to run evaluation
+2. If `has_concerns: true` - STOP and show feedback to user, ask before proceeding
+3. If `has_concerns: false` - continue with confidence
+4. If `skipped: true` - proceed normally (this is fine, not an error)
+
+**Protocol:** Superego is opt-in. Use it for high-stakes decisions, architectural choices, or when you want a second opinion. It catches premature commitment, scope creep, and misalignment.
+
+---
+
+## Tool Orchestration
+
+The tools work together:
+- **wm** preps your dive context
+- **ba** tracks your work
+- **superego** reviews at decision points
+
+Typical workflow:
+1. `$bottle dive fix` - Prep context for bug fix
+2. `$ba status` - See what tasks are available
+3. `ba claim <task>` - Take ownership
+4. ... do your work ...
+5. `$superego` - Get feedback before committing
+6. `ba finish <task>` - Mark complete
+7. `wm distill` - Extract learnings (optional)
