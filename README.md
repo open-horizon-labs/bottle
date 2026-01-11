@@ -22,7 +22,7 @@ Open Horizons (strategic layer - missions, guardrails, metis)
             Knowledge workers use this directly
 ```
 
-**Bottle tools** augment Claude Code and OpenCode with:
+**Bottle tools** augment Claude Code, OpenCode, and Codex with:
 - **Intentional grounding** (wm/dive-prep) - Start sessions with relevant context
 - **Semantic recall** (datasphere) - Search past knowledge
 - **Metacognitive oversight** (superego) - Catch drift before it compounds
@@ -160,9 +160,9 @@ That's it - one command initializes everything with recommended defaults.
 ```bash
 mkdir -p ~/.codex/skills/bottle
 curl -fsSL -o ~/.codex/skills/bottle/SKILL.md \
-  https://raw.githubusercontent.com/cloud-atlas-ai/bottle/main/codex-skill/SKILL.md
+  https://raw.githubusercontent.com/open-horizon-labs/bottle/main/codex-skill/SKILL.md
 curl -fsSL -o ~/.codex/skills/bottle/AGENTS.md.snippet \
-  https://raw.githubusercontent.com/cloud-atlas-ai/bottle/main/codex-skill/AGENTS.md.snippet
+  https://raw.githubusercontent.com/open-horizon-labs/bottle/main/codex-skill/AGENTS.md.snippet
 ```
 
 **Initialize in Codex:**
