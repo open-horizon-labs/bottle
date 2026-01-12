@@ -1,3 +1,4 @@
+mod common;
 pub mod diff;
 pub mod eject;
 pub mod install;

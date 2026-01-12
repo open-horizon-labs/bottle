@@ -1,5 +1,6 @@
+use super::common::{check_prerequisites, fetch_or_load_manifest, MARKETPLACE};
 use crate::error::{BottleError, Result};
-use crate::fetch::{fetch_bottle_manifest, fetch_tool_definition};
+use crate::fetch::fetch_tool_definition;
 use crate::install::{self, plugin};
 use crate::manifest::bottle::BottleManifest;
 use crate::manifest::state::{BottleState, Mode, ToolState};
@@ -7,9 +8,6 @@ use crate::ui;
 use chrono::Utc;
 use console::style;
 use std::collections::HashMap;
-use std::fs;
-
-const MARKETPLACE: &str = "cloud-atlas-ai/bottle";
 
 /// Install a bottle (stable, edge, or bespoke)
 pub fn run(bottle: &str, yes: bool) -> Result<()> {
@@ -65,49 +63,6 @@ pub fn run(bottle: &str, yes: bool) -> Result<()> {
 
     // 9. Show success
     show_success(&manifest);
-
-    Ok(())
-}
-
-/// Fetch manifest from bespoke location or GitHub
-fn fetch_or_load_manifest(bottle: &str) -> Result<BottleManifest> {
-    // Check bespoke first (~/.bottle/bottles/<name>/)
-    if let Some(home) = dirs::home_dir() {
-        let bespoke_path = home
-            .join(".bottle")
-            .join("bottles")
-            .join(bottle)
-            .join("manifest.json");
-
-        if bespoke_path.exists() {
-            let contents = fs::read_to_string(&bespoke_path).map_err(|e| {
-                BottleError::Other(format!("Failed to read bespoke manifest: {}", e))
-            })?;
-            return serde_json::from_str(&contents).map_err(|e| {
-                BottleError::ParseError(e)
-            });
-        }
-    }
-
-    // Fall back to curated (fetch from GitHub)
-    fetch_bottle_manifest(bottle)
-}
-
-/// Check that required prerequisites are available
-fn check_prerequisites(manifest: &BottleManifest) -> Result<()> {
-    let mut missing = Vec::new();
-
-    if manifest.prerequisites.contains_key("cargo") && !crate::install::cargo::is_available() {
-        missing.push("cargo (install Rust: https://rustup.rs)");
-    }
-
-    if manifest.prerequisites.contains_key("node") && which::which("node").is_err() {
-        missing.push("node (install Node.js: https://nodejs.org)");
-    }
-
-    if !missing.is_empty() {
-        return Err(BottleError::PrerequisitesNotMet(missing.join(", ")));
-    }
 
     Ok(())
 }
