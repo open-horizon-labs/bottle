@@ -25,7 +25,7 @@ Bottle does not control tool releases. Tools release when they're ready.
 ### Bottles Are Curated Snapshots
 
 A bottle is a tested combination of tool versions + matching plugins. Bottles are:
-- **Named:** stable, edge, minimal, etc.
+- **Named:** stable, edge
 - **Versioned:** dated snapshots (2026.01.15)
 - **Complete:** binaries + MCP servers + plugins, all matched
 - **Cohesive:** no backwards compatibility across bottles
@@ -76,10 +76,6 @@ bottle/
 │   │   ├── CHANGELOG.md
 │   │   └── plugins/
 │   │
-│   └── minimal/
-│       ├── manifest.json
-│       └── plugins/
-│           └── ba/
 │
 ├── commands/                   # Bottle management commands
 │   ├── install.md
@@ -285,6 +281,128 @@ Leave bottle management, keep tools.
 **Post-eject:** User manages tools manually. /bottle:status shows "ejected" mode.
 
 **UX requirement:** Graceful exit. No lock-in.
+
+---
+
+## Bespoke Bottles
+
+Users can create custom bottles for project-specific version requirements.
+
+### Philosophy: You Build It, You Own It
+
+**Curated bottles** (stable, edge) are maintained by the bottle project. They receive updates, testing, and long-term support.
+
+**Bespoke bottles** are user-created and user-maintained. The bottle project makes no backwards compatibility guarantees for bespoke bottles. If the manifest format evolves, users are responsible for updating their bespoke bottles.
+
+This is intentional:
+- Keeps bottle simple (no schema versioning, no migration tooling)
+- Clear ownership model
+- Users can always recreate from a curated bottle as base
+
+### /bottle:create
+
+Create a new bespoke bottle.
+
+**Usage:**
+```bash
+bottle create mybottle                    # Empty bottle
+bottle create mybottle --from stable      # Copy from curated bottle
+```
+
+**Flow:**
+1. Create `~/.bottle/bottles/mybottle/`
+2. If `--from`, copy manifest from source bottle
+3. Otherwise, create minimal manifest template
+4. Open manifest in editor (if `$EDITOR` set)
+5. Show next steps
+
+**Output:**
+```
+Created bespoke bottle: mybottle
+
+Location: ~/.bottle/bottles/mybottle/manifest.json
+
+Edit the manifest to pin your desired versions, then:
+  bottle install mybottle
+
+Note: Bespoke bottles are user-maintained. You're responsible
+for keeping the manifest compatible with future bottle versions.
+```
+
+### Bespoke Bottle Location
+
+```
+~/.bottle/
+├── state.json              # Current installation state
+└── bottles/                # User-created bottles
+    ├── mybottle/
+    │   └── manifest.json
+    └── client-project/
+        └── manifest.json
+```
+
+Curated bottles are fetched from GitHub. Bespoke bottles live locally.
+
+### Bespoke Manifest Format
+
+Same format as curated bottles:
+
+```json
+{
+  "name": "mybottle",
+  "version": "2026.01.12",
+  "description": "My custom tool versions",
+  "tools": {
+    "ba": "0.2.1",
+    "superego": "0.9.0",
+    "wm": "0.2.2"
+  },
+  "plugins": [
+    "ba",
+    "superego",
+    "wm"
+  ]
+}
+```
+
+Users can:
+- Pin specific versions
+- Include only tools they need
+- Skip plugins they don't want
+
+### Installing a Bespoke Bottle
+
+```bash
+bottle install mybottle
+```
+
+Works identically to installing a curated bottle. The only difference is where the manifest is read from (local vs GitHub).
+
+### Listing Available Bottles
+
+```bash
+bottle list
+```
+
+**Output:**
+```
+Curated bottles (from GitHub):
+  stable     Production-ready stack
+  edge       Latest features
+
+Bespoke bottles (local):
+  mybottle        My custom tool versions
+  client-project  Pinned for client work
+```
+
+### Sharing Bespoke Bottles
+
+Bespoke bottles are just JSON files. To share:
+1. Copy `~/.bottle/bottles/mybottle/manifest.json` to your project repo
+2. Teammate copies it to their `~/.bottle/bottles/`
+3. They run `bottle install mybottle`
+
+No special tooling needed. It's just a file.
 
 ---
 
@@ -534,6 +652,8 @@ bottle/
 │   │   ├── update.rs        # bottle update
 │   │   ├── switch.rs        # bottle switch
 │   │   ├── eject.rs         # bottle eject
+│   │   ├── create.rs        # bottle create (bespoke)
+│   │   ├── list.rs          # bottle list
 │   │   ├── diff.rs          # bottle diff (curator)
 │   │   ├── upgrade.rs       # bottle upgrade (curator)
 │   │   ├── validate.rs      # bottle validate (curator)
