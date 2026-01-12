@@ -1,6 +1,7 @@
 pub mod diff;
 pub mod eject;
 pub mod install;
+pub mod list;
 pub mod release;
 pub mod status;
 pub mod switch;
