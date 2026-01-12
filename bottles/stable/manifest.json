@@ -10,12 +10,12 @@
     "oh-mcp": "0.3.0"
   },
   "plugins": [
-    "stable-ba",
-    "stable-superego",
-    "stable-wm",
-    "stable-datasphere",
-    "stable-oh-mcp",
-    "stable-miranda"
+    "ba",
+    "superego",
+    "wm",
+    "datasphere",
+    "oh-mcp",
+    "miranda"
   ],
   "prerequisites": {
     "cargo": "Required for ba, superego, wm, datasphere",

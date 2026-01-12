@@ -12,6 +12,6 @@ Initial stable bottle release.
 - oh-mcp 0.3.0 - Open Horizons MCP server
 
 ### Plugins
-- stable-ba, stable-superego, stable-wm, stable-datasphere, stable-oh-mcp, stable-miranda
+- ba, superego, wm, datasphere, oh-mcp, miranda
 
 Note: miranda is a skill provider plugin only (no backing binary tool).

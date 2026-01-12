@@ -12,6 +12,6 @@ Initial edge bottle release (same as stable for now).
 - oh-mcp 0.3.0 - Open Horizons MCP server
 
 ### Plugins
-- edge-ba, edge-superego, edge-wm, edge-datasphere, edge-oh-mcp, edge-miranda
+- ba, superego, wm, datasphere, oh-mcp, miranda
 
 Note: miranda is a skill provider plugin only (no backing binary tool).

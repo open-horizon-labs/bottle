@@ -1,5 +1,5 @@
 {
-  "name": "stable-datasphere",
+  "name": "datasphere",
   "version": "0.1.0",
   "description": "Datasphere - Build a searchable knowledge graph from Claude Code sessions",
   "author": {
