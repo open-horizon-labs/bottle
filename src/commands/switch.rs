@@ -155,7 +155,11 @@ fn calculate_switch_plan(state: &BottleState, new_manifest: &BottleManifest) -> 
 fn compare_versions(a: &str, b: &str) -> std::cmp::Ordering {
     let parse = |v: &str| -> Vec<u32> {
         v.split('.')
-            .filter_map(|part| part.parse::<u32>().ok())
+            .filter_map(|part| {
+                // Strip pre-release suffix (e.g., "3-beta" -> "3")
+                let numeric = part.split('-').next().unwrap_or(part);
+                numeric.parse::<u32>().ok()
+            })
             .collect()
     };
 
