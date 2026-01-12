@@ -105,6 +105,16 @@ enum Commands {
         #[arg(short, long)]
         message: Option<String>,
     },
+
+    /// Create a new bespoke bottle
+    Create {
+        /// Name for the new bottle
+        name: String,
+
+        /// Copy manifest from an existing bottle (curated or bespoke)
+        #[arg(long)]
+        from: Option<String>,
+    },
 }
 
 fn main() {
@@ -132,5 +142,6 @@ fn run() -> Result<()> {
         } => commands::upgrade::run(&bottle, &tool, &version),
         Commands::Validate { bottle } => commands::validate::run(&bottle),
         Commands::Release { bottle, message } => commands::release::run(&bottle, message.as_deref()),
+        Commands::Create { name, from } => commands::create::run(&name, from.as_deref()),
     }
 }
