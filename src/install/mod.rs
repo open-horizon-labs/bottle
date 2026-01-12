@@ -4,24 +4,30 @@ pub mod mcp;
 pub mod plugin;
 
 use crate::error::Result;
+use crate::manifest::state::InstallMethod;
 use crate::manifest::tool::{ToolDefinition, ToolType};
 
-/// Install a tool using the appropriate method
-pub fn install_tool(tool: &ToolDefinition, version: &str) -> Result<()> {
+/// Install a tool using the appropriate method, returns the method actually used
+pub fn install_tool(tool: &ToolDefinition, version: &str) -> Result<InstallMethod> {
     match tool.tool_type {
         ToolType::Binary => {
             // Try cargo first, fall back to brew
             if which::which("cargo").is_ok() {
-                cargo::install(&tool.package, version)
+                cargo::install(&tool.package, version)?;
+                Ok(InstallMethod::Cargo)
             } else if which::which("brew").is_ok() {
-                brew::install(&tool.package, version)
+                brew::install(&tool.package, version)?;
+                Ok(InstallMethod::Brew)
             } else {
                 Err(crate::error::BottleError::PrerequisitesNotMet(
                     "Neither cargo nor brew found. Install Rust or Homebrew.".into(),
                 ))
             }
         }
-        ToolType::Mcp => mcp::register(&tool.package, version),
+        ToolType::Mcp => {
+            mcp::register(&tool.package, version)?;
+            Ok(InstallMethod::Mcp)
+        }
     }
 }
 
