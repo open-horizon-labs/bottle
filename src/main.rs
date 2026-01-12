@@ -65,6 +65,9 @@ enum Commands {
         yes: bool,
     },
 
+    /// List available bottles (curated and bespoke)
+    List,
+
     /// Compare bottles or check for updates (curator command)
     Diff {
         /// First bottle or 'latest' for latest tool versions
@@ -120,6 +123,7 @@ fn run() -> Result<()> {
         Commands::Update { yes } => commands::update::run(yes),
         Commands::Switch { bottle, yes } => commands::switch::run(&bottle, yes),
         Commands::Eject { yes } => commands::eject::run(yes),
+        Commands::List => commands::list::run(),
         Commands::Diff { from, to } => commands::diff::run(&from, &to),
         Commands::Upgrade {
             bottle,
