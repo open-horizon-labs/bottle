@@ -1,0 +1,13 @@
+{
+  "name": "wm",
+  "binary": "wm",
+  "registry": "crates.io",
+  "package": "working-memory",
+  "type": "binary",
+  "install": {
+    "cargo": "cargo install working-memory@{version}",
+    "brew": "brew install cloud-atlas-ai/tap/wm"
+  },
+  "check": "wm --version",
+  "homepage": "https://github.com/cloud-atlas-ai/wm"
+}

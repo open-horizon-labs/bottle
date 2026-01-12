@@ -1,0 +1,11 @@
+{
+  "name": "oh-mcp",
+  "type": "mcp",
+  "registry": "npm",
+  "package": "@cloud-atlas-ai/oh-mcp-server",
+  "install": {
+    "mcp": "claude mcp add oh-mcp -s user -e OH_API_URL=https://app.openhorizons.me -- npx -y @cloud-atlas-ai/oh-mcp-server@{version}"
+  },
+  "check": "claude mcp list | grep oh-mcp",
+  "homepage": "https://github.com/cloud-atlas-ai/oh-mcp-server"
+}

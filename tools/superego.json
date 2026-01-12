@@ -1,0 +1,13 @@
+{
+  "name": "superego",
+  "binary": "sg",
+  "registry": "crates.io",
+  "package": "superego",
+  "type": "binary",
+  "install": {
+    "cargo": "cargo install superego@{version}",
+    "brew": "brew install cloud-atlas-ai/tap/superego"
+  },
+  "check": "sg --version",
+  "homepage": "https://github.com/cloud-atlas-ai/superego"
+}
