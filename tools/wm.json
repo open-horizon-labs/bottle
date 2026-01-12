@@ -6,7 +6,7 @@
   "type": "binary",
   "install": {
     "cargo": "cargo install working-memory --version {version}",
-    "brew": "brew install cloud-atlas-ai/tap/wm"
+    "brew": "brew install wm"
   },
   "check": "wm --version",
   "homepage": "https://github.com/cloud-atlas-ai/wm"

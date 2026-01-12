@@ -6,7 +6,7 @@
   "type": "binary",
   "install": {
     "cargo": "cargo install superego --version {version}",
-    "brew": "brew install cloud-atlas-ai/tap/superego"
+    "brew": "brew install sg"
   },
   "check": "sg --version",
   "homepage": "https://github.com/cloud-atlas-ai/superego"

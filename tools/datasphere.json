@@ -6,7 +6,7 @@
   "type": "binary",
   "install": {
     "cargo": "cargo install datasphere --version {version}",
-    "brew": "brew install cloud-atlas-ai/tap/datasphere"
+    "brew": "brew install ds"
   },
   "check": "ds --version",
   "homepage": "https://github.com/cloud-atlas-ai/datasphere"
