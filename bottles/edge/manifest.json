@@ -1,0 +1,24 @@
+{
+  "name": "edge",
+  "version": "2026.01.12",
+  "description": "Latest features, may have rough edges",
+  "tools": {
+    "ba": "0.2.1",
+    "superego": "0.8.5",
+    "wm": "0.1.4",
+    "datasphere": "0.1.0",
+    "oh-mcp": "0.3.0"
+  },
+  "plugins": [
+    "ba",
+    "superego",
+    "wm",
+    "datasphere",
+    "oh-mcp",
+    "miranda"
+  ],
+  "prerequisites": {
+    "cargo": "Required for ba, superego, wm, datasphere",
+    "node": "Required for oh-mcp (uses npx)"
+  }
+}

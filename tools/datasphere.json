@@ -1,0 +1,13 @@
+{
+  "name": "datasphere",
+  "binary": "ds",
+  "registry": "crates.io",
+  "package": "datasphere",
+  "type": "binary",
+  "install": {
+    "cargo": "cargo install datasphere --version {version}",
+    "brew": "brew install ds"
+  },
+  "check": "ds --version",
+  "homepage": "https://github.com/cloud-atlas-ai/datasphere"
+}

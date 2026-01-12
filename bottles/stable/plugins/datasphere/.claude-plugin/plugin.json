@@ -1,0 +1,11 @@
+{
+  "name": "datasphere",
+  "version": "0.1.0",
+  "description": "Datasphere - Build a searchable knowledge graph from Claude Code sessions",
+  "author": {
+    "name": "Cloud Atlas AI",
+    "email": "hello@cloudatlas.ai",
+    "url": "https://github.com/cloud-atlas-ai/datasphere"
+  },
+  "repository": "https://github.com/cloud-atlas-ai/datasphere"
+}

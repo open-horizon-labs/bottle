@@ -1,0 +1,13 @@
+{
+  "name": "ba",
+  "binary": "ba",
+  "registry": "crates.io",
+  "package": "ba",
+  "type": "binary",
+  "install": {
+    "cargo": "cargo install ba --version {version}",
+    "brew": "brew install ba"
+  },
+  "check": "ba --version",
+  "homepage": "https://github.com/cloud-atlas-ai/ba"
+}
