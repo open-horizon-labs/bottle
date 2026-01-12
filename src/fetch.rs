@@ -3,7 +3,7 @@ use crate::manifest::bottle::BottleManifest;
 use crate::manifest::tool::ToolDefinition;
 
 const GITHUB_RAW_BASE: &str =
-    "https://raw.githubusercontent.com/cloud-atlas-ai/bottle/main";
+    "https://raw.githubusercontent.com/open-horizon-labs/bottle/main";
 
 /// Fetch a bottle manifest from GitHub
 pub fn fetch_bottle_manifest(bottle: &str) -> Result<BottleManifest> {
@@ -31,13 +31,9 @@ pub fn fetch_tool_definition(tool: &str) -> Result<ToolDefinition> {
     Ok(definition)
 }
 
-/// List available bottles
+/// List available curated bottles
 pub fn list_available_bottles() -> Result<Vec<String>> {
     // For now, return hardcoded list
     // In the future, could fetch from an index file
-    Ok(vec![
-        "stable".to_string(),
-        "edge".to_string(),
-        "minimal".to_string(),
-    ])
+    Ok(vec!["stable".to_string(), "edge".to_string()])
 }
