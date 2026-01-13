@@ -1,6 +1,6 @@
 [package]
 name = "bottle"
-version = "0.1.0"
+version = "0.1.2"
 edition = "2021"
 description = "Curated snapshot manager for the Cloud Atlas AI tool stack"
 license = "MIT"
