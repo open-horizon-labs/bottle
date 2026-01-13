@@ -3,6 +3,9 @@ name: Sync Claude Code Plugins
 on:
   workflow_dispatch:  # Manual trigger only
 
+permissions:
+  contents: write
+
 jobs:
   sync:
     runs-on: ubuntu-latest
