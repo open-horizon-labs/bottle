@@ -6,7 +6,7 @@ use chrono::Utc;
 use console::style;
 
 /// Add, remove, or list platform integrations
-pub fn run(platform: Option<Platform>, list: bool, remove: bool) -> Result<()> {
+pub fn run(platform: Option<Platform>, list: bool, remove: bool, dry_run: bool) -> Result<()> {
     // Must have a bottle installed
     let state = BottleState::load().ok_or(BottleError::NoBottleInstalled)?;
 
@@ -25,9 +25,9 @@ pub fn run(platform: Option<Platform>, list: bool, remove: bool) -> Result<()> {
     })?;
 
     if remove {
-        remove_integration(&state, platform)
+        remove_integration(&state, platform, dry_run)
     } else {
-        add_integration(&state, platform)
+        add_integration(&state, platform, dry_run)
     }
 }
 
@@ -84,23 +84,44 @@ fn show_integrations(state: &BottleState) -> Result<()> {
 }
 
 /// Add a platform integration
-fn add_integration(state: &BottleState, platform: Platform) -> Result<()> {
+fn add_integration(state: &BottleState, platform: Platform, dry_run: bool) -> Result<()> {
     // Check if already installed
     if state.integrations.contains_key(platform.key()) {
         ui::print_warning(&format!("{} integration is already installed.", platform));
         return Ok(());
     }
 
-    // Warn if not detected (but allow anyway)
+    // Get detection info
     let detections = integrate::detect_platforms();
     let detection = detections.iter().find(|d| d.platform == platform);
-    if let Some(d) = detection {
-        if !d.detected {
-            ui::print_warning(&format!(
-                "{} not detected ({} not found). Installing anyway.",
-                platform, d.detection_hint
-            ));
+    let detected = detection.map(|d| d.detected).unwrap_or(false);
+    let hint = detection.map(|d| d.detection_hint.as_str()).unwrap_or("unknown");
+
+    // Dry run: show what would happen
+    if dry_run {
+        println!();
+        println!("{}", style("[DRY RUN]").yellow().bold());
+        println!("Would install {} integration:", style(platform.display_name()).cyan());
+        println!();
+        if detected {
+            println!("  Platform:  {} ({})", style("detected").green(), hint);
+        } else {
+            println!("  Platform:  {} ({} not found)", style("not detected").yellow(), hint);
         }
+        println!("  Action:    {}", describe_install_action(platform));
+        println!("  State:     Add {} to ~/.bottle/state.json", platform.key());
+        println!();
+        println!("{}", style("No changes made.").dim());
+        println!();
+        return Ok(());
+    }
+
+    // Warn if not detected (but allow anyway)
+    if !detected {
+        ui::print_warning(&format!(
+            "{} not detected ({} not found). Installing anyway.",
+            platform, hint
+        ));
     }
 
     // Install
@@ -150,10 +171,25 @@ fn add_integration(state: &BottleState, platform: Platform) -> Result<()> {
 }
 
 /// Remove a platform integration
-fn remove_integration(state: &BottleState, platform: Platform) -> Result<()> {
+fn remove_integration(state: &BottleState, platform: Platform, dry_run: bool) -> Result<()> {
     // Check if installed
     if !state.integrations.contains_key(platform.key()) {
         ui::print_warning(&format!("{} integration is not installed.", platform));
+        return Ok(());
+    }
+
+    // Dry run: show what would happen
+    if dry_run {
+        println!();
+        println!("{}", style("[DRY RUN]").yellow().bold());
+        println!("Would remove {} integration:", style(platform.display_name()).cyan());
+        println!();
+        println!("  Installed: {}", style("yes").green());
+        println!("  Action:    {}", describe_remove_action(platform));
+        println!("  State:     Remove {} from ~/.bottle/state.json", platform.key());
+        println!();
+        println!("{}", style("No changes made.").dim());
+        println!();
         return Ok(());
     }
 
@@ -178,4 +214,22 @@ fn remove_integration(state: &BottleState, platform: Platform) -> Result<()> {
     println!();
 
     Ok(())
+}
+
+/// Describe the install action for a platform (for dry-run output)
+fn describe_install_action(platform: Platform) -> &'static str {
+    match platform {
+        Platform::ClaudeCode => "Run `claude plugin install bottle@cloud-atlas-ai/bottle`",
+        Platform::OpenCode => "Add @cloud-atlas-ai/bottle to opencode.json plugins",
+        Platform::Codex => "Create ~/.codex/skills/bottle/SKILL.md",
+    }
+}
+
+/// Describe the remove action for a platform (for dry-run output)
+fn describe_remove_action(platform: Platform) -> &'static str {
+    match platform {
+        Platform::ClaudeCode => "Run `claude plugin uninstall bottle@cloud-atlas-ai/bottle`",
+        Platform::OpenCode => "Remove @cloud-atlas-ai/bottle from opencode.json plugins",
+        Platform::Codex => "Remove ~/.codex/skills/bottle/",
+    }
 }

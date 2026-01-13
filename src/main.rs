@@ -33,6 +33,10 @@ enum Commands {
         /// Skip confirmation prompt
         #[arg(short = 'y', long)]
         yes: bool,
+
+        /// Show what would be done without making changes
+        #[arg(long)]
+        dry_run: bool,
     },
 
     /// Show current bottle status and installed tools
@@ -79,6 +83,10 @@ enum Commands {
         /// Remove the integration instead of adding it
         #[arg(short, long)]
         remove: bool,
+
+        /// Show what would be done without making changes
+        #[arg(long)]
+        dry_run: bool,
     },
 
     /// List available bottles (curated and bespoke)
@@ -169,7 +177,7 @@ fn run() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Install { bottle, yes } => commands::install::run(&bottle, yes),
+        Commands::Install { bottle, yes, dry_run } => commands::install::run(&bottle, yes, dry_run),
         Commands::Status { check_updates } => commands::status::run(check_updates),
         Commands::Update { yes } => commands::update::run(yes),
         Commands::Switch { bottle, yes } => commands::switch::run(&bottle, yes),
@@ -178,7 +186,8 @@ fn run() -> Result<()> {
             platform,
             list,
             remove,
-        } => commands::integrate::run(platform.map(|p| p.to_platform()), list, remove),
+            dry_run,
+        } => commands::integrate::run(platform.map(|p| p.to_platform()), list, remove, dry_run),
         Commands::List => commands::list::run(),
         Commands::Diff { from, to } => commands::diff::run(&from, &to),
         Commands::Upgrade {

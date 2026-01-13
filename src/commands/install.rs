@@ -10,7 +10,7 @@ use console::style;
 use std::collections::HashMap;
 
 /// Install a bottle (stable, edge, or bespoke)
-pub fn run(bottle: &str, yes: bool) -> Result<()> {
+pub fn run(bottle: &str, yes: bool, dry_run: bool) -> Result<()> {
     // 1. Check if already installed
     if let Some(state) = BottleState::load() {
         if state.bottle == bottle && state.is_managed() {
@@ -35,7 +35,12 @@ pub fn run(bottle: &str, yes: bool) -> Result<()> {
     // 3. Check prerequisites
     check_prerequisites(&manifest)?;
 
-    // 4. Show what will be installed
+    // 4. Show what will be installed (or would be installed for dry-run)
+    if dry_run {
+        show_dry_run_plan(&manifest);
+        return Ok(());
+    }
+
     show_install_plan(&manifest);
 
     // 5. Confirm (unless -y)
@@ -94,6 +99,48 @@ fn show_install_plan(manifest: &BottleManifest) {
     for plugin in &manifest.plugins {
         println!("  {}", plugin);
     }
+    println!();
+}
+
+/// Display the dry-run plan showing what would be installed
+fn show_dry_run_plan(manifest: &BottleManifest) {
+    println!();
+    println!("{}", style("[DRY RUN]").yellow().bold());
+    println!(
+        "Would install bottle {} ({}):",
+        style(&manifest.name).cyan(),
+        &manifest.version
+    );
+    println!("{}", style(&manifest.description).dim());
+    println!();
+
+    // Show tools that would be installed
+    println!("{}:", style("Tools to install").bold());
+    let mut tools: Vec<_> = manifest.tools.iter().collect();
+    tools.sort_by_key(|(name, _)| *name);
+    for (name, version) in &tools {
+        println!("  {:<12} {}", name, style(version).dim());
+    }
+    println!();
+
+    // Show plugins that would be installed
+    if !manifest.plugins.is_empty() {
+        println!("{}:", style("Plugins to install").bold());
+        for plugin in &manifest.plugins {
+            println!("  {}", plugin);
+        }
+        println!();
+    }
+
+    // Show state changes
+    println!("{}:", style("State changes").bold());
+    println!("  Create ~/.bottle/state.json with:");
+    println!("    bottle: {}", manifest.name);
+    println!("    version: {}", manifest.version);
+    println!("    mode: managed");
+    println!();
+
+    println!("{}", style("No changes made.").dim());
     println!();
 }
 
