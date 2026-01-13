@@ -1,0 +1,58 @@
+name: Sync Claude Code Plugins
+
+on:
+  workflow_dispatch:  # Manual trigger only
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync ba plugin
+        run: |
+          git clone --depth 1 https://github.com/open-horizon-labs/ba /tmp/ba
+          [ -d /tmp/ba/plugin ] || { echo "ERROR: ba plugin/ not found"; exit 1; }
+          rm -rf .claude-plugin/plugins/ba
+          mkdir -p .claude-plugin/plugins/ba
+          cp -r /tmp/ba/plugin/. .claude-plugin/plugins/ba/
+
+      - name: Sync wm plugin
+        run: |
+          git clone --depth 1 https://github.com/open-horizon-labs/wm /tmp/wm
+          [ -d /tmp/wm/plugin ] || { echo "ERROR: wm plugin/ not found"; exit 1; }
+          rm -rf .claude-plugin/plugins/wm
+          mkdir -p .claude-plugin/plugins/wm
+          cp -r /tmp/wm/plugin/. .claude-plugin/plugins/wm/
+
+      - name: Sync superego plugin
+        run: |
+          git clone --depth 1 https://github.com/open-horizon-labs/superego /tmp/superego
+          [ -d /tmp/superego/plugin ] || { echo "ERROR: superego plugin/ not found"; exit 1; }
+          rm -rf .claude-plugin/plugins/superego
+          mkdir -p .claude-plugin/plugins/superego
+          cp -r /tmp/superego/plugin/. .claude-plugin/plugins/superego/
+
+      - name: Sync oh-mcp plugin
+        run: |
+          git clone --depth 1 https://github.com/open-horizon-labs/oh-mcp-server /tmp/oh-mcp-server
+          [ -d /tmp/oh-mcp-server/plugin ] || { echo "ERROR: oh-mcp-server plugin/ not found"; exit 1; }
+          rm -rf .claude-plugin/plugins/oh-mcp
+          mkdir -p .claude-plugin/plugins/oh-mcp
+          cp -r /tmp/oh-mcp-server/plugin/. .claude-plugin/plugins/oh-mcp/
+
+      - name: Sync miranda plugin
+        run: |
+          git clone --depth 1 https://github.com/open-horizon-labs/miranda /tmp/miranda
+          [ -d /tmp/miranda/plugin ] || { echo "ERROR: miranda plugin/ not found"; exit 1; }
+          rm -rf .claude-plugin/plugins/miranda
+          mkdir -p .claude-plugin/plugins/miranda
+          cp -r /tmp/miranda/plugin/. .claude-plugin/plugins/miranda/
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .claude-plugin/plugins/
+          git commit -m "chore: sync Claude Code plugins from source repos" || echo "No changes to commit"
+          git push

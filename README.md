@@ -238,12 +238,16 @@ claude plugin update wm@bottle
 
 Each tool has its own repo with detailed documentation:
 
-- [ba](https://github.com/cloud-atlas-ai/ba)
-- [wm](https://github.com/cloud-atlas-ai/wm)
-- [superego](https://github.com/cloud-atlas-ai/superego)
-- [datasphere](https://github.com/cloud-atlas-ai/datasphere)
-- [oh-mcp-server](https://github.com/cloud-atlas-ai/oh-mcp-server)
-- [miranda](https://github.com/cloud-atlas-ai/miranda)
+- [ba](https://github.com/open-horizon-labs/ba)
+- [wm](https://github.com/open-horizon-labs/wm)
+- [superego](https://github.com/open-horizon-labs/superego)
+- [datasphere](https://github.com/open-horizon-labs/datasphere)
+- [oh-mcp-server](https://github.com/open-horizon-labs/oh-mcp-server)
+- [miranda](https://github.com/open-horizon-labs/miranda)
+
+## Plugin Sync
+
+The Claude Code plugins in `.claude-plugin/plugins/` are synced from their source repositories via a GitHub Action. To update to the latest plugin versions, run the "Sync Claude Code Plugins" workflow manually from the Actions tab.
 
 ## License
 
