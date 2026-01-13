@@ -49,11 +49,11 @@ This creates `.wm/dive_context.md` with your intent, relevant context, and sugge
 
 **Protocol:** Treat wm as your external memory. Don't guess at past decisions - check wm first.
 
-## Metacognition ($superego)
+## Metacognition ($sg)
 
 **Mode:** Pull mode - evaluates only when explicitly requested, not automatically.
 
-**When to use $superego:**
+**When to use $sg review:**
 - Before committing to a plan or approach
 - When choosing between alternatives
 - Before non-trivial implementations
@@ -61,7 +61,7 @@ This creates `.wm/dive_context.md` with your intent, relevant context, and sugge
 - Before claiming work is "done"
 
 **How to use:**
-1. Invoke `$superego` to run evaluation
+1. Invoke `$sg review` to run evaluation
 2. If `has_concerns: true` - STOP and show feedback to user, ask before proceeding
 3. If `has_concerns: false` - continue with confidence
 4. If `skipped: true` - proceed normally (this is fine, not an error)
@@ -75,13 +75,13 @@ This creates `.wm/dive_context.md` with your intent, relevant context, and sugge
 The tools work together:
 - **wm** preps your dive context
 - **ba** tracks your work
-- **superego** reviews at decision points
+- **sg** reviews at decision points
 
 Typical workflow:
 1. `$bottle dive fix` - Prep context for bug fix
 2. `$ba status` - See what tasks are available
 3. `ba claim <task>` - Take ownership
 4. ... do your work ...
-5. `$superego` - Get feedback before committing
+5. `$sg review` - Get feedback before committing
 6. `ba finish <task>` - Mark complete
 7. `wm distill` - Extract learnings (optional)
