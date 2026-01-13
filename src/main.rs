@@ -79,6 +79,10 @@ enum Commands {
         /// Remove the integration instead of adding it
         #[arg(short, long)]
         remove: bool,
+
+        /// Show what would be done without making changes
+        #[arg(long)]
+        dry_run: bool,
     },
 
     /// List available bottles (curated and bespoke)
@@ -178,7 +182,8 @@ fn run() -> Result<()> {
             platform,
             list,
             remove,
-        } => commands::integrate::run(platform.map(|p| p.to_platform()), list, remove),
+            dry_run,
+        } => commands::integrate::run(platform.map(|p| p.to_platform()), list, remove, dry_run),
         Commands::List => commands::list::run(),
         Commands::Diff { from, to } => commands::diff::run(&from, &to),
         Commands::Upgrade {
