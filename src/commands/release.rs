@@ -195,6 +195,15 @@ fn git_tag(tag_name: &str, message: Option<&str>) -> Result<()> {
         .args(["tag", "-l", tag_name])
         .output()?;
 
+    // Verify the command succeeded before trusting output
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(BottleError::Other(format!(
+            "Failed to check existing tags.\n{}\n\nMake sure you're in a git repository.",
+            stderr.trim()
+        )));
+    }
+
     let existing = String::from_utf8_lossy(&output.stdout);
     if !existing.trim().is_empty() {
         return Err(BottleError::Other(format!(
