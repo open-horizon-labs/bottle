@@ -8,8 +8,8 @@ The recommended way to set up the bottle ecosystem:
 
 ```bash
 # 1. Install the bottle CLI
-brew install oh-labs/tap/bottle
-# or: cargo install bottle
+# See https://github.com/open-horizon-labs/bottle for installation instructions
+# (Official Homebrew tap and crates.io package coming soon)
 
 # 2. Use bottle to integrate with OpenCode
 bottle integrate opencode
@@ -35,7 +35,7 @@ All tools invoke the `bottle` CLI:
 - `bottle-create <name>` - Create a bespoke bottle
 - `bottle-integrate` - Add/remove platform integrations
 - `bottle-eject` - Stop bottle management (keep tools)
-- `bottle-init` - Initialize all tools with defaults
+- `bottle-init` - Show guidance for initializing all tools
 - `bottle-help` - Show available commands
 
 ### Plus Child Plugin Tools
@@ -55,8 +55,7 @@ The child plugins provide their own tools:
 
 1. **Install bottle CLI:**
    ```bash
-   brew install oh-labs/tap/bottle
-   # or: cargo install bottle
+   # See https://github.com/open-horizon-labs/bottle for installation
    ```
 
 2. **Install the bottle tool stack:**
@@ -73,7 +72,7 @@ The child plugins provide their own tools:
    ```bash
    bottle-init
    ```
-   This runs `ba init`, `wm init`, and `sg init` with recommended defaults.
+   This provides guidance for running `ba init`, `wm init`, and `sg init`. See [skills/init.md](skills/init.md) for full orchestration instructions.
 
 ## Architecture
 
