@@ -11,7 +11,7 @@ Add or remove platform integrations (OpenCode, Codex).
 ```
 
 - `--list` - List available and installed integrations
-- `platform` - Platform to integrate: `opencode`, `codex`
+- `platform` - Platform to integrate: `claude_code`, `opencode`, `codex`
 - `--remove` - Remove the integration instead of adding it
 
 ## Execution

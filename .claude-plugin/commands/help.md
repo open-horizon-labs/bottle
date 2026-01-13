@@ -31,5 +31,5 @@ Getting Started:
   /bottle:install            Install the stable bottle
   /bottle:status             See what's installed
 
-More info: https://github.com/cloud-atlas-ai/bottle
+More info: https://github.com/open-horizon-labs/bottle
 ```
