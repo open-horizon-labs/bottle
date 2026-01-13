@@ -1,60 +1,60 @@
 {
   "name": "bottle",
   "owner": {
-    "name": "Cloud Atlas AI",
-    "email": "hello@cloudatlas.ai"
+    "name": "Open Horizon Labs",
+    "email": "hello@ohl.dev"
   },
   "metadata": {
-    "description": "Cloud Atlas AI - Complete stack for 10-100x AI leverage",
+    "description": "Open Horizon Labs - Complete stack for 10-100x AI leverage",
     "version": "1.0.0"
   },
   "plugins": [
     {
       "name": "bottle",
-      "source": "./",
-      "description": "Unified installer and orchestrator for Cloud Atlas AI stack",
+      "source": "./.claude-plugin",
+      "description": "Unified installer and orchestrator for Open Horizon Labs stack",
       "author": {
-        "name": "Cloud Atlas AI"
+        "name": "Open Horizon Labs"
       }
     },
     {
       "name": "ba",
-      "source": "./plugins/ba",
+      "source": "./.claude-plugin/plugins/ba",
       "description": "Task tracking for AI sessions",
       "author": {
-        "name": "Cloud Atlas AI"
+        "name": "Open Horizon Labs"
       }
     },
     {
       "name": "wm",
-      "source": "./plugins/wm",
+      "source": "./.claude-plugin/plugins/wm",
       "description": "Working memory - automatic tacit knowledge extraction",
       "author": {
-        "name": "Cloud Atlas AI"
+        "name": "Open Horizon Labs"
       }
     },
     {
       "name": "superego",
-      "source": "./plugins/superego",
+      "source": "./.claude-plugin/plugins/superego",
       "description": "Metacognitive advisor",
       "author": {
-        "name": "Cloud Atlas AI"
+        "name": "Open Horizon Labs"
       }
     },
     {
       "name": "oh-mcp",
-      "source": "./plugins/oh-mcp",
-      "description": "Open Horizons MCP - strategic alignment",
+      "source": "./.claude-plugin/plugins/oh-mcp",
+      "description": "Open Horizons MCP server for strategic alignment",
       "author": {
-        "name": "Cloud Atlas AI"
+        "name": "Open Horizon Labs"
       }
     },
     {
       "name": "miranda",
-      "source": "./plugins/miranda",
+      "source": "./.claude-plugin/plugins/miranda",
       "description": "Telegram bot for remote orchestration",
       "author": {
-        "name": "Cloud Atlas AI"
+        "name": "Open Horizon Labs"
       }
     }
   ]

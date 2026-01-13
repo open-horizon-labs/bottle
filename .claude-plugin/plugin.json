@@ -1,11 +1,11 @@
 {
   "name": "bottle",
   "version": "1.0.0",
-  "description": "Cloud Atlas AI unified installer and orchestrator",
+  "description": "Open Horizon Labs unified installer and orchestrator",
   "author": {
-    "name": "Cloud Atlas AI",
-    "email": "hello@cloudatlas.ai",
-    "url": "https://github.com/cloud-atlas-ai"
+    "name": "Open Horizon Labs",
+    "email": "hello@ohl.dev",
+    "url": "https://github.com/open-horizon-labs"
   },
-  "repository": "https://github.com/cloud-atlas-ai/bottle"
+  "repository": "https://github.com/open-horizon-labs/bottle"
 }
