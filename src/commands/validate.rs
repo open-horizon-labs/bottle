@@ -1,3 +1,4 @@
+use super::common::get_local_manifest_path;
 use crate::error::{BottleError, Result};
 use console::style;
 use serde_json::Value;
@@ -11,7 +12,7 @@ pub fn run(bottle: &str) -> Result<()> {
     println!("Validating {} bottle...", style(bottle).cyan());
     println!();
 
-    let manifest_path = get_manifest_path(bottle)?;
+    let manifest_path = get_local_manifest_path(bottle)?;
     let contents = fs::read_to_string(&manifest_path)?;
     let manifest: Value = serde_json::from_str(&contents)?;
 
@@ -60,18 +61,6 @@ pub fn run(bottle: &str) -> Result<()> {
             Ok(())
         }
     }
-}
-
-/// Get the path to a bottle manifest
-fn get_manifest_path(bottle: &str) -> Result<PathBuf> {
-    let local_path = PathBuf::from(format!("bottles/{}/manifest.json", bottle));
-    if local_path.exists() {
-        return Ok(local_path);
-    }
-    Err(BottleError::BottleNotFound(format!(
-        "No local manifest found at bottles/{}/manifest.json. Run from bottle repo root.",
-        bottle
-    )))
 }
 
 /// Check required schema fields

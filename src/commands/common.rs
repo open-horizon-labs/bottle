@@ -2,6 +2,7 @@ use crate::error::{BottleError, Result};
 use crate::fetch::fetch_bottle_manifest;
 use crate::manifest::bottle::BottleManifest;
 use std::fs;
+use std::path::PathBuf;
 
 /// Marketplace identifier for plugins
 pub const MARKETPLACE: &str = "cloud-atlas-ai/bottle";
@@ -44,4 +45,41 @@ pub fn check_prerequisites(manifest: &BottleManifest) -> Result<()> {
     }
 
     Ok(())
+}
+
+/// Get the path to a local bottle manifest (curator command helper).
+///
+/// This function is used by curator commands (upgrade, validate, release) that
+/// operate on local bottle manifests in the repository's bottles/ directory.
+///
+/// # Security
+/// Validates the bottle name to prevent path traversal attacks by rejecting
+/// names containing path separators or parent directory references.
+pub fn get_local_manifest_path(bottle: &str) -> Result<PathBuf> {
+    // Reject bottle names with path separators or traversal attempts
+    if bottle.contains('/') || bottle.contains('\\') || bottle.contains("..") {
+        return Err(BottleError::Other(format!(
+            "Invalid bottle name '{}': must not contain path separators or '..'",
+            bottle
+        )));
+    }
+
+    // Reject empty or whitespace-only names
+    if bottle.trim().is_empty() {
+        return Err(BottleError::Other(
+            "Invalid bottle name: cannot be empty".to_string(),
+        ));
+    }
+
+    // Construct path using PathBuf for proper path handling
+    let local_path = PathBuf::from("bottles").join(bottle).join("manifest.json");
+
+    if local_path.exists() {
+        return Ok(local_path);
+    }
+
+    Err(BottleError::BottleNotFound(format!(
+        "No local manifest found at bottles/{}/manifest.json. Run from bottle repo root.",
+        bottle
+    )))
 }
