@@ -3,7 +3,7 @@ use crate::manifest::bottle::BottleManifest;
 use crate::manifest::tool::ToolDefinition;
 
 const GITHUB_RAW_BASE: &str =
-    "https://raw.githubusercontent.com/open-horizon-labs/bottle/main";
+    "https://raw.githubusercontent.com/open-horizon-labs/bottle/master";
 
 /// Fetch a bottle manifest from GitHub
 pub fn fetch_bottle_manifest(bottle: &str) -> Result<BottleManifest> {
