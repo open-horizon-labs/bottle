@@ -56,13 +56,14 @@ pub fn run(bottle: &str, yes: bool) -> Result<()> {
     // 9. Handle plugins
     update_plugins(&new_manifest)?;
 
-    // 10. Save new state
+    // 10. Save new state (preserve integrations across bottle switches)
     let new_state = BottleState {
         bottle: new_manifest.name.clone(),
         bottle_version: new_manifest.version.clone(),
         installed_at: Utc::now(),
         tools: tool_states,
         mode: Mode::Managed,
+        integrations: state.integrations.clone(),
     };
     new_state
         .save()

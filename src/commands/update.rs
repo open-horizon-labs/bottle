@@ -64,13 +64,14 @@ pub fn run(yes: bool) -> Result<()> {
         apply_updates(&state, &changes)?
     };
 
-    // 7. Save updated state
+    // 7. Save updated state (preserve integrations across updates)
     let new_state = BottleState {
         bottle: state.bottle.clone(),
         bottle_version: latest.version.clone(),
         installed_at: state.installed_at,
         tools: updated_tools,
         mode: state.mode.clone(),
+        integrations: state.integrations.clone(),
     };
     new_state
         .save()

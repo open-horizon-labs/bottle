@@ -58,6 +58,7 @@ pub fn run(bottle: &str, yes: bool) -> Result<()> {
         installed_at: Utc::now(),
         tools: tool_states,
         mode: Mode::Managed,
+        integrations: HashMap::new(),
     };
     state.save().map_err(|e| BottleError::Other(format!("Failed to save state: {}", e)))?;
 
