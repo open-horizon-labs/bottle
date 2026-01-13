@@ -1,22 +1,22 @@
 //! Codex integration
 //!
-//! Installs/removes the bottle skill for Codex.
+//! Installs/removes all Cloud Atlas AI skills for Codex (bottle, ba, wm, superego).
+//! Skill content is embedded at compile time from codex-skill/ directory.
 
 use crate::error::{BottleError, Result};
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
-/// Skill directory name
-const SKILL_DIR: &str = "bottle";
+// Embed skill files at compile time - codex-skill/ is the source of truth
+const BOTTLE_SKILL: &str = include_str!("../../codex-skill/SKILL.md");
+const BA_SKILL: &str = include_str!("../../codex-skill/ba/SKILL.md");
+const WM_SKILL: &str = include_str!("../../codex-skill/wm/SKILL.md");
+const SG_SKILL: &str = include_str!("../../codex-skill/sg/SKILL.md");
+const AGENTS_SNIPPET: &str = include_str!("../../codex-skill/AGENTS.md.snippet");
 
 /// Get the Codex skills directory path
 fn skills_dir() -> Option<PathBuf> {
     dirs::home_dir().map(|h| h.join(".codex").join("skills"))
-}
-
-/// Get the bottle skill path
-fn skill_path() -> Option<PathBuf> {
-    skills_dir().map(|s| s.join(SKILL_DIR))
 }
 
 /// Check if Codex is detected (has config directory)
@@ -29,14 +29,12 @@ pub fn is_detected() -> bool {
 /// Check if the bottle skill is installed in Codex
 #[allow(dead_code)]
 pub fn is_installed() -> bool {
-    skill_path()
-        .map(|p| p.exists())
+    skills_dir()
+        .map(|s| s.join("bottle").exists())
         .unwrap_or(false)
 }
 
-/// Install the bottle skill for Codex
-/// AIDEV-NOTE: Creates a minimal SKILL.md that invokes the bottle CLI.
-/// The actual skill content will be enhanced as part of kk-c0jl task.
+/// Install all Cloud Atlas AI skills for Codex
 pub fn install() -> Result<()> {
     let skills_path = skills_dir().ok_or_else(|| BottleError::InstallError {
         tool: "codex integration".to_string(),
@@ -49,123 +47,59 @@ pub fn install() -> Result<()> {
         reason: format!("Failed to create skills directory: {}", e),
     })?;
 
-    let bottle_skill_path = skills_path.join(SKILL_DIR);
+    // Install all skills
+    install_skill(&skills_path, "bottle", BOTTLE_SKILL)?;
+    install_skill(&skills_path, "ba", BA_SKILL)?;
+    install_skill(&skills_path, "wm", WM_SKILL)?;
+    install_skill(&skills_path, "sg", SG_SKILL)?;
 
-    // Create skill directory
-    fs::create_dir_all(&bottle_skill_path).map_err(|e| BottleError::InstallError {
-        tool: "codex integration".to_string(),
-        reason: format!("Failed to create bottle skill directory: {}", e),
-    })?;
-
-    // Write SKILL.md
-    let skill_content = r#"# Bottle
-
-Manage the Cloud Atlas AI tool stack.
-
-## Commands
-
-All commands invoke the `bottle` CLI. Ensure bottle is installed.
-
-### $bottle status
-
-Show current bottle state.
-
-```bash
-bottle status
-```
-
-### $bottle install <name>
-
-Install a bottle (stable, edge, or bespoke).
-
-```bash
-bottle install stable
-bottle install edge
-```
-
-### $bottle update
-
-Update to the latest bottle snapshot.
-
-```bash
-bottle update
-```
-
-### $bottle switch <name>
-
-Switch to a different bottle.
-
-```bash
-bottle switch edge
-```
-
-### $bottle list
-
-List available bottles.
-
-```bash
-bottle list
-```
-
-### $bottle eject
-
-Exit bottle management, keep tools.
-
-```bash
-bottle eject
-```
-
-### $bottle integrate <platform>
-
-Add a platform integration.
-
-```bash
-bottle integrate opencode
-bottle integrate codex
-bottle integrate claude_code
-```
-
-### $bottle integrate --remove <platform>
-
-Remove a platform integration.
-
-```bash
-bottle integrate --remove codex
-```
-
-### $bottle integrate --list
-
-Show available and installed integrations.
-
-```bash
-bottle integrate --list
-```
-"#;
-
-    fs::write(bottle_skill_path.join("SKILL.md"), skill_content).map_err(|e| {
+    // Install AGENTS.md.snippet in bottle skill directory
+    let bottle_path = skills_path.join("bottle");
+    fs::write(bottle_path.join("AGENTS.md.snippet"), AGENTS_SNIPPET).map_err(|e| {
         BottleError::InstallError {
             tool: "codex integration".to_string(),
-            reason: format!("Failed to write SKILL.md: {}", e),
+            reason: format!("Failed to write AGENTS.md.snippet: {}", e),
         }
     })?;
 
     Ok(())
 }
 
-/// Remove the bottle skill from Codex
+/// Install a single skill
+fn install_skill(skills_path: &Path, name: &str, content: &str) -> Result<()> {
+    let skill_path = skills_path.join(name);
+
+    // Create skill directory
+    fs::create_dir_all(&skill_path).map_err(|e| BottleError::InstallError {
+        tool: "codex integration".to_string(),
+        reason: format!("Failed to create {} skill directory: {}", name, e),
+    })?;
+
+    // Write SKILL.md
+    fs::write(skill_path.join("SKILL.md"), content).map_err(|e| BottleError::InstallError {
+        tool: "codex integration".to_string(),
+        reason: format!("Failed to write {}/SKILL.md: {}", name, e),
+    })?;
+
+    Ok(())
+}
+
+/// Remove all Cloud Atlas AI skills from Codex
 pub fn remove() -> Result<()> {
-    let Some(path) = skill_path() else {
+    let Some(skills_path) = skills_dir() else {
         return Ok(()); // No path, nothing to remove
     };
 
-    if !path.exists() {
-        return Ok(()); // Already removed
+    // Remove all skills
+    for name in &["bottle", "ba", "wm", "sg"] {
+        let skill_path = skills_path.join(name);
+        if skill_path.exists() {
+            fs::remove_dir_all(&skill_path).map_err(|e| BottleError::InstallError {
+                tool: "codex integration".to_string(),
+                reason: format!("Failed to remove {} skill: {}", name, e),
+            })?;
+        }
     }
-
-    fs::remove_dir_all(&path).map_err(|e| BottleError::InstallError {
-        tool: "codex integration".to_string(),
-        reason: format!("Failed to remove bottle skill: {}", e),
-    })?;
 
     Ok(())
 }

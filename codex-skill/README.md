@@ -4,40 +4,43 @@ Codex skill for orchestrating the Cloud Atlas AI tool suite.
 
 ## Installation
 
-### Quick Install (Recommended)
+### Via Bottle CLI (Recommended)
 
+If you have the bottle CLI installed:
 ```bash
-# Install the bottle skill
-mkdir -p ~/.codex/skills/bottle
-curl -fsSL -o ~/.codex/skills/bottle/SKILL.md \
-  https://raw.githubusercontent.com/cloud-atlas-ai/bottle/main/codex-skill/SKILL.md
-curl -fsSL -o ~/.codex/skills/bottle/AGENTS.md.snippet \
-  https://raw.githubusercontent.com/cloud-atlas-ai/bottle/main/codex-skill/AGENTS.md.snippet
+bottle integrate codex
 ```
 
-Then in Codex:
-```
-$bottle init
-```
+This installs all Cloud Atlas AI skills (bottle, ba, wm, sg).
 
 ### Manual Install
 
-1. Clone this repo
-2. Copy `codex-skill/` contents to `~/.codex/skills/bottle/`
-3. Run `$bottle init` in Codex
+Copy the skill directories to `~/.codex/skills/`:
+```bash
+mkdir -p ~/.codex/skills/bottle
+cp codex-skill/SKILL.md codex-skill/AGENTS.md.snippet ~/.codex/skills/bottle/
+cp -r codex-skill/ba codex-skill/wm codex-skill/sg ~/.codex/skills/
+```
 
 ## Usage
 
-### Commands
+### Standard Commands (CLI Wrappers)
 
 | Command | Description |
 |---------|-------------|
-| `$bottle init` | Full setup: binaries, skills, AGENTS.md |
-| `$bottle status` | Check what's installed |
+| `$bottle init` | Install bottle and set up Codex integration |
+| `$bottle status` | Show current bottle state |
+| `$bottle update` | Update to latest bottle snapshot |
+| `$bottle remove` | Exit bottle management |
+
+### Codex-Native Features
+
+| Command | Description |
+|---------|-------------|
 | `$bottle dive <intent>` | Start a focused session (fix/plan/explore/ship) |
-| `$bottle update` | Update skills and binaries |
+| `$bottle codex-sync` | Sync Codex sessions to working memory |
+| `$bottle web-context <query>` | Augment context with web search |
 | `$bottle agents` | Show recommended AGENTS.md content |
-| `$bottle remove` | Remove from project (keeps binaries) |
 
 ### Quick Start
 
@@ -45,7 +48,7 @@ $bottle init
 $bottle init              # One-time setup
 $bottle dive fix          # Start a bug fix session
 $ba status                # Check your tasks
-$superego                 # Get feedback at decision points
+$sg review                # Get feedback at decision points
 ```
 
 ## What Gets Installed
@@ -56,12 +59,18 @@ $superego                 # Get feedback at decision points
 - `wm` - Working memory
 - `sg` - Superego metacognitive oversight
 
+Install via:
+```bash
+brew tap oh-labs/tap && brew install ba wm superego
+# or: cargo install ba working-memory superego
+```
+
 ### Skills
 
+- `$bottle` - Orchestration (this skill)
 - `$ba` - Task tracking commands
 - `$wm` - Working memory commands
-- `$superego` - Metacognitive evaluation
-- `$bottle` - Orchestration (this skill)
+- `$sg` - Metacognitive evaluation
 
 ### Project Files
 
@@ -76,32 +85,21 @@ The recommended way to work:
 
 1. **Start with intent**: `$bottle dive fix` (or plan/explore/ship)
 2. **Track your work**: `$ba status`, `ba claim <task>`
-3. **Get feedback**: `$superego` at decision points
+3. **Get feedback**: `$sg review` at decision points
 4. **Extract learnings**: `wm distill` after completing work
 
 No dive is too small. The 30 seconds of setup prevents 30 minutes of drift.
-
-## Differences from Other Platforms
-
-| Aspect | Claude Code | OpenCode | Codex |
-|--------|-------------|----------|-------|
-| Extension | Plugin | TypeScript plugin | Skill (SKILL.md) |
-| Auto-trigger | Yes (hooks) | Yes (hooks) | No (advisory) |
-| Distribution | npm | npm | curl from GitHub |
-| Config | CLAUDE.md | opencode.json | AGENTS.md |
-
-Codex skills are advisory-only. The guidance in AGENTS.md tells Codex when to invoke skills, but cannot enforce it automatically.
 
 ## Files
 
 ```
 codex-skill/
-  SKILL.md            # Main skill definition
+  SKILL.md            # Main bottle skill
   AGENTS.md.snippet   # Content for user's AGENTS.md
   README.md           # This file
-  scripts/
-    init.sh           # Binary installation helper
-    status.sh         # Status check helper
+  ba/SKILL.md         # Task tracking skill
+  wm/SKILL.md         # Working memory skill
+  sg/SKILL.md         # Superego skill
 ```
 
 ## Requirements

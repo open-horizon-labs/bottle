@@ -7,100 +7,57 @@ description: Task tracking. "$ba status" for current tasks, "$ba claim <id>" to 
 
 Simple, file-based task tracking. No server, no database - just files in `.ba/`.
 
+All commands invoke the `ba` CLI. If ba is not installed, show:
+```
+ba not installed. Install with:
+  brew tap oh-labs/tap && brew install ba
+  # or: cargo install ba
+```
+
 ## $ba status
 
 Show current task status - what's ready, what's claimed, what's blocked.
 
-**Run:**
 ```bash
-echo "=== Ready to Work ==="
-ba ready
-
-echo ""
-echo "=== Currently Claimed ==="
-ba mine
-
-echo ""
-echo "=== All Open ==="
-ba list --status open
+ba ready && echo "" && ba mine && echo "" && ba list --status open
 ```
-
-**Tell user:** Summary of tasks ready for work, currently claimed, and total open.
 
 ## $ba init
 
 Initialize task tracking for this project.
 
-**Step 1:** Check if ba binary is installed:
 ```bash
-if ! command -v ba >/dev/null; then
-  echo "ba binary not installed. Install with:"
-  echo "  brew install cloud-atlas-ai/tap/ba"
-  echo "  # or: cargo install ba"
-  exit 1
-fi
-```
-
-**Step 2:** Initialize .ba/ directory:
-```bash
-if [ ! -d ".ba" ]; then
-  ba init
-  echo "✓ .ba/ initialized"
-else
-  echo "✓ .ba/ already exists"
-fi
-```
-
-**Step 3:** Show quickstart:
-```bash
-ba quickstart
+ba init
 ```
 
 ## $ba claim <id>
 
 Claim a task to start working on it.
 
-**Run:**
 ```bash
 ba claim <id>
 ```
-
-**Then show the task details:**
-```bash
-ba show <id>
-```
-
-**Tell user:** "Claimed task <id>. Task details shown above."
 
 ## $ba finish <id>
 
 Mark a task as complete (releases claim and closes).
 
-**Run:**
 ```bash
 ba finish <id>
 ```
-
-**Tell user:** "Task <id> completed."
 
 ## $ba create <title>
 
 Create a new task.
 
-**Run:**
 ```bash
 ba create "<title>"
 ```
-
-The command outputs the new task ID.
-
-**Tell user:** "Created task <id>: <title>"
 
 ## $ba ready
 
 Show tasks that are ready to work on (open and not blocked).
 
-**Run:**
 ```bash
 ba ready
 ```
@@ -109,7 +66,6 @@ ba ready
 
 List all tasks with optional filters.
 
-**Run:**
 ```bash
 ba list                    # All tasks
 ba list --status open      # Open tasks only
@@ -121,7 +77,6 @@ ba list --label <label>    # Tasks with specific label
 
 Show details of a specific task including comments and blocking relationships.
 
-**Run:**
 ```bash
 ba show <id>
 ```
@@ -130,18 +85,14 @@ ba show <id>
 
 Mark that task <id> is blocked by task <blocker>.
 
-**Run:**
 ```bash
 ba block <id> <blocker>
 ```
-
-**Tell user:** "Task <id> is now blocked by <blocker>."
 
 ## $ba unblock <id> <blocker>
 
 Remove a blocking relationship.
 
-**Run:**
 ```bash
 ba unblock <id> <blocker>
 ```
@@ -150,7 +101,6 @@ ba unblock <id> <blocker>
 
 Add a comment to a task.
 
-**Run:**
 ```bash
 ba comment <id> "<comment>"
 ```
@@ -159,7 +109,6 @@ ba comment <id> "<comment>"
 
 Show the dependency tree of all tasks.
 
-**Run:**
 ```bash
 ba tree
 ```
@@ -168,7 +117,6 @@ ba tree
 
 Show the quick start guide for using ba.
 
-**Run:**
 ```bash
 ba quickstart
 ```
