@@ -1,3 +1,4 @@
+use super::common::get_local_manifest_path;
 use crate::error::{BottleError, Result};
 use chrono::Local;
 use console::style;
@@ -23,7 +24,7 @@ pub fn run(bottle: &str, message: Option<&str>) -> Result<()> {
     println!("{}", style("✓").green());
 
     // 3. Bump manifest version to today's date
-    let manifest_path = get_manifest_path(bottle)?;
+    let manifest_path = get_local_manifest_path(bottle)?;
     let (old_version, new_version) = bump_version(&manifest_path)?;
     println!(
         "  Bumped version: {} → {}",
@@ -59,7 +60,7 @@ pub fn run(bottle: &str, message: Option<&str>) -> Result<()> {
 
 /// Validate the manifest (mirrors validate command logic)
 fn validate_manifest(bottle: &str) -> Result<()> {
-    let manifest_path = get_manifest_path(bottle)?;
+    let manifest_path = get_local_manifest_path(bottle)?;
     let contents = fs::read_to_string(&manifest_path)?;
     let manifest: Value = serde_json::from_str(&contents)?;
 
@@ -256,17 +257,4 @@ fn git_push(tag_name: &str) -> Result<()> {
     }
 
     Ok(())
-}
-
-/// Get the path to a bottle manifest (local bottles/ directory)
-fn get_manifest_path(bottle: &str) -> Result<PathBuf> {
-    let local_path = PathBuf::from(format!("bottles/{}/manifest.json", bottle));
-    if local_path.exists() {
-        return Ok(local_path);
-    }
-
-    Err(BottleError::BottleNotFound(format!(
-        "No local manifest found at bottles/{}/manifest.json. Run from bottle repo root.",
-        bottle
-    )))
 }

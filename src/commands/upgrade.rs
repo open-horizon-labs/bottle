@@ -1,13 +1,13 @@
+use super::common::get_local_manifest_path;
 use crate::error::{BottleError, Result};
 use console::style;
 use serde_json::Value;
 use std::fs;
-use std::path::PathBuf;
 
 /// Bump a tool version in a bottle manifest (curator command)
 pub fn run(bottle: &str, tool: &str, version: &str) -> Result<()> {
     // Find the manifest
-    let manifest_path = get_manifest_path(bottle)?;
+    let manifest_path = get_local_manifest_path(bottle)?;
 
     // Read and parse
     let contents = fs::read_to_string(&manifest_path)?;
@@ -49,18 +49,4 @@ pub fn run(bottle: &str, tool: &str, version: &str) -> Result<()> {
     println!();
 
     Ok(())
-}
-
-/// Get the path to a bottle manifest (local bottles/ directory)
-fn get_manifest_path(bottle: &str) -> Result<PathBuf> {
-    // Check local bottles/ directory
-    let local_path = PathBuf::from(format!("bottles/{}/manifest.json", bottle));
-    if local_path.exists() {
-        return Ok(local_path);
-    }
-
-    Err(BottleError::BottleNotFound(format!(
-        "No local manifest found at bottles/{}/manifest.json. Run from bottle repo root.",
-        bottle
-    )))
 }
