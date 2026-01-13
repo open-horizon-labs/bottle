@@ -1,6 +1,6 @@
 //! OpenCode integration
 //!
-//! Adds/removes the bottle plugin to opencode.json.
+//! Adds/removes the bottle ecosystem plugins to opencode.json.
 //!
 //! AIDEV-NOTE: Config file resolution is cwd-first, then home directory.
 //! This means `bottle integrate opencode` modifies the local project's
@@ -12,8 +12,13 @@ use serde_json::{json, Value};
 use std::fs;
 use std::path::PathBuf;
 
-/// NPM package for the OpenCode integration
-const PACKAGE: &str = "@cloud-atlas-ai/bottle";
+/// NPM packages for the OpenCode integration - full ecosystem
+const PACKAGES: &[&str] = &[
+    "@cloud-atlas-ai/bottle",
+    "@cloud-atlas-ai/ba-opencode",
+    "@cloud-atlas-ai/wm-opencode",
+    "@cloud-atlas-ai/superego-opencode",
+];
 
 /// Check if OpenCode is detected (has ~/.opencode/ directory or opencode binary)
 pub fn is_detected() -> bool {
@@ -43,7 +48,7 @@ fn get_config_path() -> Option<PathBuf> {
         .filter(|p| p.exists())
 }
 
-/// Check if the bottle plugin is installed in OpenCode config
+/// Check if the bottle plugins are installed in OpenCode config
 #[allow(dead_code)]
 pub fn is_installed() -> bool {
     let Some(config_path) = get_config_path() else {
@@ -58,21 +63,19 @@ pub fn is_installed() -> bool {
         return false;
     };
 
-    // Check if package is in plugins array
+    // Check if main bottle package is in plugins array
     config
         .get("plugins")
         .and_then(|p| p.as_array())
-        .map(|plugins| plugins.iter().any(|p| p.as_str() == Some(PACKAGE)))
+        .map(|plugins| plugins.iter().any(|p| p.as_str() == Some(PACKAGES[0])))
         .unwrap_or(false)
 }
 
-/// Install the bottle plugin into OpenCode config
+/// Install the bottle ecosystem plugins into OpenCode config
 pub fn install() -> Result<()> {
-    let config_path = get_config_path().ok_or_else(|| {
-        BottleError::InstallError {
-            tool: "opencode integration".to_string(),
-            reason: "No opencode.json found in current directory or home".to_string(),
-        }
+    let config_path = get_config_path().ok_or_else(|| BottleError::InstallError {
+        tool: "opencode integration".to_string(),
+        reason: "No opencode.json found in current directory or home".to_string(),
     })?;
 
     // Read existing config
@@ -103,13 +106,12 @@ pub fn install() -> Result<()> {
         reason: "plugins field is not an array".to_string(),
     })?;
 
-    // Check if already installed
-    if plugins_array.iter().any(|p| p.as_str() == Some(PACKAGE)) {
-        return Ok(()); // Already installed, idempotent
+    // Add all ecosystem packages (idempotent - skip already installed)
+    for package in PACKAGES {
+        if !plugins_array.iter().any(|p| p.as_str() == Some(*package)) {
+            plugins_array.push(json!(*package));
+        }
     }
-
-    // Add our package
-    plugins_array.push(json!(PACKAGE));
 
     // Write back
     let updated = serde_json::to_string_pretty(&config).map_err(|e| BottleError::InstallError {
@@ -125,7 +127,7 @@ pub fn install() -> Result<()> {
     Ok(())
 }
 
-/// Remove the bottle plugin from OpenCode config
+/// Remove the bottle ecosystem plugins from OpenCode config
 pub fn remove() -> Result<()> {
     let Some(config_path) = get_config_path() else {
         return Ok(()); // No config, nothing to remove
@@ -149,8 +151,12 @@ pub fn remove() -> Result<()> {
         return Ok(()); // No plugins array, nothing to remove
     };
 
-    // Remove our package
-    plugins.retain(|p| p.as_str() != Some(PACKAGE));
+    // Remove all ecosystem packages
+    plugins.retain(|p| {
+        p.as_str()
+            .map(|s| !PACKAGES.contains(&s))
+            .unwrap_or(true)
+    });
 
     // Write back
     let updated = serde_json::to_string_pretty(&config).map_err(|e| BottleError::InstallError {

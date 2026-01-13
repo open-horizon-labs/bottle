@@ -1,354 +1,198 @@
 /**
- * Bottle - Cloud Atlas AI Core Stack for OpenCode
+ * Bottle - Cloud Atlas AI Thin Wrapper Plugin for OpenCode
  *
- * Two things:
- * 1. npm meta-package - pulls in ba-opencode, wm-opencode, superego-opencode as dependencies
- * 2. OpenCode plugin - provides setup/orchestration tools (bottle-init, bottle-install, bottle-status)
- *    bottle-init updates opencode.json to add child plugins automatically
+ * This plugin provides thin wrapper tools that invoke the bottle CLI.
+ * All logic lives in the CLI - this plugin just passes through commands.
  */
 
 import type { Plugin } from "@opencode-ai/plugin";
 import { tool } from "@opencode-ai/plugin";
-import { existsSync, writeFileSync, readFileSync } from "fs";
-import { join } from "path";
 import { spawnSync } from "child_process";
 
-// Helper: Check if a binary is available
-function checkBinary(name: string): boolean {
+// Helper: Check if bottle binary is available
+function checkBottle(): { exists: boolean; error?: string } {
   try {
-    const result = spawnSync("command", ["-v", name], { encoding: "utf-8" });
-    return result.status === 0;
+    const result = spawnSync("command", ["-v", "bottle"], {
+      encoding: "utf-8",
+      shell: true,
+    });
+    return { exists: result.status === 0 };
   } catch {
-    return false;
+    return { exists: false };
   }
 }
 
-// Helper: Detect available package managers
-function detectPackageManagers(): { homebrew: boolean; cargo: boolean } {
-  return {
-    homebrew: checkBinary("brew"),
-    cargo: checkBinary("cargo") || existsSync(`${process.env.HOME}/.cargo/bin/cargo`),
-  };
+// Helper: Run bottle command and return output
+function runBottle(args: string[], cwd: string): string {
+  const check = checkBottle();
+  if (!check.exists) {
+    return `The bottle CLI is not installed.
+
+Install with Homebrew:
+  brew install oh-labs/tap/bottle
+
+Or with Cargo:
+  cargo install bottle
+
+Then run this command again.`;
+  }
+
+  try {
+    const result = spawnSync("bottle", args, {
+      cwd,
+      encoding: "utf-8",
+      timeout: 60000,
+    });
+
+    if (result.error) {
+      return `Error running bottle: ${result.error.message}`;
+    }
+
+    const output = (result.stdout || "") + (result.stderr || "");
+    return output.trim() || "Command completed successfully.";
+  } catch (e) {
+    return `Error running bottle: ${e}`;
+  }
 }
 
-const BottleOrchestration: Plugin = async ({ directory }) => {
+const BottlePlugin: Plugin = async ({ directory }) => {
   return {
     tool: {
-      "bottle-init": tool({
-        description: "Initialize the full Cloud Atlas AI stack (ba, wm, superego). Detects missing binaries and guides installation.",
-        args: {},
-        async execute() {
-          const results: string[] = [];
-
-          // Step 1: Check if child plugins are in opencode.json
-          const opencodeConfigPath = join(directory, "opencode.json");
-          if (existsSync(opencodeConfigPath)) {
-            try {
-              const configContent = readFileSync(opencodeConfigPath, "utf-8");
-              const config = JSON.parse(configContent);
-              const childPlugins = ["ba-opencode", "wm-opencode", "superego-opencode"];
-              const pluginArray = Array.isArray(config.plugin) ? config.plugin : [];
-
-              const missingPlugins = childPlugins.filter(p => !pluginArray.includes(p));
-
-              if (missingPlugins.length > 0) {
-                results.push("⚠️  Child plugins missing from opencode.json");
-                results.push("");
-                results.push("📋 Setup Steps:");
-                results.push(`1. AI will now add ${missingPlugins.join(", ")} to opencode.json`);
-                results.push("2. User: Restart OpenCode to load the new plugins");
-                results.push("3. Run 'bottle-init' again to complete initialization");
-                results.push("");
-                results.push(`AI: Add ${missingPlugins.join(", ")} to the plugin array in opencode.json`);
-                return results.join("\n");
-              }
-            } catch (e) {
-              results.push(`⚠️  Could not read opencode.json: ${e}`);
-              results.push("");
-            }
-          }
-
-          // Check which binaries are available
-          const binaries = {
-            ba: checkBinary("ba"),
-            wm: checkBinary("wm"),
-            sg: checkBinary("sg"),
-          };
-
-          // Detect missing binaries (regardless of project initialization state)
-          const missing: string[] = [];
-          if (!binaries.ba) missing.push("ba");
-          if (!binaries.wm) missing.push("wm");
-          if (!binaries.sg) missing.push("sg");
-
-          // If binaries are missing, guide installation
-          if (missing.length > 0) {
-            const pkgManagers = detectPackageManagers();
-            const available: string[] = [];
-            if (pkgManagers.homebrew) available.push("homebrew");
-            if (pkgManagers.cargo) available.push("cargo");
-
-            results.push(`⚠️  Missing binaries: ${missing.join(", ")}`);
-            results.push("");
-
-            if (available.length > 0) {
-              results.push(`Available installation methods: ${available.join(", ")}`);
-              results.push("");
-              results.push("To install, use the bottle-install tool:");
-              results.push(`  bottle-install --binary=<name> --method=<${available.join("|")}>`);
-              results.push("");
-              results.push("Example:");
-              missing.forEach((bin) => {
-                results.push(`  bottle-install --binary=${bin} --method=${available[0]}`);
-              });
-              results.push("");
-              results.push("After installation, run bottle-init again to complete setup.");
-            } else {
-              results.push("⚠️  No package manager found (homebrew or cargo).");
-              results.push("");
-              results.push("Install options:");
-              results.push("1. Homebrew (macOS):");
-              results.push('   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"');
-              results.push("2. Rust/Cargo (cross-platform):");
-              results.push("   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh");
-            }
-
-            return results.join("\n");
-          }
-
-          // All binaries available - initialize projects
-          // Initialize ba
-          if (!existsSync(join(directory, ".ba"))) {
-            try {
-              const ba = spawnSync("ba", ["init"], { cwd: directory, encoding: "utf-8" });
-              results.push(ba.status === 0 ? "✓ ba initialized" : `✗ ba init failed: ${ba.stderr}`);
-            } catch (e) {
-              results.push(`✗ ba init failed: ${e}`);
-            }
-          } else {
-            results.push("✓ ba already initialized");
-          }
-
-          // Initialize wm
-          if (!existsSync(join(directory, ".wm"))) {
-            try {
-              const wm = spawnSync("wm", ["init"], { cwd: directory, encoding: "utf-8" });
-              results.push(wm.status === 0 ? "✓ wm initialized" : `✗ wm init failed: ${wm.stderr}`);
-            } catch (e) {
-              results.push(`✗ wm init failed: ${e}`);
-            }
-          } else {
-            results.push("✓ wm already initialized");
-          }
-
-          // Initialize superego
-          if (!existsSync(join(directory, ".superego"))) {
-            try {
-              const sg = spawnSync("sg", ["init"], { cwd: directory, encoding: "utf-8" });
-              results.push(sg.status === 0 ? "✓ superego initialized" : `✗ superego init failed: ${sg.stderr}`);
-            } catch (e) {
-              results.push(`✗ superego init failed: ${e}`);
-            }
-          } else {
-            results.push("✓ superego already initialized");
-          }
-
-          // Handle AGENTS.md - create if missing, provide template for merge if exists
-          const agentsFile = join(directory, "AGENTS.md");
-          const agentsContent = `# Cloud Atlas AI Stack
-
-This project uses Cloud Atlas AI tools integrated with OpenCode.
-
-## Quick Start: Dive First
-
-**No dive is too small for a dive prep.** The metaphor comes from scuba diving: you prep before you dive, you don't just splash in. Even a quick bug fix benefits from explicit intent.
-
-Start every session with a dive:
-\`\`\`
-wm dive-prep --intent fix     # Bug fix
-wm dive-prep --intent plan    # Design work
-wm dive-prep --intent explore # Understanding code
-\`\`\`
-
-This creates \`.wm/dive_context.md\` with your intent, relevant context, and suggested workflow. The 30 seconds of setup prevents 30 minutes of drift.
-
-## Task Tracking (ba)
-
-**Available tools:** ba-status, ba-list, ba-create, ba-claim, ba-finish, ba-block
-
-**Protocol:**
-- At session start: Check ba-status for active tasks
-- Track non-trivial work (multi-step or >5 minutes) as ba tasks
-- Claim tasks before starting work, finish when done
-
-## Working Memory (wm)
-
-**Available tools:** wm compile, wm show (state|working|sessions), wm distill, wm compress, wm dive-prep
-
-**Protocol:**
-- Start sessions with \`wm dive-prep\` for explicit grounding
-- Use wm compile to get relevant context for current work
-- After completing work: Use wm distill to extract learnings
-- Working memory accumulates tacit knowledge across sessions automatically
-
-**Dive terminology:**
-- **dive-prep** = the action of preparing (the command)
-- **dive pack** = reusable context bundle (stored in OH)
-- **dive context** = the manifest file for current session (\`.wm/dive_context.md\`)
-
-## Metacognition (superego)
-
-**Available tools:** sg-review, sg-mode
-
-**Protocol:**
-- Superego is in pull mode - only runs when explicitly requested
-- Use sg-review before major decisions or when uncertain about approach
-- Review feedback critically and incorporate or discuss with user
-`;
-
-          if (!existsSync(agentsFile)) {
-            // File doesn't exist - create it
-            writeFileSync(agentsFile, agentsContent);
-            results.push("✓ AGENTS.md created");
-          } else {
-            // File exists - provide template for AI to merge
-            results.push("");
-            results.push("AGENTS.md exists. AI: update these sections while preserving other content:");
-            results.push("");
-            results.push("```markdown");
-            results.push(agentsContent);
-            results.push("```");
-          }
-
-          // Install key commands in .opencode/command/
-          const commandDir = join(directory, ".opencode", "command");
-          const superegCommand = join(commandDir, "superego-review.md");
-          const wmDiveCommand = join(commandDir, "wm-dive-prep.md");
-
-          const commandsToCreate = [];
-          if (!existsSync(superegCommand)) commandsToCreate.push("superego-review.md");
-          if (!existsSync(wmDiveCommand)) commandsToCreate.push("wm-dive-prep.md");
-
-          if (commandsToCreate.length > 0) {
-            results.push("");
-            results.push(`AI: Create .opencode/command/ directory (if missing) and add these commands: ${commandsToCreate.join(", ")}`);
-            results.push("");
-
-            if (commandsToCreate.includes("superego-review.md")) {
-              results.push("📝 .opencode/command/superego-review.md:");
-              results.push("```markdown");
-              results.push("---");
-              results.push("description: Run metacognitive review of current work");
-              results.push("---");
-              results.push("");
-              results.push("Run metacognitive review:");
-              results.push("1. Use sg-review to get feedback on current approach");
-              results.push("2. Review the feedback critically");
-              results.push("3. Either incorporate suggestions or discuss with user if feedback seems off-track");
-              results.push("```");
-              results.push("");
-            }
-
-            if (commandsToCreate.includes("wm-dive-prep.md")) {
-              results.push("📝 .opencode/command/wm-dive-prep.md:");
-              results.push("```markdown");
-              results.push("---");
-              results.push("description: Prepare grounded dive session with context");
-              results.push("---");
-              results.push("");
-              results.push("Prepare a grounded dive session with context from multiple sources:");
-              results.push("1. Use wm show state to see what knowledge is available");
-              results.push("2. Use wm compile to get relevant context for current work");
-              results.push("3. Ask user what specific area they want to dive into");
-              results.push("4. Gather context from: past sessions, code, docs, and working memory");
-              results.push("5. Present synthesized dive pack with key insights and open questions");
-              results.push("```");
-            }
-          } else {
-            results.push("✓ Convenience commands installed");
-          }
-
-          return results.join("\n");
-        },
-      }),
-
       "bottle-install": tool({
-        description: "Get installation commands for Cloud Atlas AI binaries (ba, wm, sg) via homebrew or cargo",
+        description: "Install a bottle (curated tool stack)",
         args: {
-          binary: tool.schema.enum(["ba", "wm", "sg"]).describe("Which binary to install"),
-          method: tool.schema.enum(["homebrew", "cargo"]).describe("Installation method"),
+          name: tool.schema.string().optional().describe("Bottle name (default: stable)"),
         },
-        async execute({ binary, method }) {
-          // Package names for each method
-          // Note: Not all homebrew taps exist yet - ba and wm need to be published
-          const packages = {
-            homebrew: {
-              ba: "cloud-atlas-ai/ba/ba",  // TODO: Publish tap
-              wm: "cloud-atlas-ai/wm/wm",  // TODO: Publish tap
-              sg: "cloud-atlas-ai/superego/superego",  // ✓ Published
-            },
-            cargo: {
-              ba: "ba",  // ✓ Published
-              wm: "working-memory",  // ✓ Published as working-memory
-              sg: "superego",  // ✓ Published
-            },
-          };
-
-          const pkg = packages[method][binary];
-          const binaryNames = { ba: "ba", wm: "wm", sg: "superego" };
-
-          const results: string[] = [];
-          results.push(`Installation command for ${binary} (${binaryNames[binary]}):`);
-          results.push("");
-
-          if (method === "homebrew") {
-            results.push(`  brew install ${pkg}`);
-          } else {
-            results.push(`  cargo install ${pkg}`);
-          }
-
-          results.push("");
-          results.push("Run this command in your terminal, then run 'bottle-init' again to initialize.");
-          results.push("");
-          results.push("Note: Cargo installations build from source and may take 5-10 minutes.");
-
-          return results.join("\n");
+        async execute({ name }) {
+          const args = ["install"];
+          if (name) args.push(name);
+          return runBottle(args, directory);
         },
       }),
 
       "bottle-status": tool({
-        description: "Check initialization status of all Cloud Atlas AI components",
+        description: "Show current bottle status and installed tools",
+        args: {
+          checkUpdates: tool.schema.boolean().optional().describe("Also check for available updates"),
+        },
+        async execute({ checkUpdates }) {
+          const args = ["status"];
+          if (checkUpdates) args.push("--check-updates");
+          return runBottle(args, directory);
+        },
+      }),
+
+      "bottle-update": tool({
+        description: "Update to the latest bottle snapshot",
+        args: {
+          yes: tool.schema.boolean().optional().describe("Skip confirmation prompt"),
+        },
+        async execute({ yes }) {
+          const args = ["update"];
+          if (yes) args.push("-y");
+          return runBottle(args, directory);
+        },
+      }),
+
+      "bottle-switch": tool({
+        description: "Switch to a different bottle",
+        args: {
+          name: tool.schema.string().describe("Bottle name to switch to"),
+          yes: tool.schema.boolean().optional().describe("Skip confirmation prompt"),
+        },
+        async execute({ name, yes }) {
+          const args = ["switch", name];
+          if (yes) args.push("-y");
+          return runBottle(args, directory);
+        },
+      }),
+
+      "bottle-list": tool({
+        description: "List available bottles (curated and bespoke)",
         args: {},
         async execute() {
-          const ba = existsSync(join(directory, ".ba")) ? "✓ initialized" : "✗ not initialized";
-          const wm = existsSync(join(directory, ".wm")) ? "✓ initialized" : "✗ not initialized";
-          const sg = existsSync(join(directory, ".superego")) ? "✓ initialized" : "✗ not initialized";
+          return runBottle(["list"], directory);
+        },
+      }),
 
-          const binaries = {
-            ba: checkBinary("ba") ? "✓ installed" : "✗ not installed",
-            wm: checkBinary("wm") ? "✓ installed" : "✗ not installed",
-            sg: checkBinary("sg") ? "✓ installed" : "✗ not installed",
-          };
+      "bottle-create": tool({
+        description: "Create a new bespoke bottle",
+        args: {
+          name: tool.schema.string().describe("Name for the new bottle"),
+          from: tool.schema.string().optional().describe("Copy manifest from an existing bottle"),
+        },
+        async execute({ name, from }) {
+          const args = ["create", name];
+          if (from) args.push("--from", from);
+          return runBottle(args, directory);
+        },
+      }),
 
-          return `Cloud Atlas AI Stack Status:
+      "bottle-integrate": tool({
+        description: "Add or remove platform integrations",
+        args: {
+          platform: tool.schema.string().optional().describe("Platform: claude_code, opencode, or codex"),
+          list: tool.schema.boolean().optional().describe("List available integrations"),
+          remove: tool.schema.boolean().optional().describe("Remove instead of add"),
+        },
+        async execute({ platform, list, remove }) {
+          const args = ["integrate"];
+          if (list) {
+            args.push("--list");
+          } else if (platform) {
+            if (remove) args.push("--remove");
+            args.push(platform);
+          }
+          return runBottle(args, directory);
+        },
+      }),
 
-Binaries:
-  ba: ${binaries.ba}
-  wm: ${binaries.wm}
-  sg: ${binaries.sg}
+      "bottle-eject": tool({
+        description: "Eject from bottle management (keep tools, manage manually)",
+        args: {
+          yes: tool.schema.boolean().optional().describe("Skip confirmation prompt"),
+        },
+        async execute({ yes }) {
+          const args = ["eject"];
+          if (yes) args.push("-y");
+          return runBottle(args, directory);
+        },
+      }),
 
-Projects:
-  ba: ${ba}
-  wm: ${wm}
-  superego: ${sg}
+      "bottle-init": tool({
+        description: "Initialize all Cloud Atlas AI tools with recommended defaults",
+        args: {},
+        async execute() {
+          // Note: There's no `bottle init` CLI command - initialization is done by
+          // running ba init, wm init, and sg init individually. This tool provides
+          // guidance for the agent to follow.
+          return `To initialize the Cloud Atlas AI stack:
 
-Use 'bottle-init' to initialize all components.`;
+1. Initialize ba (task tracking):
+   ba init
+
+2. Initialize wm (working memory):
+   wm init
+
+3. Initialize superego (metacognition):
+   sg init
+
+After initialization, optionally configure superego to pull mode:
+   Edit .superego/config.yaml and set mode: pull
+
+For detailed guidance, see the bottle-init skill documentation.`;
+        },
+      }),
+
+      "bottle-help": tool({
+        description: "Show available bottle commands",
+        args: {},
+        async execute() {
+          return runBottle(["--help"], directory);
         },
       }),
     },
   };
 };
 
-// Export only the orchestration plugin
-// Child plugins (ba, wm, superego) should be loaded separately in opencode.json
-export default BottleOrchestration;
+export default BottlePlugin;
