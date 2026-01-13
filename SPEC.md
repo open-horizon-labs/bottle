@@ -103,7 +103,7 @@ bottle/
   "type": "binary",
   "install": {
     "cargo": "cargo install superego@{version}",
-    "brew": "brew install cloud-atlas-ai/tap/superego"
+    "brew": "brew install oh-labs/tap/superego"
   },
   "check": "sg --version",
   "homepage": "https://github.com/cloud-atlas-ai/superego"
@@ -174,6 +174,14 @@ Location: `~/.bottle/state.json`
       "method": "cargo"
     }
   },
+  "integrations": {
+    "claude_code": {
+      "installed_at": "2026-01-15T10:31:00Z"
+    },
+    "opencode": {
+      "installed_at": "2026-01-15T10:31:05Z"
+    }
+  },
   "mode": "managed"
 }
 ```
@@ -181,6 +189,8 @@ Location: `~/.bottle/state.json`
 Mode values:
 - `managed` - Bottle controls everything
 - `ejected` - User took manual control
+
+Integration keys: `claude_code`, `opencode`, `codex`
 
 ---
 
@@ -192,6 +202,12 @@ Install a bottle. First-run experience.
 
 **Input:** Bottle name (optional, prompts if not provided)
 
+**Flags:**
+- `--with <platforms>` - Install specific platform integrations (comma-separated)
+- `--with all` - Install all detected platform integrations
+- `--with none` - Skip integration prompts, tools only
+- `-y` - Skip confirmations
+
 **Flow:**
 1. Show available bottles with descriptions
 2. User selects (or confirms if provided)
@@ -200,9 +216,47 @@ Install a bottle. First-run experience.
 5. Confirm
 6. Install binaries at pinned versions
 7. Register MCP servers
-8. Install plugins
-9. Write state
-10. Show success + next steps
+8. Detect available platforms (Claude Code, OpenCode, Codex)
+9. Prompt for platform integrations (unless `--with` specified)
+10. Install selected integrations
+11. Write state
+12. Show success + next steps
+
+**Example with integrations:**
+```
+bottle install stable
+```
+```
+Installing bottle: stable (v0.1.0)
+
+Tools:
+  ba           0.1.0  installed
+  wm           0.2.0  installed
+  sg           0.3.0  installed
+
+Platform integrations detected:
+  [x] Claude Code  (~/.claude found)
+  [x] OpenCode     (opencode.json found)
+  [ ] Codex        (not detected)
+
+Install integrations? [Y/n/select]
+> Y
+
+Installing Claude Code integration...
+  ✓ Plugin installed
+
+Installing OpenCode integration...
+  ✓ Added to opencode.json
+
+Done! Run 'bottle status' to verify.
+```
+
+**Explicit selection:**
+```bash
+bottle install stable --with opencode,codex   # specific platforms
+bottle install stable --with all              # all detected
+bottle install stable --with none             # tools only
+```
 
 **UX requirement:** Must feel like one smooth operation, not a series of disconnected installs.
 
@@ -221,14 +275,18 @@ Tools:
   datasphere 0.1.0   ✓ installed
   oh-mcp     0.3.3   ✓ registered
 
-Plugins: 6 installed
+Integrations:
+  Claude Code   ✓ installed
+  OpenCode      ✓ installed
+  Codex         ✗ not installed
 
 Update available: stable (2026.01.20)
   Changes:
     superego  0.9.0 → 0.10.0
     wm        0.2.2 → 0.3.0
 
-Run /bottle:update to upgrade
+Run 'bottle update' to upgrade
+Run 'bottle integrate codex' to add Codex integration
 ```
 
 **UX requirement:** Glanceable. User knows exactly what they have in 2 seconds.
@@ -281,6 +339,54 @@ Leave bottle management, keep tools.
 **Post-eject:** User manages tools manually. /bottle:status shows "ejected" mode.
 
 **UX requirement:** Graceful exit. No lock-in.
+
+### /bottle:integrate
+
+Add or remove platform integrations.
+
+**Usage:**
+```bash
+bottle integrate claude_code      # Add Claude Code integration
+bottle integrate opencode         # Add OpenCode integration
+bottle integrate codex            # Add Codex integration
+bottle integrate --remove codex   # Remove an integration
+bottle integrate --list           # Show available/installed integrations
+```
+
+**Platforms:**
+| Platform | Detection | Integration Action |
+|----------|-----------|-------------------|
+| Claude Code | `~/.claude/` exists | `claude plugin install bottle@cloud-atlas-ai/bottle` |
+| OpenCode | `opencode.json` exists | Add to plugins array in `opencode.json` |
+| Codex | `~/.codex/` exists | Install skills to `~/.codex/skills/` |
+
+**Flow (add):**
+1. Check if platform is detected
+2. If not detected, warn but allow (user may know better)
+3. Check if already installed
+4. Install integration
+5. Update state
+6. Confirm success
+
+**Flow (remove):**
+1. Check if integration is installed
+2. Remove integration
+3. Update state
+4. Confirm removal
+
+**Example:**
+```
+$ bottle integrate opencode
+
+Detected: opencode.json in current directory
+
+Installing OpenCode integration...
+  ✓ Added @cloud-atlas-ai/bottle to opencode.json
+
+Note: Restart OpenCode to load the new plugin.
+```
+
+**UX requirement:** Safe to run multiple times (idempotent).
 
 ---
 
@@ -496,19 +602,47 @@ https://raw.githubusercontent.com/cloud-atlas-ai/bottle/main/bottles/stable/mani
 
 No git clone required. Simple HTTP fetch.
 
-### Plugin Distribution
+### Platform Integrations
 
-Plugins distributed via Claude Code marketplace:
+Bottle separates **tools** (universal binaries) from **integrations** (platform-specific wrappers).
 
-```bash
-claude plugin marketplace add cloud-atlas-ai/bottle
-claude plugin install bottle@bottle        # Management commands
-claude plugin install stable-ba@bottle     # Bottle-specific plugins
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    BOTTLE = TOOLS                           │
+│                                                             │
+│   stable bottle = ba 0.1.0, wm 0.2.0, sg 0.3.0             │
+│   (universal - same binaries for all platforms)             │
+└─────────────────────────────────────────────────────────────┘
+                           │
+           ┌───────────────┼───────────────┐
+           ▼               ▼               ▼
+┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│  Claude Code    │ │    OpenCode     │ │     Codex       │
+│                 │ │                 │ │                 │
+│ .claude-plugin/ │ │ opencode-plugin/│ │ codex-skill/    │
+│ → marketplace   │ │ → npm           │ │ → skill install │
+│                 │ │                 │ │                 │
+│ Thin wrapper    │ │ Thin wrapper    │ │ Thin wrapper +  │
+│ invokes CLI     │ │ invokes CLI     │ │ Codex-native    │
+└─────────────────┘ └─────────────────┘ └─────────────────┘
 ```
 
-Each bottle's plugins are namespaced:
-- `stable-ba`, `stable-superego`, etc.
-- `edge-ba`, `edge-superego`, etc.
+**Key principles:**
+- Tools are universal (ba, wm, sg work identically regardless of AI platform)
+- Integrations are opt-in (user chooses which platforms to integrate with)
+- Each integration is a thin wrapper that invokes the `bottle` CLI
+- Plugins are NOT namespaced per bottle (one set active at a time)
+- Integrations persist across bottle switches (they just invoke CLI, don't depend on tool versions)
+
+**Platform detection:**
+- Claude Code: `~/.claude/` directory exists
+- OpenCode: `opencode.json` in current directory or home
+- Codex: `~/.codex/` directory exists
+
+**Integration installation:**
+- Claude Code: `claude plugin install bottle@cloud-atlas-ai/bottle`
+- OpenCode: Add `@cloud-atlas-ai/bottle` to `opencode.json` plugins array
+- Codex: Skills installed via `$bottle init`
 
 ### State Persistence
 
@@ -604,23 +738,31 @@ Bottle is implemented as a Rust CLI binary, consistent with ba, superego, wm, an
 ```bash
 cargo install bottle
 # or
-brew install cloud-atlas-ai/tap/bottle
+brew install oh-labs/tap/bottle
 ```
 
 ### Command Mapping
 
-| User runs | Executes |
-|-----------|----------|
-| `bottle install stable` | Direct CLI |
-| `bottle status` | Direct CLI |
-| `bottle update` | Direct CLI |
-| `/bottle:install` | Claude plugin invokes `bottle install` |
-| `/bottle:status` | Claude plugin invokes `bottle status` |
+| CLI Command | Claude Code | OpenCode | Codex |
+|-------------|-------------|----------|-------|
+| `bottle install` | `/bottle:install` | `bottle-install` | `$bottle install` |
+| `bottle status` | `/bottle:status` | `bottle-status` | `$bottle status` |
+| `bottle update` | `/bottle:update` | `bottle-update` | `$bottle update` |
+| `bottle switch` | `/bottle:switch` | `bottle-switch` | `$bottle switch` |
+| `bottle eject` | `/bottle:eject` | `bottle-eject` | `$bottle eject` |
+| `bottle integrate` | `/bottle:integrate` | `bottle-integrate` | `$bottle integrate` |
+| `bottle create` | `/bottle:create` | `bottle-create` | `$bottle create` |
+| `bottle list` | `/bottle:list` | `bottle-list` | `$bottle list` |
 
-### Claude Plugin Role
+### Platform Plugin Architecture
 
-The Claude Code plugin becomes a thin wrapper:
+Each platform's plugin is a **thin wrapper** that:
+1. Checks if `bottle` binary exists
+2. If missing, guides installation
+3. Invokes the appropriate `bottle` CLI command
+4. Returns output to the AI agent
 
+**Claude Code plugin** (`.claude-plugin/commands/*.md`):
 ```markdown
 # /bottle:install
 
@@ -628,15 +770,35 @@ Run `bottle install` in the terminal and follow the prompts.
 
 If bottle is not installed, offer to install it:
 - cargo install bottle
-- brew install cloud-atlas-ai/tap/bottle
+- brew install oh-labs/tap/bottle
 ```
 
-The plugin exists for:
-1. Discoverability (users find commands via `/bottle:`)
-2. Bootstrap help (install bottle binary if missing)
-3. Integration (future: hooks, agents)
+**OpenCode plugin** (`opencode-plugin/src/index.ts`):
+```typescript
+"bottle-install": tool({
+  description: "Install a bottle (stable, edge, or bespoke)",
+  args: { bottle: tool.schema.string(), with: tool.schema.string().optional() },
+  async execute({ bottle, with: platforms }) {
+    // Check binary exists, guide install if not
+    // Run: bottle install <bottle> [--with <platforms>]
+    // Return output
+  }
+})
+```
 
-All actual work happens in the Rust binary.
+**Codex skill** (`codex-skill/SKILL.md`):
+- Standard commands invoke `bottle` CLI
+- Codex-native features that use Codex capabilities:
+  - `$bottle web-context` - Web search integration
+  - `$bottle resume` - Codex session continuity
+  - `$bottle codex-sync` - Session knowledge extraction
+
+The plugins exist for:
+1. **Discoverability** - Users find commands via platform-native means
+2. **Bootstrap** - Help install bottle binary if missing
+3. **Platform features** - Codex-specific features that use Codex capabilities
+
+All standard bottle operations happen in the Rust binary.
 
 ### Crate Structure
 
@@ -652,6 +814,7 @@ bottle/
 │   │   ├── update.rs        # bottle update
 │   │   ├── switch.rs        # bottle switch
 │   │   ├── eject.rs         # bottle eject
+│   │   ├── integrate.rs     # bottle integrate
 │   │   ├── create.rs        # bottle create (bespoke)
 │   │   ├── list.rs          # bottle list
 │   │   ├── diff.rs          # bottle diff (curator)
@@ -669,6 +832,11 @@ bottle/
 │   │   ├── brew.rs          # brew install wrapper
 │   │   ├── mcp.rs           # claude mcp add wrapper
 │   │   └── plugin.rs        # claude plugin install wrapper
+│   ├── integrate/
+│   │   ├── mod.rs           # Platform integration logic
+│   │   ├── claude_code.rs   # Claude Code plugin management
+│   │   ├── opencode.rs      # OpenCode plugin management
+│   │   └── codex.rs         # Codex skill management
 │   ├── fetch.rs             # GitHub raw manifest fetching
 │   └── ui.rs                # Progress bars, spinners, colors
 ```
