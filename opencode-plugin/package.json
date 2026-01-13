@@ -1,21 +1,20 @@
 {
   "name": "@cloud-atlas-ai/bottle",
-  "version": "0.2.6",
-  "description": "Cloud Atlas AI core stack for OpenCode - ba, wm, and superego in one package",
+  "version": "0.2.7",
+  "description": "Cloud Atlas AI thin wrapper plugin for OpenCode - invokes bottle CLI",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "bun build src/index.ts --outdir dist --target bun --external ba-opencode --external wm-opencode --external superego-opencode",
+    "build": "bun build src/index.ts --outdir dist --target bun",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "opencode",
     "opencode-plugin",
     "ai",
-    "task-tracking",
-    "working-memory",
-    "metacognition"
+    "bottle",
+    "cloud-atlas"
   ],
   "author": {
     "name": "Cloud Atlas AI",
@@ -26,11 +25,6 @@
     "url": "git+https://github.com/cloud-atlas-ai/bottle.git"
   },
   "license": "MIT",
-  "dependencies": {
-    "ba-opencode": "*",
-    "wm-opencode": "*",
-    "superego-opencode": "*"
-  },
   "devDependencies": {
     "@opencode-ai/plugin": "^1.0.61",
     "@types/bun": "^1.2.4",

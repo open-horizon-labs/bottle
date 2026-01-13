@@ -156,7 +156,7 @@ fn add_integration(state: &BottleState, platform: Platform, dry_run: bool) -> Re
             );
         }
         Platform::OpenCode => {
-            println!("  Restart OpenCode to load the bottle plugin.");
+            println!("  Restart OpenCode to load the bottle ecosystem plugins.");
         }
         Platform::Codex => {
             println!(
@@ -220,7 +220,7 @@ fn remove_integration(state: &BottleState, platform: Platform, dry_run: bool) ->
 fn describe_install_action(platform: Platform) -> &'static str {
     match platform {
         Platform::ClaudeCode => "Run `claude plugin install bottle@cloud-atlas-ai/bottle`",
-        Platform::OpenCode => "Add @cloud-atlas-ai/bottle to opencode.json plugins",
+        Platform::OpenCode => "Add bottle ecosystem plugins to opencode.json (bottle, ba, wm, superego)",
         Platform::Codex => "Create ~/.codex/skills/bottle/SKILL.md",
     }
 }
@@ -229,7 +229,7 @@ fn describe_install_action(platform: Platform) -> &'static str {
 fn describe_remove_action(platform: Platform) -> &'static str {
     match platform {
         Platform::ClaudeCode => "Run `claude plugin uninstall bottle@cloud-atlas-ai/bottle`",
-        Platform::OpenCode => "Remove @cloud-atlas-ai/bottle from opencode.json plugins",
+        Platform::OpenCode => "Remove bottle ecosystem plugins from opencode.json",
         Platform::Codex => "Remove ~/.codex/skills/bottle/",
     }
 }

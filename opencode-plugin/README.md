@@ -1,103 +1,90 @@
 # Bottle - Cloud Atlas AI for OpenCode
 
-**One package, full stack:** ba (task tracking), wm (working memory), and superego (metacognition) for OpenCode.
+**Thin wrapper plugin:** Invokes the `bottle` CLI and integrates the full Cloud Atlas AI stack (ba, wm, superego) with OpenCode.
 
 ## Installation
 
+The recommended way to set up the bottle ecosystem:
+
 ```bash
-npm install @cloud-atlas-ai/bottle
+# 1. Install the bottle CLI
+# See https://github.com/open-horizon-labs/bottle for installation instructions
+# (Official Homebrew tap and crates.io package coming soon)
+
+# 2. Use bottle to integrate with OpenCode
+bottle integrate opencode
 ```
 
-Add to your `opencode.json`:
-
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "plugin": ["@cloud-atlas-ai/bottle"]
-}
-```
+This adds all 4 plugins to your `opencode.json`:
+- `@cloud-atlas-ai/bottle` - CLI wrapper and orchestration
+- `@cloud-atlas-ai/ba-opencode` - Task tracking
+- `@cloud-atlas-ai/wm-opencode` - Working memory
+- `@cloud-atlas-ai/superego-opencode` - Metacognition
 
 ## What You Get
 
-### ba - Task Tracking
-Simple ownership-based task tracking for multi-agent workflows.
+### bottle - CLI Wrapper Tools
 
-**Tools:**
-- `ba-init` - Initialize ba for a project
-- `ba-status` - Show current tasks and counts
-- `ba-quickstart` - Quick reference guide
+All tools invoke the `bottle` CLI:
 
-**Requires:** `ba` binary ([install instructions](https://github.com/cloud-atlas-ai/ba))
+- `bottle-install [name]` - Install a bottle (default: stable)
+- `bottle-status` - Show installed tools and versions
+- `bottle-update` - Update to latest bottle snapshot
+- `bottle-switch <name>` - Switch to a different bottle
+- `bottle-list` - List available bottles
+- `bottle-create <name>` - Create a bespoke bottle
+- `bottle-integrate` - Add/remove platform integrations
+- `bottle-eject` - Stop bottle management (keep tools)
+- `bottle-init` - Show guidance for initializing all tools
+- `bottle-help` - Show available commands
 
-### wm - Working Memory
-Accumulates tacit knowledge across sessions. Model-driven: the LLM calls wm when it needs context.
+### Plus Child Plugin Tools
 
-**Tools:**
-- `wm init` - Initialize working memory
-- `wm show state` - View accumulated knowledge
-- `wm compile` - Get relevant context for current task
-- `wm distill` - Extract knowledge from recent work
+The child plugins provide their own tools:
 
-**Requires:** `wm` binary ([install instructions](https://github.com/cloud-atlas-ai/wm))
+**ba-opencode:**
+- `ba-status`, `ba-list`, `ba-create`, `ba-claim`, `ba-finish`, `ba-block`
 
-**How it works:** A soft hint in the system prompt tells the LLM about wm. When the model needs context, it calls the `wm` tool. Similar to superego's "pull mode."
+**wm-opencode:**
+- `wm init`, `wm show`, `wm compile`, `wm distill`
 
-### superego - Metacognition
-Reviews your work before finishing. Provides feedback on approach, risks, and missed considerations.
-
-**Tools:**
-- `superego init` - Initialize superego
-- `superego status` - Check if enabled
-- `superego disable/enable` - Toggle evaluation
-- `superego remove` - Remove from project
-
-**How it works:** Evaluates sessions when idle. If concerns found, injects feedback into the conversation.
+**superego-opencode:**
+- `sg-review`, `sg-mode`
 
 ## Quick Start
 
-1. **Install bottle:**
+1. **Install bottle CLI:**
    ```bash
-   npm install @cloud-atlas-ai/bottle
+   # See https://github.com/open-horizon-labs/bottle for installation
    ```
 
-2. **Add to opencode.json:**
-   ```json
-   {
-     "plugin": ["@cloud-atlas-ai/bottle"]
-   }
+2. **Install the bottle tool stack:**
+   ```bash
+   bottle install
    ```
 
-3. **Install binaries (ba and wm require them):**
+3. **Integrate with OpenCode:**
    ```bash
-   # ba
-   brew install cloud-atlas-ai/ba/ba
-   # or: cargo install ba
-
-   # wm
-   brew install cloud-atlas-ai/wm/wm
-   # or: cargo install wm
+   bottle integrate opencode
    ```
 
 4. **Initialize in your project:**
-   Ask OpenCode to initialize each tool:
-   - "use ba-init to set up task tracking"
-   - "use wm init to set up working memory"
-   - "use superego init to set up metacognition"
+   ```bash
+   bottle-init
+   ```
+   This provides guidance for running `ba init`, `wm init`, and `sg init`. See [skills/init.md](skills/init.md) for full orchestration instructions.
 
-## Differences from Claude Code
+## Architecture
 
-### ba
-✅ Same functionality - tools wrap the CLI
+This plugin is a **thin wrapper** that invokes the `bottle` CLI. All logic lives in the CLI - this plugin just passes through commands.
 
-### wm
-⚠️ **Model-driven instead of automatic:**
-- **Claude Code:** Automatically injects relevant context before every user prompt
-- **OpenCode:** Model decides when to call `wm compile` (no per-prompt hooks available)
-- **Why:** OpenCode doesn't have an equivalent to Claude Code's `UserPromptSubmit` hook
-- **Benefit:** Preserves relevance filtering, avoids token bloat
+When you run `bottle integrate opencode`, it adds all 4 ecosystem plugins to your opencode.json:
+- `@cloud-atlas-ai/bottle` - This plugin (CLI wrapper)
+- `@cloud-atlas-ai/ba-opencode` - Task tracking tools
+- `@cloud-atlas-ai/wm-opencode` - Working memory tools
+- `@cloud-atlas-ai/superego-opencode` - Metacognition tools
 
-### superego
-✅ Same "pull mode" behavior - evaluates on session idle
+Each child plugin can also be installed separately if you only need one tool.
 
 ## Individual Plugins
 
@@ -106,27 +93,13 @@ If you only want one tool, install from their respective repos:
 - [wm-opencode](https://github.com/cloud-atlas-ai/wm/tree/main/opencode-plugin)
 - [superego-opencode](https://github.com/cloud-atlas-ai/superego/tree/main/opencode-plugin)
 
-## Architecture
-
-Bottle is a meta-package that depends on the individually published plugins:
-- `ba-opencode` - Task tracking plugin
-- `wm-opencode` - Working memory plugin
-- `superego-opencode` - Metacognition plugin
-
-Each plugin can be published and versioned independently. Bottle simply re-exports them for convenience.
-
-Each plugin:
-- Provides OpenCode tools
-- Injects soft hints via `experimental.chat.system.transform`
-- Registers event hooks where needed (superego uses `session.idle`)
-
 ## License
 
 MIT
 
 ## Links
 
-- [bottle (Claude Code marketplace)](https://github.com/cloud-atlas-ai/bottle)
+- [bottle](https://github.com/open-horizon-labs/bottle)
 - [ba](https://github.com/cloud-atlas-ai/ba)
 - [wm](https://github.com/cloud-atlas-ai/wm)
 - [superego](https://github.com/cloud-atlas-ai/superego)
