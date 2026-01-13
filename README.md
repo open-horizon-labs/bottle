@@ -1,8 +1,18 @@
 # Bottle
 
-**Cloud Atlas AI - One entry point for all the tools**
+**Open Horizon Labs - One entry point for all the tools**
 
-Bottle provides the complete Cloud Atlas AI stack for **Claude Code**, **OpenCode**, and **Codex**.
+Bottle provides the complete Open Horizon Labs stack for **Claude Code**, **OpenCode**, and **Codex**.
+
+## Quickstart
+
+```bash
+brew tap open-horizon-labs/tap && brew install bottle
+bottle install stable
+bottle integrate claude-code  # or: codex, opencode
+```
+
+Then in your project: `/bottle:init`
 
 ---
 
