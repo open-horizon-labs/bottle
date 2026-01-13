@@ -1,5 +1,5 @@
 /**
- * Bottle - Cloud Atlas AI Thin Wrapper Plugin for OpenCode
+ * Bottle - Open Horizon Labs Thin Wrapper Plugin for OpenCode
  *
  * This plugin provides thin wrapper tools that invoke the bottle CLI.
  * All logic lives in the CLI - this plugin just passes through commands.
@@ -160,13 +160,13 @@ const BottlePlugin: Plugin = async ({ directory }) => {
       }),
 
       "bottle-init": tool({
-        description: "Initialize all Cloud Atlas AI tools with recommended defaults",
+        description: "Initialize all Open Horizon Labs tools with recommended defaults",
         args: {},
         async execute() {
           // Note: There's no `bottle init` CLI command - initialization is done by
           // running ba init, wm init, and sg init individually. This tool provides
           // guidance for the agent to follow.
-          return `To initialize the Cloud Atlas AI stack:
+          return `To initialize the Open Horizon Labs stack:
 
 1. Initialize ba (task tracking):
    ba init

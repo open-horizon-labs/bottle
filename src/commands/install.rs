@@ -54,10 +54,7 @@ pub fn run(bottle: &str, yes: bool, dry_run: bool) -> Result<()> {
     // 6. Install tools (binaries + MCP)
     let tool_states = install_tools(&manifest)?;
 
-    // 7. Install plugins
-    install_plugins(&manifest)?;
-
-    // 8. Write state
+    // 7. Write state
     let state = BottleState {
         bottle: manifest.name.clone(),
         bottle_version: manifest.version.clone(),
@@ -92,13 +89,6 @@ fn show_install_plan(manifest: &BottleManifest) {
     tools.sort_by_key(|(name, _)| *name);
     for (name, version) in &tools {
         println!("  {:<12} {}", name, style(version).dim());
-    }
-    println!();
-
-    // Show plugins
-    println!("{}:", style("Plugins").bold());
-    for plugin in &manifest.plugins {
-        println!("  {}", plugin);
     }
     println!();
 }
@@ -140,22 +130,6 @@ fn show_dry_run_plan(manifest: &BottleManifest) {
     }
     println!();
 
-    // Show plugins that would be installed
-    if !manifest.plugins.is_empty() {
-        println!("{} {}:", style("Claude Code Plugins").bold(), style("(claude plugin install)").dim());
-        for plugin in &manifest.plugins {
-            match get_plugin_version(plugin) {
-                Some(ver) => {
-                    println!("  {:<12} {} {}", plugin, style("installed").green(), style(ver).dim());
-                }
-                None => {
-                    println!("  {:<12} {}", plugin, style("will install").yellow());
-                }
-            }
-        }
-        println!();
-    }
-
     // Show detected platforms for integration
     println!("{} {}:", style("Platform Integrations").bold(), style("(optional, run after install)").dim());
     println!();
@@ -182,7 +156,7 @@ fn show_claude_code_integration() {
         println!("  {} {}", style("Claude Code").cyan().bold(), style("(~/.claude/ detected)").dim());
         println!("    {} bottle integrate claude_code", style("→").dim());
         println!("    Adds /bottle commands: status, update, switch, integrate, list");
-        println!("    Plugin: bottle@cloud-atlas-ai/bottle");
+        println!("    Plugin: bottle@open-horizon-labs");
     } else {
         println!("  {} {}", style("Claude Code").dim(), style("not detected").dim());
     }

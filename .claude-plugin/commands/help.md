@@ -13,7 +13,7 @@ Show available bottle commands.
 Display the following to the user:
 
 ```
-Bottle - Cloud Atlas AI Tool Stack Manager
+Bottle - Open Horizon Labs Tool Stack Manager
 
 Commands:
   /bottle:install [name]     Install a bottle (default: stable)

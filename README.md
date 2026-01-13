@@ -18,7 +18,7 @@ Then in your project: `/bottle:init`
 
 ## Ecosystem Vision
 
-Bottle is part of the Cloud Atlas AI ecosystem - tools that give you AI superpowers without surrendering your mind. The ecosystem has two delivery mechanisms serving different audiences:
+Bottle is part of the Open Horizon Labs ecosystem - tools that give you AI superpowers without surrendering your mind. The ecosystem has two delivery mechanisms serving different audiences:
 
 ```
 Open Horizons (strategic layer - missions, guardrails, metis)
@@ -81,7 +81,7 @@ Add to your `opencode.json`:
 ```
 
 **Initialize** - Ask the AI to initialize the stack:
-- "use bottle-init to set up the full Cloud Atlas AI stack"
+- "use bottle-init to set up the full Open Horizon Labs stack"
 
 Bottle will automatically:
 - Add child plugins (ba-opencode, wm-opencode, superego-opencode) to opencode.json

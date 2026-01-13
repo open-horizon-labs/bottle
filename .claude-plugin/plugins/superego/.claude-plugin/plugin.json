@@ -3,7 +3,7 @@
   "version": "0.9.0",
   "description": "Metacognitive advisor that monitors Claude Code and provides feedback",
   "author": {
-    "name": "Cloud Atlas AI",
+    "name": "Open Horizon Labs",
     "email": "hello@cloudatlas.ai",
     "url": "https://github.com/cloud-atlas-ai"
   },

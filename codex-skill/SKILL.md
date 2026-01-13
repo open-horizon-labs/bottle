@@ -1,11 +1,11 @@
 ---
 name: bottle
-description: Cloud Atlas AI orchestration. "$bottle init" for setup, "$bottle dive" to start sessions, "$bottle web-context" for fresh docs.
+description: Open Horizon Labs orchestration. "$bottle init" for setup, "$bottle dive" to start sessions, "$bottle web-context" for fresh docs.
 ---
 
-# Bottle - Cloud Atlas AI Orchestration
+# Bottle - Open Horizon Labs Orchestration
 
-Bottle is a meta-package that orchestrates the Cloud Atlas AI tools:
+Bottle is a meta-package that orchestrates the Open Horizon Labs tools:
 - **ba** - Task tracking (backlog automaton)
 - **wm** - Working memory (context and learnings)
 - **superego** - Metacognitive oversight

@@ -1,6 +1,6 @@
-# Bottle - Cloud Atlas AI for OpenCode
+# Bottle - Open Horizon Labs for OpenCode
 
-**Thin wrapper plugin:** Invokes the `bottle` CLI and integrates the full Cloud Atlas AI stack (ba, wm, superego) with OpenCode.
+**Thin wrapper plugin:** Invokes the `bottle` CLI and integrates the full Open Horizon Labs stack (ba, wm, superego) with OpenCode.
 
 ## Installation
 

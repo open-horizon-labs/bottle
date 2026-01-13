@@ -1,6 +1,6 @@
 # Bottle Codex Skill
 
-Codex skill for orchestrating the Cloud Atlas AI tool suite.
+Codex skill for orchestrating the Open Horizon Labs tool suite.
 
 ## Installation
 
@@ -11,7 +11,7 @@ If you have the bottle CLI installed:
 bottle integrate codex
 ```
 
-This installs all Cloud Atlas AI skills (bottle, ba, wm, sg).
+This installs all Open Horizon Labs skills (bottle, ba, wm, sg).
 
 ### Manual Install
 

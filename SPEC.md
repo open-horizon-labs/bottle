@@ -6,7 +6,7 @@
 
 ## Overview
 
-Bottle is a curated snapshot manager for the Cloud Atlas AI tool stack. It provides one-command installation, coherent versioning, and seamless updates for users who want a batteries-included experience.
+Bottle is a curated snapshot manager for the Open Horizon Labs tool stack. It provides one-command installation, coherent versioning, and seamless updates for users who want a batteries-included experience.
 
 **Core principle:** The value is in the tooling. Every interaction must be effortless, predictable, and transparent.
 
@@ -130,7 +130,7 @@ bottle/
 {
   "name": "stable",
   "version": "2026.01.15",
-  "description": "Production-ready Cloud Atlas AI stack",
+  "description": "Production-ready Open Horizon Labs stack",
   "tools": {
     "ba": "0.2.1",
     "superego": "0.9.0",
@@ -198,31 +198,24 @@ Integration keys: `claude_code`, `opencode`, `codex`
 
 ### /bottle:install
 
-Install a bottle. First-run experience.
+Install a bottle. Installs CLI tools only.
 
-**Input:** Bottle name (optional, prompts if not provided)
+**Input:** Bottle name (optional, defaults to "stable")
 
 **Flags:**
-- `--with <platforms>` - Install specific platform integrations (comma-separated)
-- `--with all` - Install all detected platform integrations
-- `--with none` - Skip integration prompts, tools only
 - `-y` - Skip confirmations
+- `--dry-run` - Show what would be installed without making changes
 
 **Flow:**
-1. Show available bottles with descriptions
-2. User selects (or confirms if provided)
-3. Check prerequisites (cargo, node, etc.)
-4. Show exactly what will be installed (versions, sizes if available)
-5. Confirm
-6. Install binaries at pinned versions
-7. Register MCP servers
-8. Detect available platforms (Claude Code, OpenCode, Codex)
-9. Prompt for platform integrations (unless `--with` specified)
-10. Install selected integrations
-11. Write state
-12. Show success + next steps
+1. Check prerequisites (cargo, node, etc.)
+2. Show exactly what will be installed (tools + versions)
+3. Confirm
+4. Install binaries at pinned versions
+5. Register MCP servers
+6. Write state
+7. Show success + next steps (run `bottle integrate`)
 
-**Example with integrations:**
+**Example:**
 ```
 bottle install stable
 ```
@@ -230,35 +223,24 @@ bottle install stable
 Installing bottle: stable (v0.1.0)
 
 Tools:
-  ba           0.1.0  installed
-  wm           0.2.0  installed
-  sg           0.3.0  installed
+  ba           0.1.0  install
+  wm           0.2.0  install
+  sg           0.3.0  install
+  oh-mcp       0.3.0  install (MCP)
 
-Platform integrations detected:
-  [x] Claude Code  (~/.claude found)
-  [x] OpenCode     (opencode.json found)
-  [ ] Codex        (not detected)
-
-Install integrations? [Y/n/select]
+Proceed? [Y/n]
 > Y
 
-Installing Claude Code integration...
-  ✓ Plugin installed
+Installing tools...
+  ba           installed
+  wm           installed
+  sg           installed
+  oh-mcp       registered
 
-Installing OpenCode integration...
-  ✓ Added to opencode.json
-
-Done! Run 'bottle status' to verify.
+Done! Next: run 'bottle integrate claude-code' (or codex, opencode)
 ```
 
-**Explicit selection:**
-```bash
-bottle install stable --with opencode,codex   # specific platforms
-bottle install stable --with all              # all detected
-bottle install stable --with none             # tools only
-```
-
-**UX requirement:** Must feel like one smooth operation, not a series of disconnected installs.
+**Note:** Platform integrations (plugins, skills) are installed separately via `bottle integrate`.
 
 ### /bottle:status
 
@@ -418,9 +400,8 @@ bottle create mybottle --from stable      # Copy from curated bottle
 **Flow:**
 1. Create `~/.bottle/bottles/mybottle/`
 2. If `--from`, copy manifest from source bottle
-3. Otherwise, create minimal manifest template
-4. Open manifest in editor (if `$EDITOR` set)
-5. Show next steps
+3. Open manifest in editor (if `$EDITOR` set)
+4. Show next steps
 
 **Output:**
 ```
@@ -777,10 +758,10 @@ If bottle is not installed, offer to install it:
 ```typescript
 "bottle-install": tool({
   description: "Install a bottle (stable, edge, or bespoke)",
-  args: { bottle: tool.schema.string(), with: tool.schema.string().optional() },
-  async execute({ bottle, with: platforms }) {
+  args: { bottle: tool.schema.string() },
+  async execute({ bottle }) {
     // Check binary exists, guide install if not
-    // Run: bottle install <bottle> [--with <platforms>]
+    // Run: bottle install <bottle>
     // Return output
   }
 })

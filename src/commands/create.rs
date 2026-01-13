@@ -102,7 +102,7 @@ pub fn run(name: &str, from: Option<&str>) -> Result<()> {
             prerequisites: source_manifest.prerequisites,
         }
     } else {
-        // Create minimal template
+        // Create template
         BottleManifest {
             name: name.to_string(),
             version: Utc::now().format("%Y.%m.%d").to_string(),

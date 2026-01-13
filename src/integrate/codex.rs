@@ -1,6 +1,6 @@
 //! Codex integration
 //!
-//! Installs/removes all Cloud Atlas AI skills for Codex (bottle, ba, wm, superego).
+//! Installs/removes all Open Horizon Labs skills for Codex (bottle, ba, wm, superego).
 //! Skills are fetched from GitHub at runtime to allow updates without new binary releases.
 
 use crate::error::{BottleError, Result};
@@ -53,7 +53,7 @@ pub fn is_installed() -> bool {
         .unwrap_or(false)
 }
 
-/// Install all Cloud Atlas AI skills for Codex
+/// Install all Open Horizon Labs skills for Codex
 pub fn install() -> Result<()> {
     let skills_path = skills_dir().ok_or_else(|| BottleError::InstallError {
         tool: "codex integration".to_string(),
@@ -109,7 +109,7 @@ fn install_skill(skills_path: &Path, name: &str, content: &str) -> Result<()> {
     Ok(())
 }
 
-/// Remove all Cloud Atlas AI skills from Codex
+/// Remove all Open Horizon Labs skills from Codex
 pub fn remove() -> Result<()> {
     let Some(skills_path) = skills_dir() else {
         return Ok(()); // No path, nothing to remove

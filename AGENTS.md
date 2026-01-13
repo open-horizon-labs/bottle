@@ -1,4 +1,4 @@
-# Cloud Atlas AI Stack
+# Open Horizon Labs Stack
 
 ## Quick Start: Dive First
 
@@ -15,7 +15,7 @@ This creates `.wm/dive_context.md` with your intent, relevant context, and sugge
 
 ---
 
-This project uses Cloud Atlas AI tools. Follow these protocols:
+This project uses Open Horizon Labs tools. Follow these protocols:
 
 ## Task Tracking (ba)
 

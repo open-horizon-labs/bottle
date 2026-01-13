@@ -1,5 +1,5 @@
 {
-  "description": "Production-ready Cloud Atlas AI stack",
+  "description": "Production-ready Open Horizon Labs stack",
   "name": "stable",
   "plugins": [
     "ba",

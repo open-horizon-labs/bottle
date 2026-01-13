@@ -38,7 +38,7 @@ bottle-list
 ## Output
 
 Shows:
-- **Curated bottles** (stable, edge, minimal) from GitHub
+- **Curated bottles** (stable, edge) from GitHub
 - **Bespoke bottles** from `~/.bottle/bottles/`
 - Current active bottle (if installed)
 

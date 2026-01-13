@@ -1,6 +1,6 @@
 # bottle-init
 
-Initialize all installed Cloud Atlas AI tools with recommended defaults. Handles binary installation automatically.
+Initialize all installed Open Horizon Labs tools with recommended defaults. Handles binary installation automatically.
 
 ## Step 1: Check and install binaries
 

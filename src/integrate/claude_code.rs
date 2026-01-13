@@ -6,7 +6,7 @@ use crate::error::{BottleError, Result};
 use std::process::Command;
 
 /// Marketplace and plugin name for Claude Code integration
-const MARKETPLACE: &str = "cloud-atlas-ai/bottle";
+const MARKETPLACE: &str = "open-horizon-labs";
 const PLUGIN: &str = "bottle";
 
 /// Check if Claude Code is detected (has config directory)

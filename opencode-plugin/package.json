@@ -1,7 +1,7 @@
 {
   "name": "@cloud-atlas-ai/bottle",
   "version": "0.2.7",
-  "description": "Cloud Atlas AI thin wrapper plugin for OpenCode - invokes bottle CLI",
+  "description": "Open Horizon Labs thin wrapper plugin for OpenCode - invokes bottle CLI",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,7 +17,7 @@
     "cloud-atlas"
   ],
   "author": {
-    "name": "Cloud Atlas AI",
+    "name": "Open Horizon Labs",
     "email": "hello@cloudatlas.ai"
   },
   "repository": {

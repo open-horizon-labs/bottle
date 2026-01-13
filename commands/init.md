@@ -1,6 +1,6 @@
-# Bottle Init - Unified Cloud Atlas AI Setup
+# Bottle Init - Unified Open Horizon Labs Setup
 
-Initialize all installed Cloud Atlas AI tools with recommended defaults. Handles binary installation automatically.
+Initialize all installed Open Horizon Labs tools with recommended defaults. Handles binary installation automatically.
 
 ## Step 1: Check and install binaries
 
@@ -73,7 +73,7 @@ After individual inits complete:
 Create AGENTS.md with guidance for all initialized tools. **Start with dive-first quick start:**
 
 ```markdown
-# Cloud Atlas AI Stack
+# Open Horizon Labs Stack
 
 ## Quick Start: Dive First
 

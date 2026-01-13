@@ -2,7 +2,7 @@
 name = "bottle"
 version = "0.1.2"
 edition = "2021"
-description = "Curated snapshot manager for the Cloud Atlas AI tool stack"
+description = "Curated snapshot manager for the Open Horizon Labs tool stack"
 license = "MIT"
 repository = "https://github.com/cloud-atlas-ai/bottle"
 keywords = ["claude", "ai", "cli", "installer"]

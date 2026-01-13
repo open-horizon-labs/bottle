@@ -16,7 +16,7 @@ pub fn run(check_updates: bool) -> Result<()> {
             println!("  {} {}", style("bottle install").cyan(), style("stable").dim());
             println!();
             println!("Available bottles:");
-            println!("  {}  Production-ready Cloud Atlas AI stack", style("stable").cyan());
+            println!("  {}  Production-ready Open Horizon Labs stack", style("stable").cyan());
             println!("  {}    Latest features, may be unstable", style("edge").cyan());
             return Ok(());
         }

@@ -12,11 +12,11 @@ use error::Result;
 
 #[derive(Parser)]
 #[command(name = "bottle")]
-#[command(author = "Cloud Atlas AI")]
+#[command(author = "Open Horizon Labs")]
 #[command(version)]
-#[command(about = "Curated snapshot manager for the Cloud Atlas AI tool stack")]
+#[command(about = "Curated snapshot manager for the Open Horizon Labs tool stack")]
 #[command(long_about = "Bottle provides one-command installation, coherent versioning, and seamless updates \
-for users who want a batteries-included experience with the Cloud Atlas AI tools.")]
+for users who want a batteries-included experience with the Open Horizon Labs tools.")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -24,7 +24,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Install a bottle (stable, edge, minimal)
+    /// Install a bottle (stable, edge)
     Install {
         /// Bottle name to install
         #[arg(default_value = "stable")]

@@ -12,7 +12,7 @@ bottle install [stable|edge]
 
 ## Options
 
-- `stable` (default) - Production-ready Cloud Atlas AI stack
+- `stable` (default) - Production-ready Open Horizon Labs stack
 - `edge` - Latest features, may have rough edges
 
 ## If bottle is not installed

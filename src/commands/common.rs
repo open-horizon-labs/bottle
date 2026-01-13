@@ -5,7 +5,7 @@ use std::fs;
 use std::path::PathBuf;
 
 /// Marketplace identifier for plugins
-pub const MARKETPLACE: &str = "cloud-atlas-ai/bottle";
+pub const MARKETPLACE: &str = "open-horizon-labs";
 
 /// Fetch manifest from bespoke location or GitHub
 pub fn fetch_or_load_manifest(bottle: &str) -> Result<BottleManifest> {

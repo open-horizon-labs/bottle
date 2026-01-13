@@ -219,7 +219,7 @@ fn remove_integration(state: &BottleState, platform: Platform, dry_run: bool) ->
 /// Describe the install action for a platform (for dry-run output)
 fn describe_install_action(platform: Platform) -> &'static str {
     match platform {
-        Platform::ClaudeCode => "Run `claude plugin install bottle@cloud-atlas-ai/bottle`",
+        Platform::ClaudeCode => "Run `claude plugin install bottle@open-horizon-labs`",
         Platform::OpenCode => "Add bottle ecosystem plugins to opencode.json (bottle, ba, wm, superego)",
         Platform::Codex => "Create ~/.codex/skills/bottle/SKILL.md",
     }
@@ -228,7 +228,7 @@ fn describe_install_action(platform: Platform) -> &'static str {
 /// Describe the remove action for a platform (for dry-run output)
 fn describe_remove_action(platform: Platform) -> &'static str {
     match platform {
-        Platform::ClaudeCode => "Run `claude plugin uninstall bottle@cloud-atlas-ai/bottle`",
+        Platform::ClaudeCode => "Run `claude plugin uninstall bottle@open-horizon-labs`",
         Platform::OpenCode => "Remove bottle ecosystem plugins from opencode.json",
         Platform::Codex => "Remove ~/.codex/skills/bottle/",
     }
