@@ -15,9 +15,18 @@ use std::path::PathBuf;
 /// NPM package for the OpenCode integration
 const PACKAGE: &str = "@cloud-atlas-ai/bottle";
 
-/// Check if OpenCode is detected (has opencode.json in cwd or home)
+/// Check if OpenCode is detected (has ~/.opencode/ directory or opencode binary)
 pub fn is_detected() -> bool {
-    get_config_path().is_some()
+    // Check for ~/.opencode/ directory
+    dirs::home_dir()
+        .map(|h| h.join(".opencode").exists())
+        .unwrap_or(false)
+        // Or check if opencode binary is installed
+        || std::process::Command::new("which")
+            .arg("opencode")
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false)
 }
 
 /// Get the path to opencode.json (cwd first, then home)

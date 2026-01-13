@@ -15,3 +15,5 @@ tmp/
 # Superego
 .superego/
 .wm/
+
+.claude/*

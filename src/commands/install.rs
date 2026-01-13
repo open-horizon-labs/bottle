@@ -126,7 +126,12 @@ fn show_dry_run_plan(manifest: &BottleManifest) {
                 println!("  {:<12} {} {}", name, style("current").green(), style(target_version).dim());
             }
             Some(installed_ver) => {
-                println!("  {:<12} {} {} → {}", name, style("update").yellow(), style(&installed_ver).dim(), target_version);
+                let arrow = match compare_versions(&installed_ver, target_version) {
+                    "upgrade" => style("↑").green(),
+                    "downgrade" => style("↓").red(),
+                    _ => style("→").yellow(),
+                };
+                println!("  {:<12} {} {} {}", name, arrow, style(&installed_ver).dim(), target_version);
             }
             None => {
                 println!("  {:<12} {} {}", name, style("install").yellow(), target_version);
@@ -152,10 +157,11 @@ fn show_dry_run_plan(manifest: &BottleManifest) {
     }
 
     // Show detected platforms for integration
-    println!("{} {}:", style("Platform Integrations").bold(), style("(bottle integrate <platform>)").dim());
-    show_platform_status("claude_code", "Claude Code", crate::integrate::claude_code::is_detected());
-    show_platform_status("opencode", "OpenCode", crate::integrate::opencode::is_detected());
-    show_platform_status("codex", "Codex", crate::integrate::codex::is_detected());
+    println!("{} {}:", style("Platform Integrations").bold(), style("(optional, run after install)").dim());
+    println!();
+    show_claude_code_integration();
+    show_opencode_integration();
+    show_codex_integration();
     println!();
 
     // Show state changes
@@ -170,11 +176,69 @@ fn show_dry_run_plan(manifest: &BottleManifest) {
     println!();
 }
 
-fn show_platform_status(key: &str, name: &str, detected: bool) {
+fn show_claude_code_integration() {
+    let detected = crate::integrate::claude_code::is_detected();
     if detected {
-        println!("  {:<12} {} - run: bottle integrate {}", name, style("detected").green(), key);
+        println!("  {} {}", style("Claude Code").cyan().bold(), style("(~/.claude/ detected)").dim());
+        println!("    {} bottle integrate claude_code", style("→").dim());
+        println!("    Adds /bottle commands: status, update, switch, integrate, list");
+        println!("    Plugin: bottle@cloud-atlas-ai/bottle");
     } else {
-        println!("  {:<12} {}", name, style("not detected").dim());
+        println!("  {} {}", style("Claude Code").dim(), style("not detected").dim());
+    }
+    println!();
+}
+
+fn show_opencode_integration() {
+    let detected = crate::integrate::opencode::is_detected();
+    if detected {
+        println!("  {} {}", style("OpenCode").cyan().bold(), style("(~/.opencode/ detected)").dim());
+        println!("    {} bottle integrate opencode", style("→").dim());
+        println!("    Adds bottle-* tools to OpenCode");
+        println!("    Config: adds @cloud-atlas-ai/bottle to plugins");
+    } else {
+        println!("  {} {}", style("OpenCode").dim(), style("not detected").dim());
+    }
+    println!();
+}
+
+fn show_codex_integration() {
+    let detected = crate::integrate::codex::is_detected();
+    if detected {
+        println!("  {} {}", style("Codex").cyan().bold(), style("(~/.codex/ detected)").dim());
+        println!("    {} bottle integrate codex", style("→").dim());
+        println!("    Adds $bottle commands as Codex skill");
+        println!("    Skill: ~/.codex/skills/bottle/SKILL.md");
+    } else {
+        println!("  {} {}", style("Codex").dim(), style("not detected").dim());
+    }
+}
+
+/// Compare two version strings, returns "upgrade", "downgrade", or "update"
+fn compare_versions(current: &str, target: &str) -> &'static str {
+    // Simple semver comparison - split by dots and compare numerically
+    let parse = |v: &str| -> Vec<u32> {
+        v.split('.')
+            .filter_map(|s| s.parse().ok())
+            .collect()
+    };
+
+    let current_parts = parse(current);
+    let target_parts = parse(target);
+
+    for (c, t) in current_parts.iter().zip(target_parts.iter()) {
+        if t > c {
+            return "upgrade";
+        } else if t < c {
+            return "downgrade";
+        }
+    }
+
+    // If we get here, compare lengths (e.g., 1.0 vs 1.0.1)
+    match target_parts.len().cmp(&current_parts.len()) {
+        std::cmp::Ordering::Greater => "upgrade",
+        std::cmp::Ordering::Less => "downgrade",
+        std::cmp::Ordering::Equal => "update", // shouldn't happen if versions are equal
     }
 }
 
