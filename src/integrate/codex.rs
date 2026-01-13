@@ -6,14 +6,25 @@
 use crate::error::{BottleError, Result};
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 
 const GITHUB_RAW_BASE: &str =
     "https://raw.githubusercontent.com/open-horizon-labs/bottle/main/codex-skill";
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// Fetch a skill file from GitHub
 fn fetch_skill(path: &str) -> Result<String> {
     let url = format!("{}/{}", GITHUB_RAW_BASE, path);
-    reqwest::blocking::get(&url)
+    let client = reqwest::blocking::Client::builder()
+        .timeout(REQUEST_TIMEOUT)
+        .build()
+        .map_err(|e| BottleError::InstallError {
+            tool: "codex integration".to_string(),
+            reason: format!("Failed to create HTTP client: {}", e),
+        })?;
+    client
+        .get(&url)
+        .send()
         .and_then(|r| r.error_for_status())
         .and_then(|r| r.text())
         .map_err(|e| BottleError::InstallError {
