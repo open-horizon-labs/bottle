@@ -1,9 +1,10 @@
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 
 mod commands;
 mod error;
 mod fetch;
 mod install;
+mod integrate;
 mod manifest;
 mod ui;
 
@@ -65,6 +66,21 @@ enum Commands {
         yes: bool,
     },
 
+    /// Add or remove platform integrations (Claude Code, OpenCode, Codex)
+    Integrate {
+        /// Platform to integrate: claude_code, opencode, codex
+        #[arg(value_enum)]
+        platform: Option<PlatformArg>,
+
+        /// List available and installed integrations
+        #[arg(short, long)]
+        list: bool,
+
+        /// Remove the integration instead of adding it
+        #[arg(short, long)]
+        remove: bool,
+    },
+
     /// List available bottles (curated and bespoke)
     List,
 
@@ -117,6 +133,31 @@ enum Commands {
     },
 }
 
+/// Platform integration targets
+#[derive(Debug, Clone, Copy, ValueEnum)]
+pub enum PlatformArg {
+    /// Claude Code plugin (detected via ~/.claude/)
+    #[value(name = "claude_code")]
+    ClaudeCode,
+    /// OpenCode plugin (detected via opencode.json)
+    #[value(name = "opencode")]
+    OpenCode,
+    /// Codex skill (detected via ~/.codex/)
+    #[value(name = "codex")]
+    Codex,
+}
+
+impl PlatformArg {
+    /// Convert to the internal Platform type
+    pub fn to_platform(self) -> integrate::Platform {
+        match self {
+            PlatformArg::ClaudeCode => integrate::Platform::ClaudeCode,
+            PlatformArg::OpenCode => integrate::Platform::OpenCode,
+            PlatformArg::Codex => integrate::Platform::Codex,
+        }
+    }
+}
+
 fn main() {
     if let Err(e) = run() {
         ui::print_error(&e);
@@ -133,6 +174,11 @@ fn run() -> Result<()> {
         Commands::Update { yes } => commands::update::run(yes),
         Commands::Switch { bottle, yes } => commands::switch::run(&bottle, yes),
         Commands::Eject { yes } => commands::eject::run(yes),
+        Commands::Integrate {
+            platform,
+            list,
+            remove,
+        } => commands::integrate::run(platform.map(|p| p.to_platform()), list, remove),
         Commands::List => commands::list::run(),
         Commands::Diff { from, to } => commands::diff::run(&from, &to),
         Commands::Upgrade {

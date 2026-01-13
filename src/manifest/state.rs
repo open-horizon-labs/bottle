@@ -11,6 +11,16 @@ pub struct BottleState {
     pub installed_at: DateTime<Utc>,
     pub tools: HashMap<String, ToolState>,
     pub mode: Mode,
+    /// Platform integrations (Claude Code, OpenCode, Codex)
+    /// AIDEV-NOTE: Optional for backwards compatibility with existing state files
+    #[serde(default)]
+    pub integrations: HashMap<String, IntegrationState>,
+}
+
+/// State for a platform integration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IntegrationState {
+    pub installed_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
