@@ -25,7 +25,7 @@ pub fn install_tool(tool: &ToolDefinition, version: &str) -> Result<InstallMetho
             }
         }
         ToolType::Mcp => {
-            mcp::register(&tool.package, version)?;
+            mcp::register(&tool.name, &tool.package, version)?;
             Ok(InstallMethod::Mcp)
         }
     }

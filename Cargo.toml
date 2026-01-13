@@ -4,7 +4,7 @@ version = "0.1.3"
 edition = "2021"
 description = "Curated snapshot manager for the Open Horizon Labs tool stack"
 license = "MIT"
-repository = "https://github.com/cloud-atlas-ai/bottle"
+repository = "https://github.com/open-horizon-labs/bottle"
 keywords = ["claude", "ai", "cli", "installer"]
 categories = ["command-line-utilities", "development-tools"]
 

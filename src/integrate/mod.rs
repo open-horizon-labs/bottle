@@ -3,6 +3,7 @@ pub mod codex;
 pub mod opencode;
 
 use crate::error::Result;
+use std::collections::HashMap;
 use std::fmt;
 
 /// Supported platform integrations
@@ -69,10 +70,11 @@ pub fn detect_platforms() -> Vec<DetectionResult> {
 }
 
 /// Install an integration for a platform
-pub fn install(platform: Platform) -> Result<()> {
+/// For OpenCode, pass the opencode_plugins map from the manifest for versioned installs
+pub fn install(platform: Platform, opencode_plugins: Option<&HashMap<String, String>>) -> Result<()> {
     match platform {
         Platform::ClaudeCode => claude_code::install(),
-        Platform::OpenCode => opencode::install(),
+        Platform::OpenCode => opencode::install(opencode_plugins),
         Platform::Codex => codex::install(),
     }
 }

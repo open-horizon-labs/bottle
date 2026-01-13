@@ -2,12 +2,14 @@ use crate::error::{BottleError, Result};
 use std::process::Command;
 
 /// Register an MCP server with Claude
-pub fn register(package: &str, version: &str) -> Result<()> {
+/// `name` is the MCP server name (e.g., "oh-mcp")
+/// `package` is the npm package (e.g., "@cloud-atlas-ai/oh-mcp-server")
+pub fn register(name: &str, package: &str, version: &str) -> Result<()> {
     let status = Command::new("claude")
         .args([
             "mcp",
             "add",
-            package,
+            name,
             "-s",
             "user",
             "--",
@@ -17,7 +19,7 @@ pub fn register(package: &str, version: &str) -> Result<()> {
         ])
         .status()
         .map_err(|e| BottleError::InstallError {
-            tool: package.to_string(),
+            tool: name.to_string(),
             reason: format!("Failed to run claude mcp add: {}", e),
         })?;
 
@@ -25,7 +27,7 @@ pub fn register(package: &str, version: &str) -> Result<()> {
         Ok(())
     } else {
         Err(BottleError::InstallError {
-            tool: package.to_string(),
+            tool: name.to_string(),
             reason: format!("claude mcp add exited with code {}", status),
         })
     }

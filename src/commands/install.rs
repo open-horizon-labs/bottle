@@ -11,21 +11,23 @@ use std::collections::HashMap;
 use std::process::Command;
 
 /// Install a bottle (stable, edge, or bespoke)
-pub fn run(bottle: &str, yes: bool, dry_run: bool) -> Result<()> {
-    // 1. Check if already installed
-    if let Some(state) = BottleState::load() {
-        if state.bottle == bottle && state.is_managed() {
-            ui::print_warning(&format!(
-                "Bottle '{}' is already installed. Use 'bottle update' to refresh.",
-                bottle
-            ));
-            return Ok(());
+pub fn run(bottle: &str, yes: bool, dry_run: bool, force: bool) -> Result<()> {
+    // 1. Check if already installed (skip if --force)
+    if !force {
+        if let Some(state) = BottleState::load() {
+            if state.bottle == bottle && state.is_managed() {
+                ui::print_warning(&format!(
+                    "Bottle '{}' is already installed. Use 'bottle update' to refresh, or --force to reinstall.",
+                    bottle
+                ));
+                return Ok(());
+            }
+            // Different bottle - this is a switch, not install
+            return Err(BottleError::Other(format!(
+                "Bottle '{}' is currently installed. Use 'bottle switch {}' to change bottles.",
+                state.bottle, bottle
+            )));
         }
-        // Different bottle - this is a switch, not install
-        return Err(BottleError::Other(format!(
-            "Bottle '{}' is currently installed. Use 'bottle switch {}' to change bottles.",
-            state.bottle, bottle
-        )));
     }
 
     // 2. Fetch manifest (local bespoke or remote curated)
@@ -129,6 +131,15 @@ fn show_dry_run_plan(manifest: &BottleManifest) {
         }
     }
     println!();
+
+    // Show plugins available via integrate
+    if !manifest.plugins.is_empty() {
+        println!("{} {}:", style("Plugins").bold(), style("(via bottle integrate)").dim());
+        for plugin in &manifest.plugins {
+            println!("  {}", plugin);
+        }
+        println!();
+    }
 
     // Show detected platforms for integration
     println!("{} {}:", style("Platform Integrations").bold(), style("(optional, run after install)").dim());

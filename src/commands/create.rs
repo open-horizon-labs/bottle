@@ -100,6 +100,7 @@ pub fn run(name: &str, from: Option<&str>) -> Result<()> {
             tools: source_manifest.tools,
             plugins: source_manifest.plugins,
             prerequisites: source_manifest.prerequisites,
+            opencode_plugins: source_manifest.opencode_plugins,
         }
     } else {
         // Create template
@@ -110,6 +111,7 @@ pub fn run(name: &str, from: Option<&str>) -> Result<()> {
             tools: HashMap::new(),
             plugins: Vec::new(),
             prerequisites: HashMap::new(),
+            opencode_plugins: HashMap::new(),
         }
     };
 

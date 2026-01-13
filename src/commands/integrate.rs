@@ -1,3 +1,4 @@
+use crate::commands::common::fetch_or_load_manifest;
 use crate::error::{BottleError, Result};
 use crate::integrate::{self, Platform};
 use crate::manifest::state::{BottleState, IntegrationState};
@@ -130,7 +131,17 @@ fn add_integration(state: &BottleState, platform: Platform, dry_run: bool) -> Re
         style(platform.display_name()).cyan()
     );
 
-    integrate::install(platform)?;
+    // Fetch manifest to get opencode_plugins versions (if available)
+    let opencode_plugins = if platform == Platform::OpenCode {
+        fetch_or_load_manifest(&state.bottle)
+            .ok()
+            .map(|m| m.opencode_plugins)
+            .filter(|p| !p.is_empty())
+    } else {
+        None
+    };
+
+    integrate::install(platform, opencode_plugins.as_ref())?;
 
     // Update state
     let mut new_state = state.clone();

@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 const GITHUB_RAW_BASE: &str =
-    "https://raw.githubusercontent.com/open-horizon-labs/bottle/main/codex-skill";
+    "https://raw.githubusercontent.com/open-horizon-labs/bottle/master/codex-skill";
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// Fetch a skill file from GitHub

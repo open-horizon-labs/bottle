@@ -1,6 +1,6 @@
 //! OpenCode integration
 //!
-//! Adds/removes the bottle ecosystem plugins to opencode.json.
+//! Adds/removes the bottle ecosystem plugin to opencode.json.
 //!
 //! AIDEV-NOTE: Config file resolution is cwd-first, then home directory.
 //! This means `bottle integrate opencode` modifies the local project's
@@ -9,15 +9,16 @@
 
 use crate::error::{BottleError, Result};
 use serde_json::{json, Value};
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
-/// NPM packages for the OpenCode integration - full ecosystem
-const PACKAGES: &[&str] = &[
+/// Default NPM packages for OpenCode integration (fallback if no manifest)
+const DEFAULT_PACKAGES: &[&str] = &[
     "@cloud-atlas-ai/bottle",
-    "@cloud-atlas-ai/ba-opencode",
-    "@cloud-atlas-ai/wm-opencode",
-    "@cloud-atlas-ai/superego-opencode",
+    "ba-opencode",
+    "wm-opencode",
+    "superego-opencode",
 ];
 
 /// Check if OpenCode is detected (has ~/.opencode/ directory or opencode binary)
@@ -34,21 +35,31 @@ pub fn is_detected() -> bool {
             .unwrap_or(false)
 }
 
-/// Get the path to opencode.json (cwd first, then home)
+/// Get the path to opencode.json (cwd first, then global config)
+/// AIDEV-NOTE: OpenCode uses XDG-style paths (~/.config/) on all platforms,
+/// not the native config directories. Do NOT use dirs::config_dir() here.
 fn get_config_path() -> Option<PathBuf> {
-    // Check current directory first
+    // Check current directory first (project config)
     let cwd_config = PathBuf::from("opencode.json");
     if cwd_config.exists() {
         return Some(cwd_config);
     }
 
-    // Check home directory
+    // Check global config at ~/.config/opencode/opencode.json (XDG style)
     dirs::home_dir()
-        .map(|h| h.join("opencode.json"))
+        .map(|h| h.join(".config").join("opencode").join("opencode.json"))
         .filter(|p| p.exists())
 }
 
-/// Check if the bottle plugins are installed in OpenCode config
+/// Get the default config path for creating new config
+/// AIDEV-NOTE: Always use XDG-style ~/.config/opencode/ for OpenCode
+fn default_config_path() -> PathBuf {
+    dirs::home_dir()
+        .map(|h| h.join(".config").join("opencode").join("opencode.json"))
+        .unwrap_or_else(|| PathBuf::from("opencode.json"))
+}
+
+/// Check if the bottle plugin are installed in OpenCode config
 #[allow(dead_code)]
 pub fn is_installed() -> bool {
     let Some(config_path) = get_config_path() else {
@@ -63,54 +74,79 @@ pub fn is_installed() -> bool {
         return false;
     };
 
-    // Check if main bottle package is in plugins array
+    // Check if main bottle package is in plugin array (with or without version)
     config
-        .get("plugins")
+        .get("plugin")
         .and_then(|p| p.as_array())
-        .map(|plugins| plugins.iter().any(|p| p.as_str() == Some(PACKAGES[0])))
+        .map(|plugin| {
+            plugin.iter().any(|p| {
+                p.as_str()
+                    .map(|s| s.starts_with(DEFAULT_PACKAGES[0]))
+                    .unwrap_or(false)
+            })
+        })
         .unwrap_or(false)
 }
 
-/// Install the bottle ecosystem plugins into OpenCode config
-pub fn install() -> Result<()> {
-    let config_path = get_config_path().ok_or_else(|| BottleError::InstallError {
-        tool: "opencode integration".to_string(),
-        reason: "No opencode.json found in current directory or home".to_string(),
-    })?;
+/// Install the bottle ecosystem plugin into OpenCode config
+/// If opencode_plugins map is provided, use versioned package references (e.g., "ba-opencode@0.2.1")
+pub fn install(opencode_plugins: Option<&HashMap<String, String>>) -> Result<()> {
+    let config_path = get_config_path().unwrap_or_else(default_config_path);
 
-    // Read existing config
-    let contents = fs::read_to_string(&config_path).map_err(|e| BottleError::InstallError {
-        tool: "opencode integration".to_string(),
-        reason: format!("Failed to read opencode.json: {}", e),
-    })?;
-
-    let mut config: Value = serde_json::from_str(&contents).map_err(|e| {
-        BottleError::InstallError {
+    // Read existing config or create new one
+    let mut config: Value = if config_path.exists() {
+        let contents = fs::read_to_string(&config_path).map_err(|e| BottleError::InstallError {
             tool: "opencode integration".to_string(),
-            reason: format!("Failed to parse opencode.json: {}", e),
-        }
-    })?;
+            reason: format!("Failed to read opencode.json: {}", e),
+        })?;
+        serde_json::from_str(&contents).map_err(|e| {
+            BottleError::InstallError {
+                tool: "opencode integration".to_string(),
+                reason: format!("Failed to parse opencode.json: {}", e),
+            }
+        })?
+    } else {
+        // Create new config with schema
+        json!({
+            "$schema": "https://opencode.ai/config.json"
+        })
+    };
 
-    // Get or create plugins array
-    let plugins = config
+    // Get or create plugin array
+    let plugin = config
         .as_object_mut()
         .ok_or_else(|| BottleError::InstallError {
             tool: "opencode integration".to_string(),
             reason: "opencode.json is not an object".to_string(),
         })?
-        .entry("plugins")
+        .entry("plugin")
         .or_insert_with(|| json!([]));
 
-    let plugins_array = plugins.as_array_mut().ok_or_else(|| BottleError::InstallError {
+    let plugin_array = plugin.as_array_mut().ok_or_else(|| BottleError::InstallError {
         tool: "opencode integration".to_string(),
-        reason: "plugins field is not an array".to_string(),
+        reason: "plugin field is not an array".to_string(),
     })?;
 
-    // Add all ecosystem packages (idempotent - skip already installed)
-    for package in PACKAGES {
-        if !plugins_array.iter().any(|p| p.as_str() == Some(*package)) {
-            plugins_array.push(json!(*package));
-        }
+    // Build package list: use versioned if manifest provided, otherwise defaults
+    let packages: Vec<String> = if let Some(plugins) = opencode_plugins {
+        plugins
+            .iter()
+            .map(|(name, version)| format!("{}@{}", name, version))
+            .collect()
+    } else {
+        DEFAULT_PACKAGES.iter().map(|s| s.to_string()).collect()
+    };
+
+    // Add all ecosystem packages (idempotent - skip if package name already present)
+    for package in &packages {
+        let package_name = package.split('@').next().unwrap_or(package);
+        // Remove any existing entry for this package (to update version)
+        plugin_array.retain(|p| {
+            p.as_str()
+                .map(|s| !s.starts_with(package_name))
+                .unwrap_or(true)
+        });
+        plugin_array.push(json!(package));
     }
 
     // Write back
@@ -118,6 +154,14 @@ pub fn install() -> Result<()> {
         tool: "opencode integration".to_string(),
         reason: format!("Failed to serialize config: {}", e),
     })?;
+
+    // Create parent directory if needed (for new config files)
+    if let Some(parent) = config_path.parent() {
+        fs::create_dir_all(parent).map_err(|e| BottleError::InstallError {
+            tool: "opencode integration".to_string(),
+            reason: format!("Failed to create config directory: {}", e),
+        })?;
+    }
 
     fs::write(&config_path, updated).map_err(|e| BottleError::InstallError {
         tool: "opencode integration".to_string(),
@@ -127,7 +171,7 @@ pub fn install() -> Result<()> {
     Ok(())
 }
 
-/// Remove the bottle ecosystem plugins from OpenCode config
+/// Remove the bottle ecosystem plugin from OpenCode config
 pub fn remove() -> Result<()> {
     let Some(config_path) = get_config_path() else {
         return Ok(()); // No config, nothing to remove
@@ -146,15 +190,15 @@ pub fn remove() -> Result<()> {
         }
     })?;
 
-    // Get plugins array
-    let Some(plugins) = config.get_mut("plugins").and_then(|p| p.as_array_mut()) else {
-        return Ok(()); // No plugins array, nothing to remove
+    // Get plugin array
+    let Some(plugin) = config.get_mut("plugin").and_then(|p| p.as_array_mut()) else {
+        return Ok(()); // No plugin array, nothing to remove
     };
 
     // Remove all ecosystem packages
-    plugins.retain(|p| {
+    plugin.retain(|p| {
         p.as_str()
-            .map(|s| !PACKAGES.contains(&s))
+            .map(|s| !DEFAULT_PACKAGES.contains(&s))
             .unwrap_or(true)
     });
 

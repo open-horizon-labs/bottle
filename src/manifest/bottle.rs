@@ -11,6 +11,9 @@ pub struct BottleManifest {
     pub plugins: Vec<String>,
     #[serde(default)]
     pub prerequisites: HashMap<String, String>,
+    /// OpenCode plugin versions (package name -> version)
+    #[serde(default)]
+    pub opencode_plugins: HashMap<String, String>,
 }
 
 impl BottleManifest {

@@ -37,6 +37,10 @@ enum Commands {
         /// Show what would be done without making changes
         #[arg(long)]
         dry_run: bool,
+
+        /// Reinstall even if already installed
+        #[arg(short, long)]
+        force: bool,
     },
 
     /// Show current bottle status and installed tools
@@ -177,7 +181,7 @@ fn run() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Install { bottle, yes, dry_run } => commands::install::run(&bottle, yes, dry_run),
+        Commands::Install { bottle, yes, dry_run, force } => commands::install::run(&bottle, yes, dry_run, force),
         Commands::Status { check_updates } => commands::status::run(check_updates),
         Commands::Update { yes } => commands::update::run(yes),
         Commands::Switch { bottle, yes } => commands::switch::run(&bottle, yes),
