@@ -105,6 +105,15 @@ fn check_git_clean() -> Result<()> {
         .args(["status", "--porcelain"])
         .output()?;
 
+    // Check if git command succeeded (e.g., fails if not in a git repo)
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(BottleError::Other(format!(
+            "Git status check failed.\n{}\n\nMake sure you're in a git repository.",
+            stderr.trim()
+        )));
+    }
+
     let status = String::from_utf8_lossy(&output.stdout);
     if !status.trim().is_empty() {
         let files: Vec<&str> = status.lines().collect();
