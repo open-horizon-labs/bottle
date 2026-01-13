@@ -1,18 +1,26 @@
 //! Codex integration
 //!
 //! Installs/removes all Cloud Atlas AI skills for Codex (bottle, ba, wm, superego).
-//! Skill content is embedded at compile time from codex-skill/ directory.
+//! Skills are fetched from GitHub at runtime to allow updates without new binary releases.
 
 use crate::error::{BottleError, Result};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-// Embed skill files at compile time - codex-skill/ is the source of truth
-const BOTTLE_SKILL: &str = include_str!("../../codex-skill/SKILL.md");
-const BA_SKILL: &str = include_str!("../../codex-skill/ba/SKILL.md");
-const WM_SKILL: &str = include_str!("../../codex-skill/wm/SKILL.md");
-const SG_SKILL: &str = include_str!("../../codex-skill/sg/SKILL.md");
-const AGENTS_SNIPPET: &str = include_str!("../../codex-skill/AGENTS.md.snippet");
+const GITHUB_RAW_BASE: &str =
+    "https://raw.githubusercontent.com/open-horizon-labs/bottle/main/codex-skill";
+
+/// Fetch a skill file from GitHub
+fn fetch_skill(path: &str) -> Result<String> {
+    let url = format!("{}/{}", GITHUB_RAW_BASE, path);
+    reqwest::blocking::get(&url)
+        .and_then(|r| r.error_for_status())
+        .and_then(|r| r.text())
+        .map_err(|e| BottleError::InstallError {
+            tool: "codex integration".to_string(),
+            reason: format!("Failed to fetch {}: {}", path, e),
+        })
+}
 
 /// Get the Codex skills directory path
 fn skills_dir() -> Option<PathBuf> {
@@ -47,15 +55,21 @@ pub fn install() -> Result<()> {
         reason: format!("Failed to create skills directory: {}", e),
     })?;
 
-    // Install all skills
-    install_skill(&skills_path, "bottle", BOTTLE_SKILL)?;
-    install_skill(&skills_path, "ba", BA_SKILL)?;
-    install_skill(&skills_path, "wm", WM_SKILL)?;
-    install_skill(&skills_path, "sg", SG_SKILL)?;
+    // Fetch and install all skills from GitHub
+    let bottle_skill = fetch_skill("SKILL.md")?;
+    let ba_skill = fetch_skill("ba/SKILL.md")?;
+    let wm_skill = fetch_skill("wm/SKILL.md")?;
+    let sg_skill = fetch_skill("sg/SKILL.md")?;
+    let agents_snippet = fetch_skill("AGENTS.md.snippet")?;
+
+    install_skill(&skills_path, "bottle", &bottle_skill)?;
+    install_skill(&skills_path, "ba", &ba_skill)?;
+    install_skill(&skills_path, "wm", &wm_skill)?;
+    install_skill(&skills_path, "sg", &sg_skill)?;
 
     // Install AGENTS.md.snippet in bottle skill directory
     let bottle_path = skills_path.join("bottle");
-    fs::write(bottle_path.join("AGENTS.md.snippet"), AGENTS_SNIPPET).map_err(|e| {
+    fs::write(bottle_path.join("AGENTS.md.snippet"), &agents_snippet).map_err(|e| {
         BottleError::InstallError {
             tool: "codex integration".to_string(),
             reason: format!("Failed to write AGENTS.md.snippet: {}", e),
