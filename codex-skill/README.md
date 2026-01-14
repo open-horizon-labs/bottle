@@ -53,7 +53,7 @@ $sg review                # Get feedback at decision points
 
 ## What Gets Installed
 
-### Binaries (via Homebrew or Cargo)
+### Binaries (via Cargo or Homebrew)
 
 - `ba` - Task tracking (backlog automaton)
 - `wm` - Working memory
@@ -61,8 +61,8 @@ $sg review                # Get feedback at decision points
 
 Install via:
 ```bash
-brew tap oh-labs/tap && brew install ba wm superego
-# or: cargo install ba working-memory superego
+cargo install ba working-memory superego
+# or via Homebrew: brew install ba wm sg
 ```
 
 ### Skills

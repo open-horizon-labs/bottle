@@ -25,11 +25,11 @@ Add or remove platform integrations (OpenCode, Codex).
    ```
    The bottle CLI is not installed.
 
-   Install with Homebrew:
-     brew install oh-labs/tap/bottle
-
-   Or with Cargo:
+   Install with Cargo:
      cargo install bottle
+
+   Or with Homebrew (macOS):
+     brew install open-horizon-labs/homebrew-tap/bottle
 
    Then run this command again.
    ```

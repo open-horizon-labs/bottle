@@ -7,9 +7,16 @@ Bottle provides the complete Open Horizon Labs stack for **Claude Code**, **Open
 ## Quickstart
 
 ```bash
-brew tap open-horizon-labs/tap && brew install bottle
+# Install bottle CLI
+cargo install bottle
+# Or via Homebrew (macOS):
+# brew install open-horizon-labs/homebrew-tap/bottle
+
+# Install the tool stack (ba, wm, sg)
 bottle install stable
-bottle integrate claude-code  # or: codex, opencode
+
+# Integrate with your AI coding assistant
+bottle integrate claude_code  # or: opencode, codex
 ```
 
 Then in your project: `/bottle:init`
@@ -65,38 +72,26 @@ We use bottle tools to build Memex. Memex will be the finished product for knowl
 
 ## OpenCode Installation
 
-**One npm package, full stack:**
+**Recommended: Use bottle CLI**
 
 ```bash
-npm install @cloud-atlas-ai/bottle
+# Install bottle CLI first (see Quickstart above)
+bottle install stable
+bottle integrate opencode
 ```
 
-Add to your `opencode.json`:
+This adds the bottle ecosystem plugins to your `opencode.json`:
+- `@cloud-atlas-ai/bottle` - CLI wrapper and orchestration
+- `ba-opencode` - Task tracking
+- `wm-opencode` - Working memory
+- `superego-opencode` - Metacognition
 
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "plugin": ["@cloud-atlas-ai/bottle"]
-}
+**Note:** Restart OpenCode after integration to load the plugins.
+
+**Initialize in your project:**
 ```
-
-**Initialize** - Ask the AI to initialize the stack:
-- "use bottle-init to set up the full Open Horizon Labs stack"
-
-Bottle will automatically:
-- Add child plugins (ba-opencode, wm-opencode, superego-opencode) to opencode.json
-- Detect missing binaries (ba, wm, sg)
-- Offer to install them via homebrew or cargo
-- Initialize each tool
-- Set recommended defaults (e.g., superego pull mode)
-- Create AGENTS.md with usage guidance
-- Install convenience commands (superego-review, wm-dive-prep)
-
-**Note:** After bottle-init updates opencode.json, restart OpenCode to load the child plugins.
-
-**Convenience commands:**
-- `superego-review` - Run metacognitive review of current work
-- `wm-dive-prep` - Prepare a grounded dive session with context
+bottle-init
+```
 
 See [opencode-plugin/README.md](./opencode-plugin/README.md) for full OpenCode documentation.
 
@@ -104,97 +99,52 @@ See [opencode-plugin/README.md](./opencode-plugin/README.md) for full OpenCode d
 
 ## Claude Code Installation
 
-### 1. Add the Marketplace
+**Recommended: Use bottle CLI**
 
 ```bash
-claude plugin marketplace add cloud-atlas-ai/bottle
+# Install bottle CLI first (see Quickstart above)
+bottle install stable
+bottle integrate claude_code
 ```
 
-### 2. Install Plugins
+This installs the `bottle@open-horizon-labs` plugin which provides all `/bottle:*` commands.
 
-Install bottle and any tools you want:
-
-```bash
-# Core stack (recommended):
-claude plugin install bottle@bottle
-claude plugin install ba@bottle
-claude plugin install wm@bottle
-claude plugin install superego@bottle
-
-# Optional:
-claude plugin install datasphere@bottle
-claude plugin install oh-mcp@bottle
-claude plugin install miranda@bottle
+**Initialize in your project:**
 ```
-
-### 3. Initialize in Your Project
-
-Run the unified init command:
-
-```bash
-# In Claude Code:
 /bottle:init
 ```
 
-Bottle will automatically:
-- Detect and install missing binaries (ba, wm, sg) via homebrew or cargo
-- Initialize all tools
+This will:
+- Detect and install missing binaries (ba, wm, sg) via cargo or homebrew
+- Initialize tool directories (.ba/, .wm/, .superego/)
 - Set recommended defaults (e.g., superego pull mode)
 - Create/update AGENTS.md with tool guidance
-
-## Core Stack
-
-Start with these for immediate 10-100x leverage:
-
-```bash
-claude plugin marketplace add cloud-atlas-ai/bottle
-claude plugin install bottle@bottle
-claude plugin install ba@bottle
-claude plugin install wm@bottle
-claude plugin install superego@bottle
-```
-
-Then in your project:
-```bash
-/bottle:init
-```
-
-That's it - one command initializes everything with recommended defaults.
 
 ---
 
 ## Codex Installation
 
-**Install the skill:**
+**Recommended: Use bottle CLI**
 
 ```bash
-mkdir -p ~/.codex/skills/bottle
-curl -fsSL -o ~/.codex/skills/bottle/SKILL.md \
-  https://raw.githubusercontent.com/open-horizon-labs/bottle/main/codex-skill/SKILL.md
-curl -fsSL -o ~/.codex/skills/bottle/AGENTS.md.snippet \
-  https://raw.githubusercontent.com/open-horizon-labs/bottle/main/codex-skill/AGENTS.md.snippet
+# Install bottle CLI first (see Quickstart above)
+bottle install stable
+bottle integrate codex
 ```
 
-**Initialize in Codex:**
+This installs all Open Horizon Labs skills (bottle, ba, wm, sg) to `~/.codex/skills/`.
 
+**Initialize in Codex:**
 ```
 $bottle init
 ```
 
-Bottle will automatically:
-- Install binaries (ba, wm, sg) via Homebrew or Cargo
-- Install child skills ($ba, $wm, $superego)
-- Initialize tool directories (.ba/, .wm/, .superego/)
-- Set recommended defaults (superego pull mode)
-- Create AGENTS.md with usage protocols
-
 **Usage:**
-
 ```
 $bottle dive fix       # Start a bug fix session
 $bottle dive plan      # Start a planning session
 $ba status             # Check your tasks
-$superego              # Get feedback at decision points
+$sg review             # Get feedback at decision points
 ```
 
 **Note:** Codex skills are advisory-only (no event hooks). The guidance in AGENTS.md tells Codex when to invoke skills.
@@ -238,11 +188,10 @@ Telegram bot for running Claude sessions remotely.
 ## Updating
 
 ```bash
-claude plugin marketplace update bottle
-claude plugin update superego@bottle
-claude plugin update wm@bottle
-# ... etc
+bottle update
 ```
+
+This updates all tools to the latest versions in the current bottle.
 
 ## Individual Repos
 
@@ -266,14 +215,15 @@ The Claude Code plugins in `.claude-plugin/plugins/` are synced from their sourc
 ### Quick Setup
 
 ```bash
-# 1. Install bottle
-brew tap open-horizon-labs/tap && brew install bottle
+# 1. Install bottle CLI
+cargo install bottle
+# Or via Homebrew: brew install open-horizon-labs/homebrew-tap/bottle
 
 # 2. Install the stable tool stack
 bottle install stable
 
 # 3. Integrate with your platform
-bottle integrate claude-code   # For Claude Code
+bottle integrate claude_code   # For Claude Code
 bottle integrate codex         # For Codex
 bottle integrate opencode      # For OpenCode
 ```
@@ -289,7 +239,7 @@ bottle integrate opencode      # For OpenCode
 - `oh-mcp` - Open Horizons MCP server for strategic alignment
 
 **Platform integrations add:**
-- Claude Code: `/bottle:*`, `/ba:*`, `/wm:*`, `/superego:*` commands
+- Claude Code: `/bottle:*` commands (from bottle@open-horizon-labs plugin)
 - Codex: `$bottle`, `$ba`, `$wm`, `$sg` skills
 - OpenCode: `bottle-*`, `ba-*`, `wm-*`, `superego-*` tools
 
@@ -316,20 +266,20 @@ This initializes `.ba/`, `.wm/`, `.superego/` and creates `AGENTS.md`.
 Bottle auto-detects installed platforms:
 - Claude Code: `~/.claude/` exists
 - Codex: `~/.codex/` exists
-- OpenCode: `opencode.json` or `~/.opencode/` exists
+- OpenCode: `~/.config/opencode/` or `opencode.json` exists
 
 Run `bottle integrate --list` to see detected platforms.
 
 ### Troubleshooting
 
-**No brew?** Install Homebrew first:
+**No cargo?** Install Rust first:
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-**Cargo alternative** (if brew unavailable):
+**Homebrew alternative** (macOS):
 ```bash
-cargo install bottle
+brew install open-horizon-labs/homebrew-tap/bottle
 ```
 
 ## License

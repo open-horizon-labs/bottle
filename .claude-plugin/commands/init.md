@@ -14,18 +14,18 @@ For each tool (ba, wm, sg), check if binary exists:
 
 2. **Offer installation:**
 
-   If **Homebrew** available (preferred for macOS):
-   ```bash
-   brew install cloud-atlas-ai/ba/ba
-   brew install cloud-atlas-ai/wm/wm
-   brew install cloud-atlas-ai/superego/superego
-   ```
-
-   If **Cargo** available:
+   If **Cargo** available (preferred):
    ```bash
    cargo install ba
    cargo install working-memory  # (published as 'working-memory', provides 'wm' binary)
    cargo install superego
+   ```
+
+   If **Homebrew** available (macOS):
+   ```bash
+   brew install ba
+   brew install wm
+   brew install sg
    ```
 
    If **neither available**, offer to install a package manager:
