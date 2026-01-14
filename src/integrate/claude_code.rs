@@ -9,6 +9,8 @@ use std::process::Command;
 const MARKETPLACE_REPO: &str = "open-horizon-labs/bottle";
 /// Marketplace name (used in plugin install commands - must match marketplace.json "name")
 const MARKETPLACE_NAME: &str = "open-horizon-labs";
+/// Old marketplace name (for migration cleanup)
+const OLD_MARKETPLACE_NAME: &str = "bottle";
 
 /// All plugins to install (bottle + child plugins)
 const ALL_PLUGINS: &[&str] = &["bottle", "ba", "superego", "wm", "oh-mcp", "miranda"];
@@ -93,9 +95,56 @@ fn ensure_marketplace() -> Result<()> {
     }
 }
 
+/// Clean up old @bottle marketplace entries from installed_plugins.json
+/// This fixes the "Plugin not found in marketplace 'bottle'" error for users
+/// who had plugins installed before the marketplace was renamed to 'open-horizon-labs'
+fn cleanup_old_marketplace_entries() {
+    let path = match dirs::home_dir() {
+        Some(h) => h.join(".claude/plugins/installed_plugins.json"),
+        None => return,
+    };
+
+    let content = match std::fs::read_to_string(&path) {
+        Ok(c) => c,
+        Err(_) => return,
+    };
+
+    let mut json: serde_json::Value = match serde_json::from_str(&content) {
+        Ok(j) => j,
+        Err(_) => return,
+    };
+
+    // Get the plugins object and remove old @bottle entries
+    if let Some(plugins) = json.get_mut("plugins").and_then(|p| p.as_object_mut()) {
+        let old_keys: Vec<String> = plugins
+            .keys()
+            .filter(|k| k.ends_with(&format!("@{}", OLD_MARKETPLACE_NAME)))
+            .cloned()
+            .collect();
+
+        if !old_keys.is_empty() {
+            eprintln!(
+                "Cleaning up old marketplace entries: {}",
+                old_keys.join(", ")
+            );
+            for key in old_keys {
+                plugins.remove(&key);
+            }
+
+            // Write the cleaned JSON back
+            if let Ok(new_content) = serde_json::to_string_pretty(&json) {
+                let _ = std::fs::write(&path, new_content);
+            }
+        }
+    }
+}
+
 /// Install all bottle plugins for Claude Code
 pub fn install() -> Result<()> {
-    // First, ensure the marketplace is added
+    // Clean up old @bottle entries that cause "Plugin not found in marketplace 'bottle'" errors
+    cleanup_old_marketplace_entries();
+
+    // Ensure the marketplace is added
     ensure_marketplace()?;
 
     let mut failures: Vec<String> = Vec::new();
