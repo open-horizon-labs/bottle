@@ -7,9 +7,9 @@ Bottle provides the complete Open Horizon Labs stack for **Claude Code**, **Open
 ## Quickstart
 
 ```bash
-brew tap open-horizon-labs/tap && brew install bottle
+brew tap open-horizon-labs/homebrew-tap && brew install bottle
 bottle install stable
-bottle integrate claude-code  # or: codex, opencode
+bottle integrate claude_code  # or: codex, opencode
 ```
 
 Then in your project: `/bottle:init`
@@ -267,13 +267,13 @@ The Claude Code plugins in `.claude-plugin/plugins/` are synced from their sourc
 
 ```bash
 # 1. Install bottle
-brew tap open-horizon-labs/tap && brew install bottle
+brew tap open-horizon-labs/homebrew-tap && brew install bottle
 
 # 2. Install the stable tool stack
 bottle install stable
 
 # 3. Integrate with your platform
-bottle integrate claude-code   # For Claude Code
+bottle integrate claude_code   # For Claude Code
 bottle integrate codex         # For Codex
 bottle integrate opencode      # For OpenCode
 ```

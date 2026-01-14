@@ -61,7 +61,7 @@ $sg review                # Get feedback at decision points
 
 Install via:
 ```bash
-brew tap oh-labs/tap && brew install ba wm superego
+brew tap open-horizon-labs/homebrew-tap && brew install ba wm superego
 # or: cargo install ba working-memory superego
 ```
 
