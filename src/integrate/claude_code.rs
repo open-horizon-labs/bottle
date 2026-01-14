@@ -1,13 +1,15 @@
 //! Claude Code integration
 //!
-//! Installs/removes the bottle plugin for Claude Code.
+//! Installs/removes the bottle plugins for Claude Code.
 
 use crate::error::{BottleError, Result};
 use std::process::Command;
 
-/// Marketplace and plugin name for Claude Code integration
+/// Marketplace name for Claude Code integration
 const MARKETPLACE: &str = "open-horizon-labs";
-const PLUGIN: &str = "bottle";
+
+/// All plugins to install (bottle + child plugins)
+const ALL_PLUGINS: &[&str] = &["bottle", "ba", "superego", "wm", "oh-mcp", "miranda"];
 
 /// Check if Claude Code is detected (has config directory)
 pub fn is_detected() -> bool {
@@ -16,7 +18,7 @@ pub fn is_detected() -> bool {
         .unwrap_or(false)
 }
 
-/// Check if the bottle plugin is installed in Claude Code
+/// Check if the bottle plugins are installed in Claude Code
 #[allow(dead_code)]
 pub fn is_installed() -> bool {
     Command::new("claude")
@@ -24,57 +26,75 @@ pub fn is_installed() -> bool {
         .output()
         .map(|output| {
             let stdout = String::from_utf8_lossy(&output.stdout);
-            // AIDEV-NOTE: This checks for the plugin name in the list output.
-            // The exact format depends on claude CLI output. May need adjustment.
-            stdout.contains(PLUGIN) && stdout.contains(MARKETPLACE)
+            // Check if main bottle plugin is installed
+            stdout.contains("bottle") && stdout.contains(MARKETPLACE)
         })
         .unwrap_or(false)
 }
 
-/// Install the bottle plugin for Claude Code
+/// Install all bottle plugins for Claude Code
 pub fn install() -> Result<()> {
-    let status = Command::new("claude")
-        .args([
-            "plugin",
-            "install",
-            &format!("{}@{}", PLUGIN, MARKETPLACE),
-        ])
-        .status()
-        .map_err(|e| BottleError::InstallError {
-            tool: "claude_code integration".to_string(),
-            reason: format!("Failed to run claude plugin install: {}", e),
-        })?;
+    let mut failures: Vec<String> = Vec::new();
 
-    if status.success() {
+    for plugin in ALL_PLUGINS {
+        let status = Command::new("claude")
+            .args([
+                "plugin",
+                "install",
+                &format!("{}@{}", plugin, MARKETPLACE),
+            ])
+            .status()
+            .map_err(|e| BottleError::InstallError {
+                tool: format!("claude_code integration ({})", plugin),
+                reason: format!("Failed to run claude plugin install: {}", e),
+            })?;
+
+        if !status.success() {
+            failures.push(plugin.to_string());
+        }
+    }
+
+    if failures.is_empty() {
         Ok(())
     } else {
         Err(BottleError::InstallError {
             tool: "claude_code integration".to_string(),
-            reason: format!("claude plugin install exited with code {}", status),
+            reason: format!("Failed to install plugins: {}", failures.join(", ")),
         })
     }
 }
 
-/// Remove the bottle plugin from Claude Code
+/// Remove all bottle plugins from Claude Code
 pub fn remove() -> Result<()> {
-    let status = Command::new("claude")
-        .args([
-            "plugin",
-            "uninstall",
-            &format!("{}@{}", PLUGIN, MARKETPLACE),
-        ])
-        .status()
-        .map_err(|e| BottleError::InstallError {
-            tool: "claude_code integration".to_string(),
-            reason: format!("Failed to run claude plugin uninstall: {}", e),
-        })?;
+    let mut failures: Vec<String> = Vec::new();
 
-    if status.success() {
-        Ok(())
-    } else {
+    // Remove in reverse order (children first, then bottle)
+    for plugin in ALL_PLUGINS.iter().rev() {
+        let status = Command::new("claude")
+            .args([
+                "plugin",
+                "uninstall",
+                &format!("{}@{}", plugin, MARKETPLACE),
+            ])
+            .status()
+            .map_err(|e| BottleError::InstallError {
+                tool: format!("claude_code integration ({})", plugin),
+                reason: format!("Failed to run claude plugin uninstall: {}", e),
+            })?;
+
+        if !status.success() {
+            // Don't fail on uninstall errors - plugin might not have been installed
+            failures.push(plugin.to_string());
+        }
+    }
+
+    // Only fail if ALL plugins failed to uninstall
+    if failures.len() == ALL_PLUGINS.len() {
         Err(BottleError::InstallError {
             tool: "claude_code integration".to_string(),
-            reason: format!("claude plugin uninstall exited with code {}", status),
+            reason: "Failed to uninstall any plugins".to_string(),
         })
+    } else {
+        Ok(())
     }
 }
