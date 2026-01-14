@@ -141,7 +141,7 @@ pub fn remove() -> Result<()> {
                 &format!("{}@{}", plugin, MARKETPLACE_NAME),
             ])
             .status()
-            .map_err(|e| BottleError::InstallError {
+            .map_err(|e| BottleError::UninstallError {
                 tool: format!("claude_code integration ({})", plugin),
                 reason: format!("Failed to run claude plugin uninstall: {}", e),
             })?;
@@ -162,7 +162,7 @@ pub fn remove() -> Result<()> {
 
     // Only fail if ALL plugins failed to uninstall
     if failures.len() == ALL_PLUGINS.len() {
-        Err(BottleError::InstallError {
+        Err(BottleError::UninstallError {
             tool: "claude_code integration".to_string(),
             reason: "Failed to uninstall any plugins".to_string(),
         })
