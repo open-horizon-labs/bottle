@@ -32,8 +32,46 @@ pub fn is_installed() -> bool {
         .unwrap_or(false)
 }
 
+/// Add the marketplace if not already added
+fn ensure_marketplace() -> Result<()> {
+    // Check if marketplace is already added
+    let output = Command::new("claude")
+        .args(["plugin", "marketplace", "list"])
+        .output()
+        .map_err(|e| BottleError::InstallError {
+            tool: "claude_code integration".to_string(),
+            reason: format!("Failed to list marketplaces: {}", e),
+        })?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    if stdout.contains(MARKETPLACE) {
+        return Ok(());
+    }
+
+    // Add the marketplace
+    let status = Command::new("claude")
+        .args(["plugin", "marketplace", "add", MARKETPLACE])
+        .status()
+        .map_err(|e| BottleError::InstallError {
+            tool: "claude_code integration".to_string(),
+            reason: format!("Failed to add marketplace: {}", e),
+        })?;
+
+    if status.success() {
+        Ok(())
+    } else {
+        Err(BottleError::InstallError {
+            tool: "claude_code integration".to_string(),
+            reason: format!("Failed to add marketplace '{}'", MARKETPLACE),
+        })
+    }
+}
+
 /// Install all bottle plugins for Claude Code
 pub fn install() -> Result<()> {
+    // First, ensure the marketplace is added
+    ensure_marketplace()?;
+
     let mut failures: Vec<String> = Vec::new();
 
     for plugin in ALL_PLUGINS {
