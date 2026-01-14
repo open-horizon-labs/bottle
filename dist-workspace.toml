@@ -15,3 +15,5 @@ tap = "open-horizon-labs/homebrew-tap"
 targets = ["aarch64-apple-darwin", "x86_64-apple-darwin"]
 # Publish jobs to run in CI
 publish-jobs = ["homebrew"]
+# Build artifacts on PRs so we can test before shipping
+pr-run-mode = "upload"
