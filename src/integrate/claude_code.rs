@@ -7,7 +7,7 @@ use std::process::Command;
 
 /// Marketplace source (owner/repo format for GitHub)
 const MARKETPLACE_SOURCE: &str = "open-horizon-labs/bottle";
-/// Marketplace name (used in plugin install commands)
+/// Marketplace name (used in plugin install commands - must match marketplace.json "name")
 const MARKETPLACE: &str = "open-horizon-labs";
 
 /// All plugins to install (bottle + child plugins)
