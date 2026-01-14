@@ -5,7 +5,9 @@
 use crate::error::{BottleError, Result};
 use std::process::Command;
 
-/// Marketplace name for Claude Code integration
+/// Marketplace source (owner/repo format for GitHub)
+const MARKETPLACE_SOURCE: &str = "open-horizon-labs/bottle";
+/// Marketplace name (used in plugin install commands)
 const MARKETPLACE: &str = "open-horizon-labs";
 
 /// All plugins to install (bottle + child plugins)
@@ -44,13 +46,13 @@ fn ensure_marketplace() -> Result<()> {
         })?;
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    if stdout.contains(MARKETPLACE) {
+    if stdout.contains(MARKETPLACE) || stdout.contains(MARKETPLACE_SOURCE) {
         return Ok(());
     }
 
-    // Add the marketplace
+    // Add the marketplace (using owner/repo format)
     let status = Command::new("claude")
-        .args(["plugin", "marketplace", "add", MARKETPLACE])
+        .args(["plugin", "marketplace", "add", MARKETPLACE_SOURCE])
         .status()
         .map_err(|e| BottleError::InstallError {
             tool: "claude_code integration".to_string(),
@@ -62,7 +64,7 @@ fn ensure_marketplace() -> Result<()> {
     } else {
         Err(BottleError::InstallError {
             tool: "claude_code integration".to_string(),
-            reason: format!("Failed to add marketplace '{}'", MARKETPLACE),
+            reason: format!("Failed to add marketplace '{}'", MARKETPLACE_SOURCE),
         })
     }
 }
