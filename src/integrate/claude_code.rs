@@ -21,34 +21,41 @@ pub fn is_detected() -> bool {
 }
 
 /// Check if ALL bottle plugins are installed in Claude Code
+/// Reads ~/.claude/plugins/installed_plugins.json directly
 pub fn is_installed() -> bool {
-    Command::new("claude")
-        .args(["plugin", "list"])
-        .output()
-        .map(|output| {
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            // Check if ALL plugins are installed (not just bottle)
-            ALL_PLUGINS.iter().all(|plugin| {
-                stdout.contains(&format!("{}@{}", plugin, MARKETPLACE))
-            })
+    let installed = get_installed_plugins();
+    ALL_PLUGINS.iter().all(|plugin| {
+        let key = format!("{}@{}", plugin, MARKETPLACE);
+        installed.contains(&key)
+    })
+}
+
+/// Get list of currently installed plugin keys from Claude Code
+fn get_installed_plugins() -> Vec<String> {
+    dirs::home_dir()
+        .map(|h| h.join(".claude/plugins/installed_plugins.json"))
+        .and_then(|path| std::fs::read_to_string(path).ok())
+        .and_then(|content| serde_json::from_str::<serde_json::Value>(&content).ok())
+        .and_then(|json| {
+            json.get("plugins")
+                .and_then(|p| p.as_object())
+                .map(|plugins| plugins.keys().cloned().collect())
         })
-        .unwrap_or(false)
+        .unwrap_or_default()
 }
 
 /// Get list of missing plugins (not currently installed)
+#[allow(dead_code)]
 pub fn get_missing_plugins() -> Vec<String> {
-    Command::new("claude")
-        .args(["plugin", "list"])
-        .output()
-        .map(|output| {
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            ALL_PLUGINS
-                .iter()
-                .filter(|plugin| !stdout.contains(&format!("{}@{}", plugin, MARKETPLACE)))
-                .map(|s| s.to_string())
-                .collect()
+    let installed = get_installed_plugins();
+    ALL_PLUGINS
+        .iter()
+        .filter(|plugin| {
+            let key = format!("{}@{}", plugin, MARKETPLACE);
+            !installed.contains(&key)
         })
-        .unwrap_or_else(|_| ALL_PLUGINS.iter().map(|s| s.to_string()).collect())
+        .map(|s| s.to_string())
+        .collect()
 }
 
 /// Add the marketplace if not already added
