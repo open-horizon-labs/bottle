@@ -103,7 +103,7 @@ bottle/
   "type": "binary",
   "install": {
     "cargo": "cargo install superego@{version}",
-    "brew": "brew install oh-labs/tap/superego"
+    "brew": "brew install open-horizon-labs/homebrew-tap/superego"
   },
   "check": "sg --version",
   "homepage": "https://github.com/cloud-atlas-ai/superego"
@@ -719,7 +719,7 @@ Bottle is implemented as a Rust CLI binary, consistent with ba, superego, wm, an
 ```bash
 cargo install bottle
 # or
-brew install oh-labs/tap/bottle
+brew install open-horizon-labs/homebrew-tap/bottle
 ```
 
 ### Command Mapping
@@ -751,7 +751,7 @@ Run `bottle install` in the terminal and follow the prompts.
 
 If bottle is not installed, offer to install it:
 - cargo install bottle
-- brew install oh-labs/tap/bottle
+- brew install open-horizon-labs/homebrew-tap/bottle
 ```
 
 **OpenCode plugin** (`opencode-plugin/src/index.ts`):

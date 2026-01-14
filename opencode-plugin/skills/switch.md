@@ -23,7 +23,7 @@ bottle-switch <bottle-name> [-y]
    The bottle CLI is not installed.
 
    Install with Homebrew:
-     brew install oh-labs/tap/bottle
+     brew install open-horizon-labs/homebrew-tap/bottle
 
    Or with Cargo:
      cargo install bottle

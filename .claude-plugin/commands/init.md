@@ -16,9 +16,8 @@ For each tool (ba, wm, sg), check if binary exists:
 
    If **Homebrew** available (preferred for macOS):
    ```bash
-   brew install cloud-atlas-ai/ba/ba
-   brew install cloud-atlas-ai/wm/wm
-   brew install cloud-atlas-ai/superego/superego
+   brew tap open-horizon-labs/homebrew-tap
+   brew install ba wm sg
    ```
 
    If **Cargo** available:

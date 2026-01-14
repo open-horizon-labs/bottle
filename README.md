@@ -7,9 +7,9 @@ Bottle provides the complete Open Horizon Labs stack for **Claude Code**, **Open
 ## Quickstart
 
 ```bash
-brew tap open-horizon-labs/tap && brew install bottle
+brew tap open-horizon-labs/homebrew-tap && brew install bottle
 bottle install stable
-bottle integrate claude-code  # or: codex, opencode
+bottle integrate claude_code  # or: codex, opencode
 ```
 
 Then in your project: `/bottle:init`
@@ -68,7 +68,7 @@ We use bottle tools to build Memex. Memex will be the finished product for knowl
 **One npm package, full stack:**
 
 ```bash
-npm install @cloud-atlas-ai/bottle
+npm install @open-horizon-labs/bottle
 ```
 
 Add to your `opencode.json`:
@@ -76,7 +76,7 @@ Add to your `opencode.json`:
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["@cloud-atlas-ai/bottle"]
+  "plugin": ["@open-horizon-labs/bottle"]
 }
 ```
 
@@ -107,7 +107,7 @@ See [opencode-plugin/README.md](./opencode-plugin/README.md) for full OpenCode d
 ### 1. Add the Marketplace
 
 ```bash
-claude plugin marketplace add cloud-atlas-ai/bottle
+claude plugin marketplace add open-horizon-labs/bottle
 ```
 
 ### 2. Install Plugins
@@ -116,15 +116,15 @@ Install bottle and any tools you want:
 
 ```bash
 # Core stack (recommended):
-claude plugin install bottle@bottle
-claude plugin install ba@bottle
-claude plugin install wm@bottle
-claude plugin install superego@bottle
+claude plugin install bottle@open-horizon-labs
+claude plugin install ba@open-horizon-labs
+claude plugin install wm@open-horizon-labs
+claude plugin install superego@open-horizon-labs
 
 # Optional:
-claude plugin install datasphere@bottle
-claude plugin install oh-mcp@bottle
-claude plugin install miranda@bottle
+claude plugin install datasphere@open-horizon-labs
+claude plugin install oh-mcp@open-horizon-labs
+claude plugin install miranda@open-horizon-labs
 ```
 
 ### 3. Initialize in Your Project
@@ -147,11 +147,11 @@ Bottle will automatically:
 Start with these for immediate 10-100x leverage:
 
 ```bash
-claude plugin marketplace add cloud-atlas-ai/bottle
-claude plugin install bottle@bottle
-claude plugin install ba@bottle
-claude plugin install wm@bottle
-claude plugin install superego@bottle
+claude plugin marketplace add open-horizon-labs/bottle
+claude plugin install bottle@open-horizon-labs
+claude plugin install ba@open-horizon-labs
+claude plugin install wm@open-horizon-labs
+claude plugin install superego@open-horizon-labs
 ```
 
 Then in your project:
@@ -238,9 +238,9 @@ Telegram bot for running Claude sessions remotely.
 ## Updating
 
 ```bash
-claude plugin marketplace update bottle
-claude plugin update superego@bottle
-claude plugin update wm@bottle
+claude plugin marketplace update open-horizon-labs
+claude plugin update superego@open-horizon-labs
+claude plugin update wm@open-horizon-labs
 # ... etc
 ```
 
@@ -267,13 +267,13 @@ The Claude Code plugins in `.claude-plugin/plugins/` are synced from their sourc
 
 ```bash
 # 1. Install bottle
-brew tap open-horizon-labs/tap && brew install bottle
+brew tap open-horizon-labs/homebrew-tap && brew install bottle
 
 # 2. Install the stable tool stack
 bottle install stable
 
 # 3. Integrate with your platform
-bottle integrate claude-code   # For Claude Code
+bottle integrate claude_code   # For Claude Code
 bottle integrate codex         # For Codex
 bottle integrate opencode      # For OpenCode
 ```

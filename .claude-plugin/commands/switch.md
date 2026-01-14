@@ -23,7 +23,7 @@ Switch to a different bottle.
    The bottle CLI is not installed.
 
    Install with Homebrew:
-     brew install oh-labs/tap/bottle
+     brew install open-horizon-labs/homebrew-tap/bottle
 
    Or with Cargo:
      cargo install bottle

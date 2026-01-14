@@ -15,6 +15,9 @@ pub enum BottleError {
     #[error("Tool installation failed: {tool} - {reason}")]
     InstallError { tool: String, reason: String },
 
+    #[error("Tool uninstall failed: {tool} - {reason}")]
+    UninstallError { tool: String, reason: String },
+
     #[error("No bottle installed. Run `bottle install` first.")]
     NoBottleInstalled,
 
