@@ -14,18 +14,18 @@ For each tool (ba, wm, sg), check if binary exists:
 
 2. **Offer installation:**
 
-   If **Homebrew** available (preferred for macOS):
-   ```bash
-   brew install cloud-atlas-ai/ba/ba
-   brew install cloud-atlas-ai/wm/wm
-   brew install cloud-atlas-ai/superego/superego
-   ```
-
-   If **Cargo** available:
+   If **Cargo** available (preferred):
    ```bash
    cargo install ba
    cargo install working-memory  # (published as 'working-memory', provides 'wm' binary)
    cargo install superego
+   ```
+
+   If **Homebrew** available (macOS):
+   ```bash
+   brew install ba
+   brew install wm
+   brew install sg
    ```
 
    If **neither available**, offer to install a package manager:
@@ -78,7 +78,7 @@ Create AGENTS.md with guidance for all initialized tools:
 ## Step 5: Confirm completion
 
 Tell user:
-```bash
+```
 ✓ Bottle initialization complete
 
 Initialized:
@@ -90,15 +90,15 @@ Configuration:
   • superego mode: pull (recommended)
   • AGENTS.md: Updated with tool guidance
 
-Quick start:
-  ba create "Your first task" -t task
-  ba ready
-  ba claim <id> --session $SESSION_ID
+What's next?
+  /bottle:getting-started  - Learn how to use the tools
+  /bottle:workflow         - Get guided workflow for your task
+  /dive-prep               - Start your first session
 
-Tools work together:
-  • ba tracks your work
-  • superego reviews before commits (/superego:review)
-  • wm captures learnings automatically
+Quick commands:
+  /ba:status         - See your tasks
+  /superego:review   - Get feedback on your work
+  /dive-prep         - Prepare session context
 ```
 
 ---

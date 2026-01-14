@@ -138,8 +138,8 @@ else
     # Look for binary in artifact dir
     BOTTLE_BIN=$(find "$ARTIFACT_DIR" -name "bottle" -type f 2>/dev/null | head -1)
     if [[ -z "$BOTTLE_BIN" ]]; then
-        # Try to extract from tarball
-        TARBALL=$(find "$ARTIFACT_DIR" -name "*.tar.*" 2>/dev/null | head -1)
+        # Try to extract from tarball (exclude .sha256 checksum files)
+        TARBALL=$(find "$ARTIFACT_DIR" -name "*.tar.xz" -o -name "*.tar.gz" 2>/dev/null | grep -v '.sha256' | head -1)
         if [[ -n "$TARBALL" ]]; then
             echo "==> Extracting from $TARBALL..."
             EXTRACT_DIR="$DOWNLOAD_DIR/extracted"
