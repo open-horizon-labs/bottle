@@ -86,6 +86,12 @@ fn show_integrations(state: &BottleState) -> Result<()> {
 
 /// Add a platform integration
 fn add_integration(state: &BottleState, platform: Platform, dry_run: bool) -> Result<()> {
+    // For Claude Code: clean up old @bottle marketplace entries first
+    // This fixes the "Plugin not found in marketplace 'bottle'" error
+    if platform == Platform::ClaudeCode {
+        crate::integrate::claude_code::cleanup_old_marketplace_entries();
+    }
+
     // Check if actually installed (not just in state) - handles partial installs
     let actually_installed = integrate::is_installed(platform);
     let in_state = state.integrations.contains_key(platform.key());

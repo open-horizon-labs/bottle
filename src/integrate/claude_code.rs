@@ -95,14 +95,25 @@ fn ensure_marketplace() -> Result<()> {
     }
 }
 
-/// Clean up old @bottle marketplace entries from installed_plugins.json
+/// Clean up old @bottle marketplace entries from installed_plugins.json and settings.json
 /// This fixes the "Plugin not found in marketplace 'bottle'" error for users
 /// who had plugins installed before the marketplace was renamed to 'open-horizon-labs'
-fn cleanup_old_marketplace_entries() {
-    let path = match dirs::home_dir() {
-        Some(h) => h.join(".claude/plugins/installed_plugins.json"),
+pub fn cleanup_old_marketplace_entries() {
+    let home = match dirs::home_dir() {
+        Some(h) => h,
         None => return,
     };
+
+    // Clean up installed_plugins.json
+    cleanup_installed_plugins(&home);
+
+    // Clean up settings.json (enabledPlugins)
+    cleanup_settings(&home);
+}
+
+/// Remove old @bottle entries from installed_plugins.json
+fn cleanup_installed_plugins(home: &std::path::Path) {
+    let path = home.join(".claude/plugins/installed_plugins.json");
 
     let content = match std::fs::read_to_string(&path) {
         Ok(c) => c,
@@ -114,7 +125,6 @@ fn cleanup_old_marketplace_entries() {
         Err(_) => return,
     };
 
-    // Get the plugins object and remove old @bottle entries
     if let Some(plugins) = json.get_mut("plugins").and_then(|p| p.as_object_mut()) {
         let old_keys: Vec<String> = plugins
             .keys()
@@ -124,14 +134,53 @@ fn cleanup_old_marketplace_entries() {
 
         if !old_keys.is_empty() {
             eprintln!(
-                "Cleaning up old marketplace entries: {}",
+                "Cleaning up old installed_plugins entries: {}",
                 old_keys.join(", ")
             );
             for key in old_keys {
                 plugins.remove(&key);
             }
 
-            // Write the cleaned JSON back
+            if let Ok(new_content) = serde_json::to_string_pretty(&json) {
+                let _ = std::fs::write(&path, new_content);
+            }
+        }
+    }
+}
+
+/// Remove old @bottle entries from settings.json enabledPlugins
+fn cleanup_settings(home: &std::path::Path) {
+    let path = home.join(".claude/settings.json");
+
+    let content = match std::fs::read_to_string(&path) {
+        Ok(c) => c,
+        Err(_) => return,
+    };
+
+    let mut json: serde_json::Value = match serde_json::from_str(&content) {
+        Ok(j) => j,
+        Err(_) => return,
+    };
+
+    if let Some(enabled) = json
+        .get_mut("enabledPlugins")
+        .and_then(|p| p.as_object_mut())
+    {
+        let old_keys: Vec<String> = enabled
+            .keys()
+            .filter(|k| k.ends_with(&format!("@{}", OLD_MARKETPLACE_NAME)))
+            .cloned()
+            .collect();
+
+        if !old_keys.is_empty() {
+            eprintln!(
+                "Cleaning up old settings entries: {}",
+                old_keys.join(", ")
+            );
+            for key in old_keys {
+                enabled.remove(&key);
+            }
+
             if let Ok(new_content) = serde_json::to_string_pretty(&json) {
                 let _ = std::fs::write(&path, new_content);
             }
