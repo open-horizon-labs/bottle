@@ -10,7 +10,7 @@ Superego provides metacognitive review for AI sessions, catching premature commi
 All commands invoke the `sg` CLI. If sg is not installed, show:
 ```
 sg not installed. Install with:
-  brew tap oh-labs/tap && brew install superego
+  brew tap open-horizon-labs/homebrew-tap && brew install superego
   # or: cargo install superego
 ```
 

@@ -15,7 +15,7 @@ Bottle is a meta-package that orchestrates the Open Horizon Labs tools:
 These commands invoke the bottle CLI. If bottle is not installed, show:
 ```
 bottle not installed. Install with:
-  brew tap oh-labs/tap && brew install bottle
+  brew tap open-horizon-labs/homebrew-tap && brew install bottle
   # or: cargo install bottle
 ```
 

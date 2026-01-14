@@ -16,9 +16,8 @@ For each tool (ba, wm, sg), check if binary exists:
 
    If **Homebrew** available (preferred for macOS):
    ```bash
-   brew install ba
-   brew install wm
-   brew install sg
+   brew tap open-horizon-labs/homebrew-tap
+   brew install ba wm sg
    ```
 
    If **Cargo** available:

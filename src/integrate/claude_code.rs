@@ -5,10 +5,10 @@
 use crate::error::{BottleError, Result};
 use std::process::Command;
 
-/// Marketplace source (owner/repo format for GitHub)
-const MARKETPLACE_SOURCE: &str = "open-horizon-labs/bottle";
+/// Marketplace repo (owner/repo format for GitHub)
+const MARKETPLACE_REPO: &str = "open-horizon-labs/bottle";
 /// Marketplace name (used in plugin install commands - must match marketplace.json "name")
-const MARKETPLACE: &str = "open-horizon-labs";
+const MARKETPLACE_NAME: &str = "open-horizon-labs";
 
 /// All plugins to install (bottle + child plugins)
 const ALL_PLUGINS: &[&str] = &["bottle", "ba", "superego", "wm", "oh-mcp", "miranda"];
@@ -25,7 +25,7 @@ pub fn is_detected() -> bool {
 pub fn is_installed() -> bool {
     let installed = get_installed_plugins();
     ALL_PLUGINS.iter().all(|plugin| {
-        let key = format!("{}@{}", plugin, MARKETPLACE);
+        let key = format!("{}@{}", plugin, MARKETPLACE_NAME);
         installed.contains(&key)
     })
 }
@@ -51,7 +51,7 @@ pub fn get_missing_plugins() -> Vec<String> {
     ALL_PLUGINS
         .iter()
         .filter(|plugin| {
-            let key = format!("{}@{}", plugin, MARKETPLACE);
+            let key = format!("{}@{}", plugin, MARKETPLACE_NAME);
             !installed.contains(&key)
         })
         .map(|s| s.to_string())
@@ -70,13 +70,13 @@ fn ensure_marketplace() -> Result<()> {
         })?;
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    if stdout.contains(MARKETPLACE) || stdout.contains(MARKETPLACE_SOURCE) {
+    if stdout.contains(MARKETPLACE_NAME) || stdout.contains(MARKETPLACE_REPO) {
         return Ok(());
     }
 
     // Add the marketplace (using owner/repo format)
     let status = Command::new("claude")
-        .args(["plugin", "marketplace", "add", MARKETPLACE_SOURCE])
+        .args(["plugin", "marketplace", "add", MARKETPLACE_REPO])
         .status()
         .map_err(|e| BottleError::InstallError {
             tool: "claude_code integration".to_string(),
@@ -88,7 +88,7 @@ fn ensure_marketplace() -> Result<()> {
     } else {
         Err(BottleError::InstallError {
             tool: "claude_code integration".to_string(),
-            reason: format!("Failed to add marketplace '{}'", MARKETPLACE_SOURCE),
+            reason: format!("Failed to add marketplace '{}'", MARKETPLACE_REPO),
         })
     }
 }
@@ -105,7 +105,7 @@ pub fn install() -> Result<()> {
             .args([
                 "plugin",
                 "install",
-                &format!("{}@{}", plugin, MARKETPLACE),
+                &format!("{}@{}", plugin, MARKETPLACE_NAME),
             ])
             .status()
             .map_err(|e| BottleError::InstallError {
@@ -138,7 +138,7 @@ pub fn remove() -> Result<()> {
             .args([
                 "plugin",
                 "uninstall",
-                &format!("{}@{}", plugin, MARKETPLACE),
+                &format!("{}@{}", plugin, MARKETPLACE_NAME),
             ])
             .status()
             .map_err(|e| BottleError::InstallError {
@@ -150,6 +150,14 @@ pub fn remove() -> Result<()> {
             // Don't fail on uninstall errors - plugin might not have been installed
             failures.push(plugin.to_string());
         }
+    }
+
+    // Warn about partial failures but don't error
+    if !failures.is_empty() && failures.len() < ALL_PLUGINS.len() {
+        eprintln!(
+            "Note: Some plugins couldn't be removed (may not have been installed): {}",
+            failures.join(", ")
+        );
     }
 
     // Only fail if ALL plugins failed to uninstall

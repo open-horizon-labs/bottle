@@ -10,7 +10,7 @@ Simple, file-based task tracking. No server, no database - just files in `.ba/`.
 All commands invoke the `ba` CLI. If ba is not installed, show:
 ```
 ba not installed. Install with:
-  brew tap oh-labs/tap && brew install ba
+  brew tap open-horizon-labs/homebrew-tap && brew install ba
   # or: cargo install ba
 ```
 

@@ -10,7 +10,7 @@ Captures tacit knowledge from sessions and provides relevant context for current
 All commands invoke the `wm` CLI. If wm is not installed, show:
 ```
 wm not installed. Install with:
-  brew tap oh-labs/tap && brew install wm
+  brew tap open-horizon-labs/homebrew-tap && brew install wm
   # or: cargo install working-memory
 ```
 
