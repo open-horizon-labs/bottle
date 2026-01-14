@@ -86,10 +86,21 @@ fn show_integrations(state: &BottleState) -> Result<()> {
 
 /// Add a platform integration
 fn add_integration(state: &BottleState, platform: Platform, dry_run: bool) -> Result<()> {
-    // Check if already installed
-    if state.integrations.contains_key(platform.key()) {
+    // Check if actually installed (not just in state) - handles partial installs
+    let actually_installed = integrate::is_installed(platform);
+    let in_state = state.integrations.contains_key(platform.key());
+
+    if actually_installed && in_state {
         ui::print_warning(&format!("{} integration is already installed.", platform));
         return Ok(());
+    }
+
+    // If in state but not actually installed, we'll reinstall missing components
+    if in_state && !actually_installed {
+        ui::print_info(&format!(
+            "{} integration incomplete, installing missing components...",
+            platform
+        ));
     }
 
     // Get detection info

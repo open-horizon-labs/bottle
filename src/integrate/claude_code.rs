@@ -20,18 +20,35 @@ pub fn is_detected() -> bool {
         .unwrap_or(false)
 }
 
-/// Check if the bottle plugins are installed in Claude Code
-#[allow(dead_code)]
+/// Check if ALL bottle plugins are installed in Claude Code
 pub fn is_installed() -> bool {
     Command::new("claude")
         .args(["plugin", "list"])
         .output()
         .map(|output| {
             let stdout = String::from_utf8_lossy(&output.stdout);
-            // Check if main bottle plugin is installed
-            stdout.contains("bottle") && stdout.contains(MARKETPLACE)
+            // Check if ALL plugins are installed (not just bottle)
+            ALL_PLUGINS.iter().all(|plugin| {
+                stdout.contains(&format!("{}@{}", plugin, MARKETPLACE))
+            })
         })
         .unwrap_or(false)
+}
+
+/// Get list of missing plugins (not currently installed)
+pub fn get_missing_plugins() -> Vec<String> {
+    Command::new("claude")
+        .args(["plugin", "list"])
+        .output()
+        .map(|output| {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            ALL_PLUGINS
+                .iter()
+                .filter(|plugin| !stdout.contains(&format!("{}@{}", plugin, MARKETPLACE)))
+                .map(|s| s.to_string())
+                .collect()
+        })
+        .unwrap_or_else(|_| ALL_PLUGINS.iter().map(|s| s.to_string()).collect())
 }
 
 /// Add the marketplace if not already added
