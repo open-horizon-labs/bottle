@@ -105,3 +105,6 @@ jq --arg ba "$BA_VERSION" \
    "$MANIFEST" > "$MANIFEST.tmp" && mv "$MANIFEST.tmp" "$MANIFEST"
 
 log "Done!"
+echo ""
+log "Next step: release the updated manifest"
+echo "  bottle release stable -m \"Update tool versions\""
