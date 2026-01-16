@@ -86,6 +86,8 @@ fi
 # Update manifest using jq
 log "Updating $MANIFEST..."
 
+TODAY=$(date +%Y.%m.%d)
+
 jq --arg ba "$BA_VERSION" \
    --arg wm "$WM_VERSION" \
    --arg sg "$SUPEREGO_VERSION" \
@@ -94,7 +96,9 @@ jq --arg ba "$BA_VERSION" \
    --arg ba_oc "$BA_OC_VERSION" \
    --arg wm_oc "$WM_OC_VERSION" \
    --arg sg_oc "$SUPEREGO_OC_VERSION" \
-   '.tools.ba = $ba |
+   --arg version "$TODAY" \
+   '.version = $version |
+    .tools.ba = $ba |
     .tools.wm = $wm |
     .tools.superego = $sg |
     .tools["oh-mcp"] = $oh |
@@ -104,7 +108,7 @@ jq --arg ba "$BA_VERSION" \
     .opencode_plugins["superego-opencode"] = $sg_oc' \
    "$MANIFEST" > "$MANIFEST.tmp" && mv "$MANIFEST.tmp" "$MANIFEST"
 
-log "Done!"
+log "Done! Manifest version: $TODAY"
 echo ""
-log "Next step: release the updated manifest"
+log "Next step: commit and tag the release"
 echo "  bottle release stable -m \"Update tool versions\""
