@@ -9,5 +9,5 @@
     "brew": "brew tap open-horizon-labs/homebrew-tap && brew install wm"
   },
   "check": "wm --version",
-  "homepage": "https://github.com/cloud-atlas-ai/wm"
+  "homepage": "https://github.com/open-horizon-labs/wm"
 }

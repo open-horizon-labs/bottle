@@ -16,7 +16,7 @@ Initialize superego for this project.
 
 If **Homebrew** available (preferred for macOS):
 ```bash
-brew install cloud-atlas-ai/superego/superego
+brew install open-horizon-labs/tap/superego
 ```
 
 If **Cargo** available:
@@ -31,7 +31,7 @@ If **neither available**, offer to install a package manager:
   ```bash
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   ```
-  Then: `brew install cloud-atlas-ai/superego/superego`
+  Then: `brew install open-horizon-labs/tap/superego`
 
 - **Install Rust** (cross-platform):
   ```bash

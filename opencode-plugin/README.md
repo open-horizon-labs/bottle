@@ -89,9 +89,9 @@ Each child plugin can also be installed separately if you only need one tool.
 ## Individual Plugins
 
 If you only want one tool, install from their respective repos:
-- [ba-opencode](https://github.com/cloud-atlas-ai/ba/tree/main/opencode-plugin)
-- [wm-opencode](https://github.com/cloud-atlas-ai/wm/tree/main/opencode-plugin)
-- [superego-opencode](https://github.com/cloud-atlas-ai/superego/tree/main/opencode-plugin)
+- [ba-opencode](https://github.com/open-horizon-labs/ba/tree/main/opencode-plugin)
+- [wm-opencode](https://github.com/open-horizon-labs/wm/tree/main/opencode-plugin)
+- [superego-opencode](https://github.com/open-horizon-labs/superego/tree/main/opencode-plugin)
 
 ## License
 
@@ -100,6 +100,6 @@ MIT
 ## Links
 
 - [bottle](https://github.com/open-horizon-labs/bottle)
-- [ba](https://github.com/cloud-atlas-ai/ba)
-- [wm](https://github.com/cloud-atlas-ai/wm)
-- [superego](https://github.com/cloud-atlas-ai/superego)
+- [ba](https://github.com/open-horizon-labs/ba)
+- [wm](https://github.com/open-horizon-labs/wm)
+- [superego](https://github.com/open-horizon-labs/superego)

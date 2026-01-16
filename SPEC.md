@@ -106,7 +106,7 @@ bottle/
     "brew": "brew install open-horizon-labs/homebrew-tap/superego"
   },
   "check": "sg --version",
-  "homepage": "https://github.com/cloud-atlas-ai/superego"
+  "homepage": "https://github.com/open-horizon-labs/superego"
 }
 ```
 
@@ -120,7 +120,7 @@ bottle/
     "mcp": "claude mcp add oh-mcp -s user -- npx -y @cloud-atlas-ai/oh-mcp-server@{version}"
   },
   "check": "claude mcp list | grep oh-mcp",
-  "homepage": "https://github.com/cloud-atlas-ai/oh-mcp-server"
+  "homepage": "https://github.com/open-horizon-labs/oh-mcp-server"
 }
 ```
 
@@ -338,7 +338,7 @@ bottle integrate --list           # Show available/installed integrations
 **Platforms:**
 | Platform | Detection | Integration Action |
 |----------|-----------|-------------------|
-| Claude Code | `~/.claude/` exists | `claude plugin install bottle@cloud-atlas-ai/bottle` |
+| Claude Code | `~/.claude/` exists | `claude plugin install bottle@open-horizon-labs` |
 | OpenCode | `opencode.json` exists | Add to plugins array in `opencode.json` |
 | Codex | `~/.codex/` exists | Install skills to `~/.codex/skills/` |
 
@@ -578,7 +578,7 @@ Tag and publish a bottle update.
 Bottles are fetched from GitHub raw URLs:
 
 ```
-https://raw.githubusercontent.com/cloud-atlas-ai/bottle/main/bottles/stable/manifest.json
+https://raw.githubusercontent.com/open-horizon-labs/bottle/main/bottles/stable/manifest.json
 ```
 
 No git clone required. Simple HTTP fetch.
@@ -621,7 +621,7 @@ Bottle separates **tools** (universal binaries) from **integrations** (platform-
 - Codex: `~/.codex/` directory exists
 
 **Integration installation:**
-- Claude Code: `claude plugin install bottle@cloud-atlas-ai/bottle`
+- Claude Code: `claude plugin install bottle@open-horizon-labs`
 - OpenCode: Add `@cloud-atlas-ai/bottle` to `opencode.json` plugins array
 - Codex: Skills installed via `$bottle init`
 

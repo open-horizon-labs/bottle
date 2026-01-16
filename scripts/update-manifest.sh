@@ -51,11 +51,11 @@ BA_VERSION=$(crate_version "ba")
 SUPEREGO_VERSION=$(crate_version "superego")
 
 # wm is not on crates.io, use GitHub
-WM_VERSION=$(github_cargo_version "cloud-atlas-ai/wm")
+WM_VERSION=$(github_cargo_version "open-horizon-labs/wm")
 [ -z "$WM_VERSION" ] && WM_VERSION="0.0.0"
 
 # oh-mcp from GitHub
-OH_MCP_VERSION=$(github_npm_version "cloud-atlas-ai/oh-mcp-server")
+OH_MCP_VERSION=$(github_npm_version "open-horizon-labs/oh-mcp-server")
 [ -z "$OH_MCP_VERSION" ] && OH_MCP_VERSION="0.0.0"
 
 # OpenCode plugins from npm

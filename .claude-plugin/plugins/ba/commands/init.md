@@ -16,7 +16,7 @@ Initialize ba task tracking for this project.
 
 If **Homebrew** available (preferred for macOS):
 ```bash
-brew install cloud-atlas-ai/ba/ba
+brew install open-horizon-labs/tap/ba
 ```
 
 If **Cargo** available:
@@ -31,7 +31,7 @@ If **neither available**, offer to install a package manager:
   ```bash
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   ```
-  Then: `brew install cloud-atlas-ai/ba/ba`
+  Then: `brew install open-horizon-labs/tap/ba`
 
 - **Install Rust** (cross-platform):
   ```bash
@@ -160,7 +160,7 @@ if curl -fsSL -o "$SKILL_DIR/SKILL.md" \
   echo "  \$ba finish   - Complete an issue"
 else
   echo "⚠️  Failed to download Codex skill files"
-  echo "You can manually install from: https://github.com/cloud-atlas-ai/ba/tree/master/codex-skill"
+  echo "You can manually install from: https://github.com/open-horizon-labs/ba/tree/master/codex-skill"
 fi
 ```
 

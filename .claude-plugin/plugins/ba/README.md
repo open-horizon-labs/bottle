@@ -43,7 +43,7 @@ claude plugin install ba
 
 ```bash
 # Clone and add as local marketplace
-git clone https://github.com/cloud-atlas-ai/ba.git
+git clone https://github.com/open-horizon-labs/ba.git
 cd ba
 claude plugin marketplace add $PWD
 
@@ -164,7 +164,7 @@ claude plugin install ba@ba
 This plugin wraps the `ba` binary, which must be installed separately. The plugin helps with installation but doesn't include the binary itself.
 
 Binary installation options:
-- **Homebrew**: `brew install cloud-atlas-ai/ba/ba`
+- **Homebrew**: `brew install open-horizon-labs/tap/ba`
 - **Cargo**: `cargo install ba`
 - **From source**: `cargo install --path /path/to/ba`
 
@@ -214,7 +214,7 @@ Claude: I'll initialize ba for this project
   [Shows installation options]
 
 User: Use Homebrew
-Claude: [Runs: brew install cloud-atlas-ai/ba/ba]
+Claude: [Runs: brew install open-horizon-labs/tap/ba]
   [Runs: ba init]
   [Installs $ba Codex skill to ~/.codex/skills/ba/]
   [Updates AGENTS.md]

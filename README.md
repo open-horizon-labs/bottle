@@ -109,7 +109,7 @@ Connects Claude Code to Open Horizons for strategic context.
 ### miranda - Remote Orchestration
 Telegram bot for running Claude sessions remotely.
 
-**Setup:** Server component, see [miranda docs](https://github.com/cloud-atlas-ai/miranda)
+**Setup:** Server component, see [miranda docs](https://github.com/open-horizon-labs/miranda)
 
 ## Updating
 

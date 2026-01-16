@@ -9,5 +9,5 @@
     "brew": "brew tap open-horizon-labs/homebrew-tap && brew install ba"
   },
   "check": "ba --version",
-  "homepage": "https://github.com/cloud-atlas-ai/ba"
+  "homepage": "https://github.com/open-horizon-labs/ba"
 }

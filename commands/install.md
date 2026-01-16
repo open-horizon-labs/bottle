@@ -22,7 +22,7 @@ First install the bottle CLI:
 ```bash
 cargo install bottle
 # or
-brew install cloud-atlas-ai/tap/bottle
+brew install open-horizon-labs/tap/bottle
 ```
 
 Then run `bottle install`.

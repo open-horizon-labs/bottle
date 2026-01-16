@@ -57,7 +57,7 @@ if ! command -v sg &> /dev/null; then
 {
   "hookSpecificOutput": {
     "hookEventName": "SessionStart",
-    "additionalContext": "SUPEREGO SETUP REQUIRED: The superego plugin is active (.superego/ exists) but the 'sg' binary is missing. The binary is needed for LLM-based evaluation. Install options: 'brew install cloud-atlas-ai/superego/superego' (macOS, ~10s) or 'cargo install superego' (cross-platform, ~30s, requires Rust). Ask the user which they prefer, or if they want to skip superego this session."
+    "additionalContext": "SUPEREGO SETUP REQUIRED: The superego plugin is active (.superego/ exists) but the 'sg' binary is missing. The binary is needed for LLM-based evaluation. Install options: 'brew install open-horizon-labs/tap/superego' (macOS, ~10s) or 'cargo install superego' (cross-platform, ~30s, requires Rust). Ask the user which they prefer, or if they want to skip superego this session."
   }
 }
 EOFINNER

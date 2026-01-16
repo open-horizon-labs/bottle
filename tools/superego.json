@@ -9,5 +9,5 @@
     "brew": "brew tap open-horizon-labs/homebrew-tap && brew install sg"
   },
   "check": "sg --version",
-  "homepage": "https://github.com/cloud-atlas-ai/superego"
+  "homepage": "https://github.com/open-horizon-labs/superego"
 }

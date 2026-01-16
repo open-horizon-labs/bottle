@@ -9,5 +9,5 @@
     "brew": "brew install ds"
   },
   "check": "ds --version",
-  "homepage": "https://github.com/cloud-atlas-ai/datasphere"
+  "homepage": "https://github.com/open-horizon-labs/datasphere"
 }
