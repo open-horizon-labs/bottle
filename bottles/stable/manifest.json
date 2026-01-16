@@ -4,7 +4,7 @@
   "opencode_plugins": {
     "@cloud-atlas-ai/bottle": "0.2.6",
     "ba-opencode": "0.2.1",
-    "superego-opencode": "0.8.5",
+    "superego-opencode": "0.9.1",
     "wm-opencode": "0.1.0"
   },
   "plugins": [
@@ -21,8 +21,8 @@
   "tools": {
     "ba": "0.2.1",
     "oh-mcp": "0.3.3",
-    "superego": "0.9.0",
-    "wm": "0.3.1"
+    "superego": "0.9.1",
+    "wm": "0.3.2"
   },
   "version": "2026.01.15"
 }
