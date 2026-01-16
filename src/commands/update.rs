@@ -22,8 +22,11 @@ pub fn run(yes: bool) -> Result<()> {
     let latest = fetch_bottle_manifest(&state.bottle)?;
     spinner.finish_and_clear();
 
-    // 3. Compare versions
-    if latest.version == state.bottle_version {
+    // 3. Calculate what needs updating (check tool versions, not just manifest version)
+    let changes = calculate_changes(&state, &latest);
+
+    // 4. If no changes and same version, we're up to date
+    if changes.is_empty() && latest.version == state.bottle_version {
         println!(
             "{} {} is already at the latest version ({})",
             style("Bottle").bold(),
@@ -32,9 +35,6 @@ pub fn run(yes: bool) -> Result<()> {
         );
         return Ok(());
     }
-
-    // 4. Calculate what needs updating
-    let changes = calculate_changes(&state, &latest);
 
     if changes.is_empty() {
         // Version changed but no tool changes - just update state
