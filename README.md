@@ -119,6 +119,18 @@ bottle update
 
 See platform-specific docs for manual update commands.
 
+## Bespoke Bottles
+
+Want to pin specific tool versions? Create a custom bottle:
+
+```bash
+bottle create mystack --from stable
+# Edit ~/.bottle/bottles/mystack/manifest.json
+bottle install mystack
+```
+
+Bespoke bottles are user-maintained and won't auto-update. See [docs/bespoke.md](docs/bespoke.md) for a full walkthrough.
+
 ## Individual Repos
 
 Each tool has its own repo with detailed documentation:
