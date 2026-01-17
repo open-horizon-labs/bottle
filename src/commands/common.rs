@@ -3,6 +3,7 @@ use crate::fetch::fetch_bottle_manifest;
 use crate::manifest::bottle::BottleManifest;
 use std::fs;
 use std::path::PathBuf;
+use std::time::Duration;
 
 /// Marketplace identifier for plugins
 pub const MARKETPLACE: &str = "open-horizon-labs";
@@ -82,4 +83,72 @@ pub fn get_local_manifest_path(bottle: &str) -> Result<PathBuf> {
         "No local manifest found at bottles/{}/manifest.json. Run from bottle repo root.",
         bottle
     )))
+}
+
+/// Build AGENTS.md snippet content from a manifest.
+/// Returns None if no agents_md config or empty sections/no URL.
+/// Returns the snippet content on success, or an error if URL fetch fails.
+pub fn build_agents_md_snippet(manifest: &BottleManifest) -> Result<Option<String>> {
+    let Some(agents_config) = &manifest.agents_md else {
+        return Ok(None);
+    };
+
+    // Skip if no sections and no snippets_url
+    if agents_config.sections.is_empty() && agents_config.snippets_url.is_none() {
+        return Ok(None);
+    }
+
+    // Build snippet content
+    let mut snippet = String::new();
+    snippet.push_str(&format!("<!-- Bottle snippet for {} -->\n\n", manifest.name));
+
+    // Add inline sections
+    for section in &agents_config.sections {
+        snippet.push_str(&section.heading);
+        snippet.push_str("\n\n");
+        snippet.push_str(&section.content);
+        snippet.push_str("\n\n");
+    }
+
+    // Fetch snippets from URL if provided
+    if let Some(url) = &agents_config.snippets_url {
+        let content = fetch_snippets_url(url)?;
+        snippet.push_str(&content);
+        snippet.push_str("\n");
+    }
+
+    Ok(Some(snippet))
+}
+
+/// Fetch content from a snippets URL (HTTPS only)
+fn fetch_snippets_url(url: &str) -> Result<String> {
+    // Enforce HTTPS for security (prevents MITM injection of malicious instructions)
+    if !url.starts_with("https://") {
+        return Err(BottleError::Other(format!(
+            "Snippets URL must use HTTPS: {}",
+            url
+        )));
+    }
+
+    // Build client with timeout
+    let client = reqwest::blocking::Client::builder()
+        .timeout(Duration::from_secs(30))
+        .build()
+        .map_err(|e| BottleError::Other(format!("Failed to create HTTP client: {}", e)))?;
+
+    let response = client.get(url).send().map_err(|e| {
+        BottleError::Other(format!("Failed to fetch {}: {}", url, e))
+    })?;
+
+    if !response.status().is_success() {
+        return Err(BottleError::Other(format!(
+            "Failed to fetch {}: HTTP {}",
+            url,
+            response.status()
+        )));
+    }
+
+    response
+        .text()
+        .map_err(|e| BottleError::Other(format!("Failed to read response from {}: {}", url, e)))
 }
