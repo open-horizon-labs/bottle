@@ -99,7 +99,7 @@ impl BottleState {
         std::fs::read_to_string(path).ok().map(|s| s.trim().to_string())
     }
 
-    /// Set the active bottle
+    /// Set the active bottle (also updates legacy symlink for backwards compatibility)
     pub fn set_active(bottle: &str) -> std::io::Result<()> {
         let path = Self::active_path().ok_or_else(|| {
             std::io::Error::new(std::io::ErrorKind::NotFound, "Could not determine home directory")
@@ -109,7 +109,42 @@ impl BottleState {
             std::fs::create_dir_all(parent)?;
         }
 
-        std::fs::write(path, bottle)
+        std::fs::write(&path, bottle)?;
+
+        // Update legacy symlink (~/.bottle/state.json -> bottles/<name>/state.json)
+        // for backwards compatibility with scripts reading the old path
+        Self::update_legacy_symlink(bottle)?;
+
+        Ok(())
+    }
+
+    /// Update the legacy state.json symlink to point to the active bottle's state
+    #[cfg(unix)]
+    fn update_legacy_symlink(bottle: &str) -> std::io::Result<()> {
+        use std::os::unix::fs::symlink;
+
+        let legacy_path = Self::bottle_dir()
+            .map(|d| d.join("state.json"))
+            .ok_or_else(|| {
+                std::io::Error::new(std::io::ErrorKind::NotFound, "Could not determine home directory")
+            })?;
+
+        // Target is relative: bottles/<name>/state.json
+        let target = PathBuf::from("bottles").join(bottle).join("state.json");
+
+        // Remove existing file/symlink if present
+        let _ = std::fs::remove_file(&legacy_path);
+
+        // Create symlink (ignore errors - this is optional backwards compat)
+        let _ = symlink(&target, &legacy_path);
+
+        Ok(())
+    }
+
+    #[cfg(not(unix))]
+    fn update_legacy_symlink(_bottle: &str) -> std::io::Result<()> {
+        // Symlinks require elevated privileges on Windows, skip for now
+        Ok(())
     }
 
     /// Load state for the active bottle
