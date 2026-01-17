@@ -214,13 +214,14 @@ Install tools not managed by curated bottles:
 
 **URL Placeholders:**
 - `{arch}`: CPU architecture (`x86_64`, `aarch64`)
+- `{arm64}`: Apple Silicon alias (`arm64` for aarch64, otherwise same as `{arch}`)
 - `{os}`: Operating system (`darwin`, `linux`, `windows`)
 - `{platform}`: Combined `{os}-{arch}` (e.g., `darwin-aarch64`)
 
 **Fields:**
 - `install` (required): At least one installation method
 - `version` (required): Version to install (or `latest`)
-- `verify`: Optional command to verify installation
+- `verify`: Optional command to verify installation (simple commands only, no quoted args)
 
 ### Full Example
 

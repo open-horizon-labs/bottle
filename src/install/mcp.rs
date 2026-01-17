@@ -58,28 +58,39 @@ fn expand_env_vars(s: &str) -> String {
 /// Supports custom commands, args, env vars, and scope.
 /// Note: Caller should validate env vars first using validate_env_vars().
 pub fn register_bespoke(name: &str, server: &McpServerDef) -> Result<()> {
-    // Build command args
-    let mut args = vec!["mcp", "add", name, "-s", &server.scope, "--"];
-    args.push(&server.command);
+    // Build command args with -e KEY=VALUE flags before "--"
+    // Format: claude mcp add <name> -s <scope> [-e KEY=VALUE]... -- <command> [args]...
+    let mut args: Vec<String> = vec![
+        "mcp".to_string(),
+        "add".to_string(),
+        name.to_string(),
+        "-s".to_string(),
+        server.scope.clone(),
+    ];
 
-    // Expand env vars in server args and add them
-    let expanded_args: Vec<String> = server.args.iter().map(|a| expand_env_vars(a)).collect();
-    let expanded_refs: Vec<&str> = expanded_args.iter().map(|s| s.as_str()).collect();
-    args.extend(expanded_refs);
-
-    // Build the command
-    let mut cmd = Command::new("claude");
-    cmd.args(&args);
-
-    // Set environment variables (expanded)
+    // Add -e KEY=VALUE flags for each environment variable (before "--")
     for (key, value) in &server.env {
-        cmd.env(key, expand_env_vars(value));
+        args.push("-e".to_string());
+        args.push(format!("{}={}", key, expand_env_vars(value)));
     }
 
-    let status = cmd.status().map_err(|e| BottleError::InstallError {
-        tool: name.to_string(),
-        reason: format!("Failed to run claude mcp add: {}", e),
-    })?;
+    // Add separator and command
+    args.push("--".to_string());
+    args.push(server.command.clone());
+
+    // Expand env vars in server args and add them
+    for arg in &server.args {
+        args.push(expand_env_vars(arg));
+    }
+
+    // Build and run the command
+    let status = Command::new("claude")
+        .args(&args)
+        .status()
+        .map_err(|e| BottleError::InstallError {
+            tool: name.to_string(),
+            reason: format!("Failed to run claude mcp add: {}", e),
+        })?;
 
     if status.success() {
         Ok(())
@@ -167,7 +178,10 @@ pub fn register_bespoke_opencode(servers: &HashMap<String, McpServerDef>) -> Res
 
     // Create parent directory if needed
     if let Some(parent) = config_path.parent() {
-        fs::create_dir_all(parent).ok();
+        fs::create_dir_all(parent).map_err(|e| BottleError::InstallError {
+            tool: "opencode mcp".to_string(),
+            reason: format!("Failed to create config directory {}: {}", parent.display(), e),
+        })?;
     }
 
     fs::write(&config_path, updated).map_err(|e| BottleError::InstallError {

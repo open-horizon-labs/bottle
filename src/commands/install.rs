@@ -699,7 +699,8 @@ fn install_custom_tool(name: &str, tool: &crate::manifest::bottle::CustomToolDef
     })
 }
 
-/// Expand {arch} placeholder in binary URL
+/// Expand placeholders in binary URL
+/// Supported: {arch}, {os}, {platform}, {arm64}
 fn expand_binary_url(url: &str) -> String {
     let arch = std::env::consts::ARCH;
     let os = std::env::consts::OS;
@@ -712,6 +713,12 @@ fn expand_binary_url(url: &str) -> String {
         _ => arch,
     };
 
+    // Alternative arch name for Apple Silicon (many releases use "arm64" instead of "aarch64")
+    let arm64_name = match arch {
+        "aarch64" => "arm64",
+        _ => arch_name,
+    };
+
     let os_name = match os {
         "macos" => "darwin",
         "linux" => "linux",
@@ -720,6 +727,7 @@ fn expand_binary_url(url: &str) -> String {
     };
 
     url.replace("{arch}", arch_name)
+        .replace("{arm64}", arm64_name)
         .replace("{os}", os_name)
         .replace("{platform}", &format!("{}-{}", os_name, arch_name))
 }
@@ -794,7 +802,9 @@ fn install_from_binary_url(name: &str, url: &str) -> Result<()> {
     Ok(())
 }
 
-/// Run a verification command
+/// Run a verification command after tool installation.
+/// Note: Commands are split on whitespace, so quoted arguments are not supported.
+/// Keep verify commands simple (e.g., "mytool --version").
 fn run_verify_command(verify: &str) -> Result<()> {
     let parts: Vec<&str> = verify.split_whitespace().collect();
     if parts.is_empty() {

@@ -56,7 +56,7 @@ pub fn run(bottle: &str, yes: bool) -> Result<()> {
     // 9. Handle plugins
     update_plugins(&new_manifest)?;
 
-    // 10. Save new state (preserve integrations across bottle switches)
+    // 10. Save new state (preserve integrations and custom tools across bottle switches)
     let new_state = BottleState {
         bottle: new_manifest.name.clone(),
         bottle_version: new_manifest.version.clone(),
