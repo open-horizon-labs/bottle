@@ -101,6 +101,9 @@ pub fn run(name: &str, from: Option<&str>) -> Result<()> {
             plugins: source_manifest.plugins,
             prerequisites: source_manifest.prerequisites,
             opencode_plugins: source_manifest.opencode_plugins,
+            mcp_servers: source_manifest.mcp_servers,
+            agents_md: source_manifest.agents_md,
+            custom_tools: source_manifest.custom_tools,
         }
     } else {
         // Create template
@@ -112,6 +115,9 @@ pub fn run(name: &str, from: Option<&str>) -> Result<()> {
             plugins: Vec::new(),
             prerequisites: HashMap::new(),
             opencode_plugins: HashMap::new(),
+            mcp_servers: HashMap::new(),
+            agents_md: None,
+            custom_tools: HashMap::new(),
         }
     };
 

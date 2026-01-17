@@ -56,7 +56,16 @@ pub fn run(bottle: &str, yes: bool, dry_run: bool, force: bool) -> Result<()> {
     // 6. Install tools (binaries + MCP)
     let tool_states = install_tools(&manifest)?;
 
-    // 7. Write state
+    // 7. Install bespoke MCP servers (if any)
+    install_mcp_servers(&manifest)?;
+
+    // 8. Inject AGENTS.md sections (if any)
+    inject_agents_md(&manifest)?;
+
+    // 9. Install custom tools (if any)
+    install_custom_tools(&manifest)?;
+
+    // 10. Write state
     let state = BottleState {
         bottle: manifest.name.clone(),
         bottle_version: manifest.version.clone(),
@@ -137,6 +146,78 @@ fn show_dry_run_plan(manifest: &BottleManifest) {
         println!("{} {}:", style("Plugins").bold(), style("(via bottle integrate)").dim());
         for plugin in &manifest.plugins {
             println!("  {}", plugin);
+        }
+        println!();
+    }
+
+    // Show bespoke MCP servers
+    if !manifest.mcp_servers.is_empty() {
+        println!("{}:", style("MCP Servers").bold());
+        let mut servers: Vec<_> = manifest.mcp_servers.iter().collect();
+        servers.sort_by_key(|(name, _)| *name);
+        for (name, server) in servers {
+            let args_str = if server.args.is_empty() {
+                String::new()
+            } else {
+                format!(" {}", server.args.join(" "))
+            };
+            println!(
+                "  {:<20} {} {}{}",
+                name,
+                style(&server.command).dim(),
+                style(format!("[{}]", server.scope)).dim(),
+                style(&args_str).dim()
+            );
+            // Show env vars that need to be set
+            for (key, value) in &server.env {
+                if value.contains("${") {
+                    println!("    {} {}", style("env:").dim(), style(format!("{}={}", key, value)).yellow());
+                }
+            }
+        }
+        println!();
+    }
+
+    // Show AGENTS.md injection
+    if let Some(agents_config) = &manifest.agents_md {
+        if !agents_config.sections.is_empty() || agents_config.snippets_url.is_some() {
+            println!("{}:", style("AGENTS.md Injection").bold());
+            for section in &agents_config.sections {
+                println!("  {} {}", style("Section:").dim(), &section.heading);
+            }
+            if let Some(url) = &agents_config.snippets_url {
+                println!("  {} {}", style("Snippets URL:").dim(), style(url).cyan());
+            }
+            println!("  {} {}", style("Target:").dim(), "./AGENTS.md");
+            println!();
+        }
+    }
+
+    // Show custom tools
+    if !manifest.custom_tools.is_empty() {
+        println!("{}:", style("Custom Tools").bold());
+        let mut tools: Vec<_> = manifest.custom_tools.iter().collect();
+        tools.sort_by_key(|(name, _)| *name);
+        for (name, tool) in tools {
+            let methods: Vec<&str> = [
+                tool.install.brew.as_ref().map(|_| "brew"),
+                tool.install.cargo.as_ref().map(|_| "cargo"),
+                tool.install.npm.as_ref().map(|_| "npm"),
+                tool.install.binary_url.as_ref().map(|_| "binary"),
+            ]
+            .into_iter()
+            .flatten()
+            .collect();
+
+            println!(
+                "  {:<20} {} {}",
+                name,
+                style(&tool.version).dim(),
+                style(format!("[{}]", methods.join(", "))).dim()
+            );
+            if let Some(verify) = &tool.verify {
+                println!("    {} {}", style("verify:").dim(), style(verify).dim());
+            }
         }
         println!();
     }
@@ -369,6 +450,436 @@ fn install_tools(manifest: &BottleManifest) -> Result<HashMap<String, ToolState>
     }
 
     Ok(states)
+}
+
+/// Inject AGENTS.md sections from the manifest
+fn inject_agents_md(manifest: &BottleManifest) -> Result<()> {
+    let Some(agents_config) = &manifest.agents_md else {
+        return Ok(());
+    };
+
+    // Skip if no sections and no snippets_url
+    if agents_config.sections.is_empty() && agents_config.snippets_url.is_none() {
+        return Ok(());
+    }
+
+    println!("{}:", style("AGENTS.md injection").bold());
+
+    let agents_path = std::path::PathBuf::from("AGENTS.md");
+    let marker_start = "<!-- bottle:agents-md:start -->";
+    let marker_end = "<!-- bottle:agents-md:end -->";
+
+    // Build content to inject
+    let mut inject_content = String::new();
+    inject_content.push_str(marker_start);
+    inject_content.push_str("\n");
+    inject_content.push_str(&format!("<!-- Managed by bottle - {} -->\n\n", manifest.name));
+
+    // Add inline sections
+    for section in &agents_config.sections {
+        inject_content.push_str(&section.heading);
+        inject_content.push_str("\n\n");
+        inject_content.push_str(&section.content);
+        inject_content.push_str("\n\n");
+    }
+
+    // Fetch snippets from URL if provided
+    if let Some(url) = &agents_config.snippets_url {
+        print!("  Fetching snippets from {}... ", style(url).dim());
+        match fetch_snippets(url) {
+            Ok(content) => {
+                println!("{}", style("ok").green());
+                inject_content.push_str(&content);
+                inject_content.push_str("\n\n");
+            }
+            Err(e) => {
+                println!("{}", style("failed").red());
+                ui::print_warning(&format!("Could not fetch snippets: {}", e));
+            }
+        }
+    }
+
+    inject_content.push_str(marker_end);
+    inject_content.push('\n');
+
+    // Read existing file or create new one
+    let existing = std::fs::read_to_string(&agents_path).unwrap_or_default();
+
+    // Check if we already have bottle-managed content
+    let new_content = if existing.contains(marker_start) && existing.contains(marker_end) {
+        // Replace existing bottle-managed section
+        let before = existing.split(marker_start).next().unwrap_or("");
+        let after = existing.split(marker_end).last().unwrap_or("");
+        format!("{}{}{}", before.trim_end(), inject_content, after.trim_start())
+    } else if existing.is_empty() {
+        // New file - add content at the start
+        format!("# AGENTS.md\n\n{}", inject_content)
+    } else {
+        // Append to existing file
+        format!("{}\n\n{}", existing.trim_end(), inject_content)
+    };
+
+    // Write the file
+    std::fs::write(&agents_path, new_content).map_err(|e| {
+        BottleError::InstallError {
+            tool: "agents_md".to_string(),
+            reason: format!("Failed to write AGENTS.md: {}", e),
+        }
+    })?;
+
+    let section_count = agents_config.sections.len();
+    let has_url = agents_config.snippets_url.is_some();
+    let msg = match (section_count, has_url) {
+        (0, true) => "Injected snippets from URL".to_string(),
+        (n, false) => format!("Injected {} section(s)", n),
+        (n, true) => format!("Injected {} section(s) + URL snippets", n),
+    };
+    println!("  {} {}", style("AGENTS.md").cyan(), msg);
+    println!();
+
+    Ok(())
+}
+
+/// Install custom tools from the manifest
+fn install_custom_tools(manifest: &BottleManifest) -> Result<()> {
+    if manifest.custom_tools.is_empty() {
+        return Ok(());
+    }
+
+    println!("{}:", style("Installing custom tools").bold());
+
+    let mut failures: Vec<(String, BottleError)> = Vec::new();
+    let mut tools: Vec<_> = manifest.custom_tools.iter().collect();
+    tools.sort_by_key(|(name, _)| *name);
+
+    for (name, tool) in tools {
+        print!("  {:<20} {} ", name, style(&tool.version).dim());
+
+        match install_custom_tool(name, tool) {
+            Ok(method) => {
+                println!("{} {}", style("installed").green(), style(format!("({})", method)).dim());
+
+                // Run verify command only after successful install
+                if let Some(verify) = &tool.verify {
+                    print!("    {} ", style("verify:").dim());
+                    match run_verify_command(verify) {
+                        Ok(()) => println!("{}", style("ok").green()),
+                        Err(e) => {
+                            println!("{}", style("failed").red());
+                            ui::print_warning(&format!("Verification failed: {}", e));
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                println!("{}", style("failed").red());
+                failures.push((name.clone(), e));
+            }
+        }
+    }
+
+    println!();
+
+    if !failures.is_empty() {
+        ui::print_warning(&format!(
+            "{} custom tool(s) failed to install:",
+            failures.len()
+        ));
+        for (name, err) in &failures {
+            println!("  {} - {}", style(name).red(), err);
+        }
+        println!();
+    }
+
+    Ok(())
+}
+
+/// Install a single custom tool, trying methods in order
+fn install_custom_tool(name: &str, tool: &crate::manifest::bottle::CustomToolDef) -> Result<String> {
+    let install = &tool.install;
+
+    // Try brew first
+    if let Some(formula) = &install.brew {
+        if which::which("brew").is_ok() {
+            let version_formula = if tool.version.is_empty() || tool.version == "latest" {
+                formula.clone()
+            } else {
+                format!("{}@{}", formula, tool.version)
+            };
+
+            let status = Command::new("brew")
+                .args(["install", &version_formula])
+                .status()
+                .map_err(|e| BottleError::InstallError {
+                    tool: name.to_string(),
+                    reason: format!("brew install failed: {}", e),
+                })?;
+
+            if status.success() {
+                return Ok("brew".to_string());
+            }
+        }
+    }
+
+    // Try cargo
+    if let Some(crate_name) = &install.cargo {
+        if which::which("cargo").is_ok() {
+            let mut args = vec!["install", crate_name];
+            let version_arg;
+            if !tool.version.is_empty() && tool.version != "latest" {
+                version_arg = format!("--version={}", tool.version);
+                args.push(&version_arg);
+            }
+
+            let status = Command::new("cargo")
+                .args(&args)
+                .status()
+                .map_err(|e| BottleError::InstallError {
+                    tool: name.to_string(),
+                    reason: format!("cargo install failed: {}", e),
+                })?;
+
+            if status.success() {
+                return Ok("cargo".to_string());
+            }
+        }
+    }
+
+    // Try npm
+    if let Some(package) = &install.npm {
+        if which::which("npm").is_ok() {
+            let package_spec = if tool.version.is_empty() || tool.version == "latest" {
+                package.clone()
+            } else {
+                format!("{}@{}", package, tool.version)
+            };
+
+            let status = Command::new("npm")
+                .args(["install", "-g", &package_spec])
+                .status()
+                .map_err(|e| BottleError::InstallError {
+                    tool: name.to_string(),
+                    reason: format!("npm install failed: {}", e),
+                })?;
+
+            if status.success() {
+                return Ok("npm".to_string());
+            }
+        }
+    }
+
+    // Try binary_url
+    if let Some(url_template) = &install.binary_url {
+        let url = expand_binary_url(url_template);
+        return install_from_binary_url(name, &url);
+    }
+
+    Err(BottleError::InstallError {
+        tool: name.to_string(),
+        reason: "No installation method available or all methods failed".to_string(),
+    })
+}
+
+/// Expand {arch} placeholder in binary URL
+fn expand_binary_url(url: &str) -> String {
+    let arch = std::env::consts::ARCH;
+    let os = std::env::consts::OS;
+
+    // Map Rust arch names to common download names
+    let arch_name = match arch {
+        "x86_64" => "x86_64",
+        "aarch64" => "aarch64",
+        "arm" => "arm",
+        _ => arch,
+    };
+
+    let os_name = match os {
+        "macos" => "darwin",
+        "linux" => "linux",
+        "windows" => "windows",
+        _ => os,
+    };
+
+    url.replace("{arch}", arch_name)
+        .replace("{os}", os_name)
+        .replace("{platform}", &format!("{}-{}", os_name, arch_name))
+}
+
+/// Install a tool from a binary URL (raw binary only, no archive support)
+fn install_from_binary_url(name: &str, url: &str) -> Result<String> {
+    use std::time::Duration;
+
+    // Enforce HTTPS for security
+    if !url.starts_with("https://") {
+        return Err(BottleError::InstallError {
+            tool: name.to_string(),
+            reason: format!("Binary URL must use HTTPS: {}", url),
+        });
+    }
+
+    // Build client with timeout
+    let client = reqwest::blocking::Client::builder()
+        .timeout(Duration::from_secs(120))
+        .build()
+        .map_err(|e| BottleError::InstallError {
+            tool: name.to_string(),
+            reason: format!("Failed to create HTTP client: {}", e),
+        })?;
+
+    // Download the binary
+    let response = client.get(url).send().map_err(|e| BottleError::InstallError {
+        tool: name.to_string(),
+        reason: format!("Failed to download from {}: {}", url, e),
+    })?;
+
+    if !response.status().is_success() {
+        return Err(BottleError::InstallError {
+            tool: name.to_string(),
+            reason: format!("HTTP {} from {}", response.status(), url),
+        });
+    }
+
+    let bytes = response.bytes().map_err(|e| BottleError::InstallError {
+        tool: name.to_string(),
+        reason: format!("Failed to read response: {}", e),
+    })?;
+
+    // Determine install path (~/.local/bin)
+    let bin_dir = dirs::home_dir()
+        .map(|h| h.join(".local").join("bin"))
+        .ok_or_else(|| BottleError::InstallError {
+            tool: name.to_string(),
+            reason: "Could not determine home directory".to_string(),
+        })?;
+
+    std::fs::create_dir_all(&bin_dir).map_err(|e| BottleError::InstallError {
+        tool: name.to_string(),
+        reason: format!("Failed to create bin directory: {}", e),
+    })?;
+
+    let bin_path = bin_dir.join(name);
+
+    // Write the binary
+    std::fs::write(&bin_path, &bytes).map_err(|e| BottleError::InstallError {
+        tool: name.to_string(),
+        reason: format!("Failed to write binary: {}", e),
+    })?;
+
+    // Make executable
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&bin_path, std::fs::Permissions::from_mode(0o755)).ok();
+    }
+
+    Ok("binary".to_string())
+}
+
+/// Run a verification command
+fn run_verify_command(verify: &str) -> Result<()> {
+    let parts: Vec<&str> = verify.split_whitespace().collect();
+    if parts.is_empty() {
+        return Ok(());
+    }
+
+    let status = Command::new(parts[0])
+        .args(&parts[1..])
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .map_err(|e| BottleError::Other(format!("Verify command failed: {}", e)))?;
+
+    if status.success() {
+        Ok(())
+    } else {
+        Err(BottleError::Other(format!(
+            "Verify command '{}' exited with code {}",
+            verify, status
+        )))
+    }
+}
+
+/// Fetch content from a snippets URL
+fn fetch_snippets(url: &str) -> Result<String> {
+    use std::time::Duration;
+
+    // Build client with timeout
+    let client = reqwest::blocking::Client::builder()
+        .timeout(Duration::from_secs(30))
+        .build()
+        .map_err(|e| BottleError::Other(format!("Failed to create HTTP client: {}", e)))?;
+
+    let response = client.get(url).send().map_err(|e| {
+        BottleError::Other(format!("Failed to fetch {}: {}", url, e))
+    })?;
+
+    if !response.status().is_success() {
+        return Err(BottleError::Other(format!(
+            "Failed to fetch {}: HTTP {}",
+            url,
+            response.status()
+        )));
+    }
+
+    response
+        .text()
+        .map_err(|e| BottleError::Other(format!("Failed to read response from {}: {}", url, e)))
+}
+
+/// Install bespoke MCP servers from the manifest
+fn install_mcp_servers(manifest: &BottleManifest) -> Result<()> {
+    if manifest.mcp_servers.is_empty() {
+        return Ok(());
+    }
+
+    println!("{}:", style("Registering MCP servers").bold());
+
+    let mut failures: Vec<(String, crate::error::BottleError)> = Vec::new();
+    let mut servers: Vec<_> = manifest.mcp_servers.iter().collect();
+    servers.sort_by_key(|(name, _)| *name);
+
+    for (name, server) in servers {
+        print!("  {:<20} ", name);
+
+        // Register with Claude Code
+        match install::mcp::register_bespoke(name, server) {
+            Ok(()) => {
+                println!("{}", style("registered").green());
+            }
+            Err(e) => {
+                println!("{}", style("failed").red());
+                failures.push((name.clone(), e));
+            }
+        }
+    }
+
+    println!();
+
+    // Also register with OpenCode if detected
+    if crate::integrate::opencode::is_detected() && !manifest.mcp_servers.is_empty() {
+        print!("  {} ", style("OpenCode integration").dim());
+        match install::mcp::register_bespoke_opencode(&manifest.mcp_servers) {
+            Ok(()) => println!("{}", style("done").green()),
+            Err(e) => {
+                println!("{}", style("failed").red());
+                ui::print_warning(&format!("OpenCode MCP registration: {}", e));
+            }
+        }
+        println!();
+    }
+
+    if !failures.is_empty() {
+        ui::print_warning(&format!(
+            "{} MCP server(s) failed to register:",
+            failures.len()
+        ));
+        for (name, err) in &failures {
+            println!("  {} - {}", style(name).red(), err);
+        }
+        println!();
+    }
+
+    Ok(())
 }
 
 /// Install all plugins from the manifest

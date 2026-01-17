@@ -107,6 +107,167 @@ Edit `~/.bottle/bottles/mystack/manifest.json` to customize:
 }
 ```
 
+## Advanced Features
+
+Bespoke bottles support additional features beyond curated bottles: MCP servers, AGENTS.md injection, and custom tools.
+
+### MCP Servers
+
+Register arbitrary MCP servers with Claude Code and OpenCode:
+
+```json
+{
+  "mcp_servers": {
+    "figma": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-figma"],
+      "env": {
+        "FIGMA_TOKEN": "${FIGMA_TOKEN}"
+      },
+      "scope": "user"
+    },
+    "ado": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-azure-devops"],
+      "env": {
+        "ADO_PAT": "${ADO_PAT}",
+        "ADO_ORG": "myorg"
+      },
+      "scope": "project"
+    }
+  }
+}
+```
+
+**Fields:**
+- `command` (required): The command to run (e.g., `npx`, `node`, `python`)
+- `args`: Arguments to pass to the command
+- `env`: Environment variables. Use `${VAR}` syntax for required env vars
+- `scope`: Either `user` (global) or `project` (per-project). Default: `user`
+
+**Environment Variables:**
+- Env vars using `${VAR}` syntax are validated at install time
+- If a required env var is not set, installation fails with a clear error message
+- Set the env vars before running `bottle install`
+
+### AGENTS.md Injection
+
+Inject custom guidance into project AGENTS.md files:
+
+```json
+{
+  "agents_md": {
+    "sections": [
+      {
+        "heading": "## Design Review Protocol",
+        "content": "Before implementing any UI changes, create a Figma mockup and get design review approval."
+      },
+      {
+        "heading": "## ADO Integration",
+        "content": "Link all PRs to work items. Use 'AB#1234' syntax in commit messages."
+      }
+    ],
+    "snippets_url": "https://example.com/team-agents-snippets.md"
+  }
+}
+```
+
+**Fields:**
+- `sections`: Array of inline sections to inject
+  - `heading`: Markdown heading (e.g., `## Section Title`)
+  - `content`: Markdown content for the section
+- `snippets_url`: Optional URL to fetch additional snippet content from
+
+**How it works:**
+- Sections are wrapped in `<!-- bottle:agents-md:start -->` and `<!-- bottle:agents-md:end -->` markers
+- Re-running `bottle install` updates the managed section without affecting other content
+- If AGENTS.md doesn't exist, it's created
+
+### Custom Tools
+
+Install tools not managed by curated bottles:
+
+```json
+{
+  "custom_tools": {
+    "internal-cli": {
+      "install": {
+        "brew": "internal-tap/cli",
+        "cargo": "internal-cli",
+        "npm": "@company/internal-cli",
+        "binary_url": "https://releases.example.com/cli/{platform}/cli"
+      },
+      "version": "1.2.3",
+      "verify": "internal-cli --version"
+    }
+  }
+}
+```
+
+**Install Methods (tried in order):**
+1. `brew`: Homebrew formula (e.g., `tap/formula`)
+2. `cargo`: Cargo crate name
+3. `npm`: npm package name (installed globally)
+4. `binary_url`: Direct binary download URL
+
+**URL Placeholders:**
+- `{arch}`: CPU architecture (`x86_64`, `aarch64`)
+- `{os}`: Operating system (`darwin`, `linux`, `windows`)
+- `{platform}`: Combined `{os}-{arch}` (e.g., `darwin-aarch64`)
+
+**Fields:**
+- `install` (required): At least one installation method
+- `version` (required): Version to install (or `latest`)
+- `verify`: Optional command to verify installation
+
+### Full Example
+
+Here's a complete bespoke bottle with all features:
+
+```json
+{
+  "name": "enterprise",
+  "version": "2026.01.15",
+  "description": "Enterprise team configuration",
+  "tools": {
+    "ba": "0.2.1",
+    "wm": "0.3.2",
+    "superego": "0.9.1"
+  },
+  "plugins": ["ba", "superego", "wm"],
+  "prerequisites": {
+    "cargo": "Required for ba, superego, wm",
+    "node": "Required for MCP servers"
+  },
+  "mcp_servers": {
+    "figma": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-figma"],
+      "env": {
+        "FIGMA_TOKEN": "${FIGMA_TOKEN}"
+      }
+    }
+  },
+  "agents_md": {
+    "sections": [
+      {
+        "heading": "## Team Standards",
+        "content": "Follow our coding standards at docs.example.com/standards"
+      }
+    ]
+  },
+  "custom_tools": {
+    "team-cli": {
+      "install": {
+        "brew": "ourteam/tap/team-cli"
+      },
+      "version": "2.0.0",
+      "verify": "team-cli --version"
+    }
+  }
+}
+```
+
 ## Installing Your Bespoke Bottle
 
 ```bash
