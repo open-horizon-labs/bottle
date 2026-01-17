@@ -66,7 +66,13 @@ pub fn run(yes: bool) -> Result<()> {
     };
 
     // 7. Re-build snippet from latest manifest (may have changed)
-    let snippet = build_agents_md_snippet(&latest).ok().flatten();
+    let snippet = match build_agents_md_snippet(&latest) {
+        Ok(s) => s,
+        Err(e) => {
+            ui::print_warning(&format!("Failed to build AGENTS.md snippet: {}", e));
+            None
+        }
+    };
 
     // 8. Save updated state (preserve integrations and custom tools across updates)
     let new_state = BottleState {

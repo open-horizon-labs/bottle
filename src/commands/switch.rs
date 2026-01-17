@@ -57,7 +57,13 @@ pub fn run(bottle: &str, yes: bool) -> Result<()> {
     update_plugins(&new_manifest)?;
 
     // 10. Build snippet for new bottle (if any)
-    let snippet = build_agents_md_snippet(&new_manifest).ok().flatten();
+    let snippet = match build_agents_md_snippet(&new_manifest) {
+        Ok(s) => s,
+        Err(e) => {
+            ui::print_warning(&format!("Failed to build AGENTS.md snippet: {}", e));
+            None
+        }
+    };
 
     // 11. Save new state (preserve integrations and custom tools across bottle switches)
     let new_state = BottleState {
