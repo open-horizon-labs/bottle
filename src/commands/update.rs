@@ -2,6 +2,7 @@ use super::common::build_agents_md_snippet;
 use crate::error::{BottleError, Result};
 use crate::fetch::{fetch_bottle_manifest, fetch_tool_definition};
 use crate::install;
+use crate::integrate::{self, Platform};
 use crate::manifest::bottle::BottleManifest;
 use crate::manifest::state::{BottleState, ToolState};
 use crate::ui;
@@ -26,8 +27,11 @@ pub fn run(yes: bool) -> Result<()> {
     // 3. Calculate what needs updating (check tool versions, not just manifest version)
     let changes = calculate_changes(&state, &latest);
 
-    // 4. If no changes and same version, we're up to date
+    // 4. If no changes and same version, still update integrations then exit
     if changes.is_empty() && latest.version == state.bottle_version {
+        // Update integrations even when tools are current (plugins/skills may have changed)
+        update_integrations(&state, &latest)?;
+
         println!(
             "{} {} is already at the latest version ({})",
             style("Bottle").bold(),
@@ -65,7 +69,10 @@ pub fn run(yes: bool) -> Result<()> {
         apply_updates(&state, &changes)?
     };
 
-    // 7. Re-build snippet from latest manifest (may have changed)
+    // 7. Update platform integrations (plugins/skills)
+    update_integrations(&state, &latest)?;
+
+    // 8. Re-build snippet from latest manifest (may have changed)
     let snippet = match build_agents_md_snippet(&latest) {
         Ok(s) => s,
         Err(e) => {
@@ -74,7 +81,7 @@ pub fn run(yes: bool) -> Result<()> {
         }
     };
 
-    // 8. Save updated state (preserve integrations and custom tools across updates)
+    // 9. Save updated state (preserve integrations and custom tools across updates)
     let new_state = BottleState {
         bottle: state.bottle.clone(),
         bottle_version: latest.version.clone(),
@@ -94,7 +101,7 @@ pub fn run(yes: bool) -> Result<()> {
             .map_err(|e| BottleError::Other(format!("Failed to save AGENTS.md snippet: {}", e)))?;
     }
 
-    // 9. Show success
+    // 10. Show success
     println!();
     ui::print_success(&format!(
         "Updated to {} {}",
@@ -310,4 +317,40 @@ fn apply_updates(
     );
 
     Ok(tools)
+}
+
+/// Update platform integrations (plugins/skills) for all active platforms
+fn update_integrations(state: &BottleState, manifest: &BottleManifest) -> Result<()> {
+    let platforms = [Platform::ClaudeCode, Platform::OpenCode, Platform::Codex];
+
+    let active: Vec<_> = platforms
+        .iter()
+        .filter(|p| state.integrations.contains_key(p.key()))
+        .collect();
+
+    if active.is_empty() {
+        return Ok(());
+    }
+
+    println!("{}:", style("Updating integrations").bold());
+
+    for platform in active {
+        print!("  {:<12} ", platform.display_name());
+        // Pass None for empty opencode_plugins to trigger default package fallback
+        let opencode_plugins = if manifest.opencode_plugins.is_empty() {
+            None
+        } else {
+            Some(&manifest.opencode_plugins)
+        };
+        match integrate::update(*platform, opencode_plugins) {
+            Ok(()) => println!("{}", style("updated").green()),
+            Err(e) => {
+                println!("{}", style("failed").red());
+                ui::print_warning(&format!("Failed to update {}: {}", platform.display_name(), e));
+            }
+        }
+    }
+
+    println!();
+    Ok(())
 }

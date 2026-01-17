@@ -88,6 +88,22 @@ pub fn remove(platform: Platform) -> Result<()> {
     }
 }
 
+/// Update an integration for a platform
+/// For OpenCode, pass the opencode_plugins map from the manifest for versioned updates
+pub fn update(platform: Platform, opencode_plugins: Option<&HashMap<String, String>>) -> Result<()> {
+    match platform {
+        Platform::ClaudeCode => claude_code::update(),
+        Platform::OpenCode => {
+            if let Some(plugins) = opencode_plugins {
+                opencode::update(plugins)
+            } else {
+                Ok(()) // No versions to update
+            }
+        }
+        Platform::Codex => codex::update(),
+    }
+}
+
 /// Check if an integration is currently installed (filesystem check)
 /// AIDEV-NOTE: Kept for future use in `bottle status` to verify state matches reality
 #[allow(dead_code)]

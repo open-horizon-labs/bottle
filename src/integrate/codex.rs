@@ -109,6 +109,12 @@ fn install_skill(skills_path: &Path, name: &str, content: &str) -> Result<()> {
     Ok(())
 }
 
+/// Update all Open Horizon Labs skills for Codex
+/// Re-fetches all skills from GitHub to get latest versions
+pub fn update() -> Result<()> {
+    install()
+}
+
 /// Remove all Open Horizon Labs skills from Codex
 pub fn remove() -> Result<()> {
     let Some(skills_path) = skills_dir() else {
