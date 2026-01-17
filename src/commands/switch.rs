@@ -64,6 +64,7 @@ pub fn run(bottle: &str, yes: bool) -> Result<()> {
         tools: tool_states,
         mode: Mode::Managed,
         integrations: state.integrations.clone(),
+        custom_tools: state.custom_tools.clone(),
     };
     new_state
         .save()

@@ -3,7 +3,7 @@ use crate::error::{BottleError, Result};
 use crate::fetch::fetch_tool_definition;
 use crate::install::{self, plugin};
 use crate::manifest::bottle::BottleManifest;
-use crate::manifest::state::{BottleState, Mode, ToolState};
+use crate::manifest::state::{BottleState, CustomInstallMethod, CustomToolState, Mode, ToolState};
 use crate::ui;
 use chrono::Utc;
 use console::style;
@@ -63,7 +63,7 @@ pub fn run(bottle: &str, yes: bool, dry_run: bool, force: bool) -> Result<()> {
     inject_agents_md(&manifest)?;
 
     // 9. Install custom tools (if any)
-    install_custom_tools(&manifest)?;
+    let custom_tool_states = install_custom_tools(&manifest)?;
 
     // 10. Write state
     let state = BottleState {
@@ -73,10 +73,11 @@ pub fn run(bottle: &str, yes: bool, dry_run: bool, force: bool) -> Result<()> {
         tools: tool_states,
         mode: Mode::Managed,
         integrations: HashMap::new(),
+        custom_tools: custom_tool_states,
     };
     state.save().map_err(|e| BottleError::Other(format!("Failed to save state: {}", e)))?;
 
-    // 9. Show success
+    // 11. Show success
     show_success(&manifest);
 
     Ok(())
@@ -541,9 +542,11 @@ fn inject_agents_md(manifest: &BottleManifest) -> Result<()> {
 }
 
 /// Install custom tools from the manifest
-fn install_custom_tools(manifest: &BottleManifest) -> Result<()> {
+fn install_custom_tools(manifest: &BottleManifest) -> Result<HashMap<String, CustomToolState>> {
+    let mut installed: HashMap<String, CustomToolState> = HashMap::new();
+
     if manifest.custom_tools.is_empty() {
-        return Ok(());
+        return Ok(installed);
     }
 
     println!("{}:", style("Installing custom tools").bold());
@@ -557,7 +560,20 @@ fn install_custom_tools(manifest: &BottleManifest) -> Result<()> {
 
         match install_custom_tool(name, tool) {
             Ok(method) => {
-                println!("{} {}", style("installed").green(), style(format!("({})", method)).dim());
+                let method_name = match method {
+                    CustomInstallMethod::Brew => "brew",
+                    CustomInstallMethod::Cargo => "cargo",
+                    CustomInstallMethod::Npm => "npm",
+                    CustomInstallMethod::Binary => "binary",
+                };
+                println!("{} {}", style("installed").green(), style(format!("({})", method_name)).dim());
+
+                // Track in state
+                installed.insert(name.clone(), CustomToolState {
+                    version: tool.version.clone(),
+                    installed_at: Utc::now(),
+                    method,
+                });
 
                 // Run verify command only after successful install
                 if let Some(verify) = &tool.verify {
@@ -591,14 +607,16 @@ fn install_custom_tools(manifest: &BottleManifest) -> Result<()> {
         println!();
     }
 
-    Ok(())
+    Ok(installed)
 }
 
 /// Install a single custom tool, trying methods in order
-fn install_custom_tool(name: &str, tool: &crate::manifest::bottle::CustomToolDef) -> Result<String> {
+fn install_custom_tool(name: &str, tool: &crate::manifest::bottle::CustomToolDef) -> Result<CustomInstallMethod> {
     let install = &tool.install;
 
     // Try brew first
+    // Note: Versioned formulas (formula@version) only work for some packages.
+    // Tap formulas (org/tap/formula) don't support the @version syntax.
     if let Some(formula) = &install.brew {
         if which::which("brew").is_ok() {
             let version_formula = if tool.version.is_empty() || tool.version == "latest" {
@@ -616,7 +634,7 @@ fn install_custom_tool(name: &str, tool: &crate::manifest::bottle::CustomToolDef
                 })?;
 
             if status.success() {
-                return Ok("brew".to_string());
+                return Ok(CustomInstallMethod::Brew);
             }
         }
     }
@@ -640,7 +658,7 @@ fn install_custom_tool(name: &str, tool: &crate::manifest::bottle::CustomToolDef
                 })?;
 
             if status.success() {
-                return Ok("cargo".to_string());
+                return Ok(CustomInstallMethod::Cargo);
             }
         }
     }
@@ -663,7 +681,7 @@ fn install_custom_tool(name: &str, tool: &crate::manifest::bottle::CustomToolDef
                 })?;
 
             if status.success() {
-                return Ok("npm".to_string());
+                return Ok(CustomInstallMethod::Npm);
             }
         }
     }
@@ -671,7 +689,8 @@ fn install_custom_tool(name: &str, tool: &crate::manifest::bottle::CustomToolDef
     // Try binary_url
     if let Some(url_template) = &install.binary_url {
         let url = expand_binary_url(url_template);
-        return install_from_binary_url(name, &url);
+        install_from_binary_url(name, &url)?;
+        return Ok(CustomInstallMethod::Binary);
     }
 
     Err(BottleError::InstallError {
@@ -706,7 +725,7 @@ fn expand_binary_url(url: &str) -> String {
 }
 
 /// Install a tool from a binary URL (raw binary only, no archive support)
-fn install_from_binary_url(name: &str, url: &str) -> Result<String> {
+fn install_from_binary_url(name: &str, url: &str) -> Result<()> {
     use std::time::Duration;
 
     // Enforce HTTPS for security
@@ -772,7 +791,7 @@ fn install_from_binary_url(name: &str, url: &str) -> Result<String> {
         std::fs::set_permissions(&bin_path, std::fs::Permissions::from_mode(0o755)).ok();
     }
 
-    Ok("binary".to_string())
+    Ok(())
 }
 
 /// Run a verification command
@@ -830,6 +849,11 @@ fn fetch_snippets(url: &str) -> Result<String> {
 fn install_mcp_servers(manifest: &BottleManifest) -> Result<()> {
     if manifest.mcp_servers.is_empty() {
         return Ok(());
+    }
+
+    // Validate all env vars upfront before any registration
+    for (name, server) in &manifest.mcp_servers {
+        install::mcp::validate_env_vars(name, server)?;
     }
 
     println!("{}:", style("Registering MCP servers").bold());

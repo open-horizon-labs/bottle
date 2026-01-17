@@ -64,7 +64,7 @@ pub fn run(yes: bool) -> Result<()> {
         apply_updates(&state, &changes)?
     };
 
-    // 7. Save updated state (preserve integrations across updates)
+    // 7. Save updated state (preserve integrations and custom tools across updates)
     let new_state = BottleState {
         bottle: state.bottle.clone(),
         bottle_version: latest.version.clone(),
@@ -72,6 +72,7 @@ pub fn run(yes: bool) -> Result<()> {
         tools: updated_tools,
         mode: state.mode.clone(),
         integrations: state.integrations.clone(),
+        custom_tools: state.custom_tools.clone(),
     };
     new_state
         .save()

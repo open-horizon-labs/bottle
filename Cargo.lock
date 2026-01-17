@@ -111,6 +111,7 @@ dependencies = [
  "dialoguer",
  "dirs",
  "indicatif",
+ "once_cell",
  "regex",
  "reqwest",
  "serde",

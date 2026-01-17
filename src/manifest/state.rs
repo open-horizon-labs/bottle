@@ -15,12 +15,24 @@ pub struct BottleState {
     /// AIDEV-NOTE: Optional for backwards compatibility with existing state files
     #[serde(default)]
     pub integrations: HashMap<String, IntegrationState>,
+    /// Custom tools installed via bespoke bottles
+    /// AIDEV-NOTE: Optional for backwards compatibility with existing state files
+    #[serde(default)]
+    pub custom_tools: HashMap<String, CustomToolState>,
 }
 
 /// State for a platform integration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IntegrationState {
     pub installed_at: DateTime<Utc>,
+}
+
+/// State for a custom tool installed via bespoke bottle
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CustomToolState {
+    pub version: String,
+    pub installed_at: DateTime<Utc>,
+    pub method: CustomInstallMethod,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -43,6 +55,16 @@ pub enum InstallMethod {
     Cargo,
     Brew,
     Mcp,
+}
+
+/// Install method for custom tools (more options than curated tools)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum CustomInstallMethod {
+    Brew,
+    Cargo,
+    Npm,
+    Binary,
 }
 
 impl BottleState {

@@ -208,7 +208,9 @@ Install tools not managed by curated bottles:
 1. `brew`: Homebrew formula (e.g., `tap/formula`)
 2. `cargo`: Cargo crate name
 3. `npm`: npm package name (installed globally)
-4. `binary_url`: Direct binary download URL
+4. `binary_url`: Direct binary download URL (must use HTTPS)
+
+**Brew version note:** Versioned formulas (`formula@version`) only work for some core Homebrew packages like `python@3.9`. Tap formulas (e.g., `org/tap/formula`) don't support the `@version` syntax - use `latest` or omit the version for tap formulas.
 
 **URL Placeholders:**
 - `{arch}`: CPU architecture (`x86_64`, `aarch64`)

@@ -1,13 +1,17 @@
 use crate::error::{BottleError, Result};
 use crate::manifest::bottle::McpServerDef;
+use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::HashMap;
 use std::process::Command;
 
+/// Pattern for matching ${VAR} environment variable references
+static ENV_VAR_PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"\$\{([^}]+)\}").unwrap());
+
 /// Validate environment variables in a bespoke MCP server definition.
 /// Returns an error if any ${VAR} pattern references an unset env var.
 pub fn validate_env_vars(name: &str, server: &McpServerDef) -> Result<()> {
-    let pattern = Regex::new(r"\$\{([^}]+)\}").unwrap();
+    let pattern = &*ENV_VAR_PATTERN;
     let mut missing: Vec<String> = Vec::new();
 
     // Check env values for ${VAR} patterns
@@ -43,8 +47,7 @@ pub fn validate_env_vars(name: &str, server: &McpServerDef) -> Result<()> {
 
 /// Expand ${VAR} patterns in a string using environment variables
 fn expand_env_vars(s: &str) -> String {
-    let pattern = Regex::new(r"\$\{([^}]+)\}").unwrap();
-    pattern
+    ENV_VAR_PATTERN
         .replace_all(s, |caps: &regex::Captures| {
             std::env::var(&caps[1]).unwrap_or_default()
         })
@@ -53,10 +56,8 @@ fn expand_env_vars(s: &str) -> String {
 
 /// Register a bespoke MCP server with Claude Code.
 /// Supports custom commands, args, env vars, and scope.
+/// Note: Caller should validate env vars first using validate_env_vars().
 pub fn register_bespoke(name: &str, server: &McpServerDef) -> Result<()> {
-    // Validate env vars first
-    validate_env_vars(name, server)?;
-
     // Build command args
     let mut args = vec!["mcp", "add", name, "-s", &server.scope, "--"];
     args.push(&server.command);
@@ -91,15 +92,11 @@ pub fn register_bespoke(name: &str, server: &McpServerDef) -> Result<()> {
 }
 
 /// Register bespoke MCP servers with OpenCode by writing to opencode.json
+/// Note: Caller should validate env vars first using validate_env_vars().
 pub fn register_bespoke_opencode(servers: &HashMap<String, McpServerDef>) -> Result<()> {
     use serde_json::{json, Value};
     use std::fs;
     use std::path::PathBuf;
-
-    // Validate all env vars first
-    for (name, server) in servers {
-        validate_env_vars(name, server)?;
-    }
 
     // Get config path (cwd first, then global)
     let config_path = {
