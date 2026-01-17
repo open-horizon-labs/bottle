@@ -53,3 +53,21 @@ This project uses Open Horizon Labs tools. Follow these protocols:
 - If you receive SUPEREGO FEEDBACK: critically evaluate it and either incorporate or escalate to user
 
 **Protocol:** Superego is opt-in. Use it for high-stakes decisions, architectural choices, or when you want a second opinion. It catches premature commitment, scope creep, and misalignment.
+
+## Development Workflow
+
+**Work tracking:** GitHub issues for features/bugs, PRs for implementation.
+
+**PR workflow:**
+1. Create PR with task list (markdown checkboxes) in description
+2. Run `/superego:review pr` before requesting review
+3. CodeRabbit provides automated review
+4. Address feedback, update checkboxes as tasks complete
+5. Merge triggers release workflow
+
+**Releases:** Automated on merge to master. Version bumps should be committed before merge.
+
+**Review tools:**
+- `sg review pr` - Superego review of PR diff
+- CodeRabbit - Automated code review on PR
+- Both are advisory, not blocking
