@@ -522,7 +522,7 @@ fn inject_agents_md(manifest: &BottleManifest) -> Result<()> {
         // Replace existing bottle-managed section
         let before = existing.split(marker_start).next().unwrap_or("");
         let after = existing.split(marker_end).last().unwrap_or("");
-        format!("{}{}{}", before.trim_end(), inject_content, after.trim_start())
+        format!("{}\n\n{}\n\n{}", before.trim_end(), inject_content, after.trim_start())
     } else if existing.is_empty() {
         // New file - add content at the start
         format!("# AGENTS.md\n\n{}", inject_content)
@@ -855,6 +855,14 @@ fn run_verify_command(verify: &str) -> Result<()> {
 /// Fetch content from a snippets URL
 fn fetch_snippets(url: &str) -> Result<String> {
     use std::time::Duration;
+
+    // Enforce HTTPS for security (prevents MITM injection of malicious instructions)
+    if !url.starts_with("https://") {
+        return Err(BottleError::Other(format!(
+            "Snippets URL must use HTTPS: {}",
+            url
+        )));
+    }
 
     // Build client with timeout
     let client = reqwest::blocking::Client::builder()

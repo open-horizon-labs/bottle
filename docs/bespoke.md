@@ -176,7 +176,7 @@ Inject custom guidance into project AGENTS.md files:
 - `sections`: Array of inline sections to inject
   - `heading`: Markdown heading (e.g., `## Section Title`)
   - `content`: Markdown content for the section
-- `snippets_url`: Optional URL to fetch additional snippet content from
+- `snippets_url`: Optional HTTPS URL to fetch additional snippet content from
 
 **How it works:**
 - Sections are wrapped in `<!-- bottle:agents-md:start -->` and `<!-- bottle:agents-md:end -->` markers
