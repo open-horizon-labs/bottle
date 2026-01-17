@@ -506,8 +506,19 @@ fn inject_agents_md(manifest: &BottleManifest) -> Result<()> {
     // Read existing file or create new one
     let existing = std::fs::read_to_string(&agents_path).unwrap_or_default();
 
+    // Check for mismatched markers (malformed content)
+    let has_start = existing.contains(marker_start);
+    let has_end = existing.contains(marker_end);
+    if has_start != has_end {
+        ui::print_warning(&format!(
+            "AGENTS.md has mismatched bottle markers (found {} but not {}). Appending new block instead.",
+            if has_start { "start" } else { "end" },
+            if has_start { "end" } else { "start" }
+        ));
+    }
+
     // Check if we already have bottle-managed content
-    let new_content = if existing.contains(marker_start) && existing.contains(marker_end) {
+    let new_content = if has_start && has_end {
         // Replace existing bottle-managed section
         let before = existing.split(marker_start).next().unwrap_or("");
         let after = existing.split(marker_end).last().unwrap_or("");
@@ -516,7 +527,7 @@ fn inject_agents_md(manifest: &BottleManifest) -> Result<()> {
         // New file - add content at the start
         format!("# AGENTS.md\n\n{}", inject_content)
     } else {
-        // Append to existing file
+        // Append to existing file (also used for mismatched markers as safe fallback)
         format!("{}\n\n{}", existing.trim_end(), inject_content)
     };
 
@@ -619,10 +630,21 @@ fn install_custom_tool(name: &str, tool: &crate::manifest::bottle::CustomToolDef
     // Tap formulas (org/tap/formula) don't support the @version syntax.
     if let Some(formula) = &install.brew {
         if which::which("brew").is_ok() {
-            let version_formula = if tool.version.is_empty() || tool.version == "latest" {
-                formula.clone()
-            } else {
+            let has_version = !tool.version.is_empty() && tool.version != "latest";
+            let is_tap_formula = formula.contains('/');
+
+            // Warn if trying to version a tap formula (unlikely to work)
+            if has_version && is_tap_formula {
+                eprintln!(
+                    "Warning: Tap formula '{}' may not support @{} syntax. Consider using 'latest'.",
+                    formula, tool.version
+                );
+            }
+
+            let version_formula = if has_version {
                 format!("{}@{}", formula, tool.version)
+            } else {
+                formula.clone()
             };
 
             let status = Command::new("brew")
@@ -796,7 +818,9 @@ fn install_from_binary_url(name: &str, url: &str) -> Result<()> {
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(&bin_path, std::fs::Permissions::from_mode(0o755)).ok();
+        if let Err(e) = std::fs::set_permissions(&bin_path, std::fs::Permissions::from_mode(0o755)) {
+            eprintln!("Warning: could not set executable permissions on {}: {}", bin_path.display(), e);
+        }
     }
 
     Ok(())

@@ -45,11 +45,19 @@ pub fn validate_env_vars(name: &str, server: &McpServerDef) -> Result<()> {
     }
 }
 
-/// Expand ${VAR} patterns in a string using environment variables
+/// Expand ${VAR} patterns in a string using environment variables.
+/// Logs a warning if a variable is not set (substitutes empty string).
 fn expand_env_vars(s: &str) -> String {
     ENV_VAR_PATTERN
         .replace_all(s, |caps: &regex::Captures| {
-            std::env::var(&caps[1]).unwrap_or_default()
+            let var_name = &caps[1];
+            match std::env::var(var_name) {
+                Ok(val) => val,
+                Err(_) => {
+                    eprintln!("Warning: environment variable ${} is not set", var_name);
+                    String::new()
+                }
+            }
         })
         .to_string()
 }
