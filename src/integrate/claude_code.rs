@@ -226,6 +226,52 @@ pub fn install() -> Result<()> {
     }
 }
 
+/// Update all bottle plugins in Claude Code
+/// Refreshes marketplace cache and updates each plugin
+pub fn update() -> Result<()> {
+    // First refresh the marketplace cache
+    let status = Command::new("claude")
+        .args(["plugin", "marketplace", "update", MARKETPLACE_NAME])
+        .status()
+        .map_err(|e| BottleError::Other(format!("Failed to run claude plugin marketplace update: {}", e)))?;
+
+    if !status.success() {
+        return Err(BottleError::Other(format!(
+            "claude plugin marketplace update exited with code {}",
+            status
+        )));
+    }
+
+    // Update each plugin
+    let mut failures: Vec<String> = Vec::new();
+    for plugin in ALL_PLUGINS {
+        let status = Command::new("claude")
+            .args([
+                "plugin",
+                "update",
+                &format!("{}@{}", plugin, MARKETPLACE_NAME),
+            ])
+            .status()
+            .map_err(|e| BottleError::Other(format!(
+                "Failed to run claude plugin update for {}: {}",
+                plugin, e
+            )))?;
+
+        if !status.success() {
+            failures.push(plugin.to_string());
+        }
+    }
+
+    if !failures.is_empty() {
+        eprintln!(
+            "Note: Some plugins couldn't be updated: {}",
+            failures.join(", ")
+        );
+    }
+
+    Ok(())
+}
+
 /// Remove all bottle plugins from Claude Code
 pub fn remove() -> Result<()> {
     let mut failures: Vec<String> = Vec::new();

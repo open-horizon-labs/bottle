@@ -171,6 +171,12 @@ pub fn install(opencode_plugins: Option<&HashMap<String, String>>) -> Result<()>
     Ok(())
 }
 
+/// Update OpenCode plugin versions in config
+/// Re-uses install logic since it replaces existing entries with new versions
+pub fn update(opencode_plugins: &HashMap<String, String>) -> Result<()> {
+    install(Some(opencode_plugins))
+}
+
 /// Remove the bottle ecosystem plugin from OpenCode config
 pub fn remove() -> Result<()> {
     let Some(config_path) = get_config_path() else {
