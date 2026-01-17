@@ -1,7 +1,11 @@
 name: Sync Claude Code Plugins
 
 on:
-  workflow_dispatch:  # Manual trigger only
+  workflow_dispatch:  # Manual trigger
+  push:
+    branches: [master]
+    paths:
+      - 'bottles/*/manifest.json'  # Trigger on manifest changes
 
 permissions:
   contents: write
