@@ -143,6 +143,10 @@ enum Commands {
         #[arg(long)]
         from: Option<String>,
     },
+
+    /// Output AGENTS.md snippet for the active bottle
+    #[command(name = "agents-md")]
+    AgentsMd,
 }
 
 /// Platform integration targets
@@ -202,5 +206,6 @@ fn run() -> Result<()> {
         Commands::Validate { bottle } => commands::validate::run(&bottle),
         Commands::Release { bottle, message } => commands::release::run(&bottle, message.as_deref()),
         Commands::Create { name, from } => commands::create::run(&name, from.as_deref()),
+        Commands::AgentsMd => commands::agents_md::run(),
     }
 }

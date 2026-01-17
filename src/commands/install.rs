@@ -59,13 +59,13 @@ pub fn run(bottle: &str, yes: bool, dry_run: bool, force: bool) -> Result<()> {
     // 7. Install bespoke MCP servers (if any)
     install_mcp_servers(&manifest)?;
 
-    // 8. Inject AGENTS.md sections (if any)
-    inject_agents_md(&manifest)?;
+    // 8. Build AGENTS.md snippet (agent applies it later)
+    let snippet = save_agents_md_snippet(&manifest)?;
 
     // 9. Install custom tools (if any)
     let custom_tool_states = install_custom_tools(&manifest)?;
 
-    // 10. Write state
+    // 10. Write state (includes snippet if present)
     let state = BottleState {
         bottle: manifest.name.clone(),
         bottle_version: manifest.version.clone(),
@@ -76,6 +76,12 @@ pub fn run(bottle: &str, yes: bool, dry_run: bool, force: bool) -> Result<()> {
         custom_tools: custom_tool_states,
     };
     state.save().map_err(|e| BottleError::Other(format!("Failed to save state: {}", e)))?;
+
+    // Save snippet alongside state if present
+    if let Some(snippet_content) = &snippet {
+        state.save_snippet(snippet_content)
+            .map_err(|e| BottleError::Other(format!("Failed to save AGENTS.md snippet: {}", e)))?;
+    }
 
     // 11. Show success
     show_success(&manifest);
@@ -179,17 +185,18 @@ fn show_dry_run_plan(manifest: &BottleManifest) {
         println!();
     }
 
-    // Show AGENTS.md injection
+    // Show AGENTS.md snippet info
     if let Some(agents_config) = &manifest.agents_md {
         if !agents_config.sections.is_empty() || agents_config.snippets_url.is_some() {
-            println!("{}:", style("AGENTS.md Injection").bold());
+            println!("{}:", style("AGENTS.md Snippet").bold());
+            println!("  {}", style("(saved for agent to apply)").dim());
             for section in &agents_config.sections {
                 println!("  {} {}", style("Section:").dim(), &section.heading);
             }
             if let Some(url) = &agents_config.snippets_url {
                 println!("  {} {}", style("Snippets URL:").dim(), style(url).cyan());
             }
-            println!("  {} {}", style("Target:").dim(), "./AGENTS.md");
+            println!("  {} ~/.bottle/bottles/{}/agents-md-snippet", style("Saved to:").dim(), manifest.name);
             println!();
         }
     }
@@ -233,10 +240,14 @@ fn show_dry_run_plan(manifest: &BottleManifest) {
 
     // Show state changes
     println!("{}:", style("State changes").bold());
-    println!("  Create ~/.bottle/state.json with:");
+    println!("  Create ~/.bottle/bottles/{}/state.json with:", manifest.name);
     println!("    bottle: {}", manifest.name);
     println!("    version: {}", manifest.version);
     println!("    mode: managed");
+    println!("  Set active bottle: ~/.bottle/active → {}", manifest.name);
+    if manifest.agents_md.as_ref().map(|a| !a.sections.is_empty() || a.snippets_url.is_some()).unwrap_or(false) {
+        println!("  Save AGENTS.md snippet: ~/.bottle/bottles/{}/agents-md-snippet", manifest.name);
+    }
     println!();
 
     println!("{}", style("No changes made.").dim());
@@ -453,103 +464,53 @@ fn install_tools(manifest: &BottleManifest) -> Result<HashMap<String, ToolState>
     Ok(states)
 }
 
-/// Inject AGENTS.md sections from the manifest
-fn inject_agents_md(manifest: &BottleManifest) -> Result<()> {
+/// Build and save AGENTS.md snippet for the manifest (agent applies it later)
+fn save_agents_md_snippet(manifest: &BottleManifest) -> Result<Option<String>> {
+    use super::common::build_agents_md_snippet;
+
     let Some(agents_config) = &manifest.agents_md else {
-        return Ok(());
+        return Ok(None);
     };
 
     // Skip if no sections and no snippets_url
     if agents_config.sections.is_empty() && agents_config.snippets_url.is_none() {
-        return Ok(());
+        return Ok(None);
     }
 
-    println!("{}:", style("AGENTS.md injection").bold());
+    println!("{}:", style("AGENTS.md snippet").bold());
 
-    let agents_path = std::path::PathBuf::from("AGENTS.md");
-    let marker_start = "<!-- bottle:agents-md:start -->";
-    let marker_end = "<!-- bottle:agents-md:end -->";
-
-    // Build content to inject
-    let mut inject_content = String::new();
-    inject_content.push_str(marker_start);
-    inject_content.push_str("\n");
-    inject_content.push_str(&format!("<!-- Managed by bottle - {} -->\n\n", manifest.name));
-
-    // Add inline sections
-    for section in &agents_config.sections {
-        inject_content.push_str(&section.heading);
-        inject_content.push_str("\n\n");
-        inject_content.push_str(&section.content);
-        inject_content.push_str("\n\n");
-    }
-
-    // Fetch snippets from URL if provided
+    // Show progress for URL fetch
     if let Some(url) = &agents_config.snippets_url {
-        print!("  Fetching snippets from {}... ", style(url).dim());
-        match fetch_snippets(url) {
-            Ok(content) => {
+        print!("  Fetching from {}... ", style(url).dim());
+    }
+
+    // Build snippet using shared function
+    match build_agents_md_snippet(manifest) {
+        Ok(Some(snippet)) => {
+            if agents_config.snippets_url.is_some() {
                 println!("{}", style("ok").green());
-                inject_content.push_str(&content);
-                inject_content.push_str("\n\n");
             }
-            Err(e) => {
+            let section_count = agents_config.sections.len();
+            let has_url = agents_config.snippets_url.is_some();
+            let msg = match (section_count, has_url) {
+                (0, true) => "saved (from URL)".to_string(),
+                (n, false) => format!("saved ({} section(s))", n),
+                (n, true) => format!("saved ({} section(s) + URL)", n),
+            };
+            println!("  {} {}", style("Snippet").cyan(), msg);
+            println!();
+            Ok(Some(snippet))
+        }
+        Ok(None) => Ok(None),
+        Err(e) => {
+            if agents_config.snippets_url.is_some() {
                 println!("{}", style("failed").red());
-                ui::print_warning(&format!("Could not fetch snippets: {}", e));
             }
+            ui::print_warning(&format!("Could not build snippet: {}", e));
+            // Continue without snippet rather than fail the whole install
+            Ok(None)
         }
     }
-
-    inject_content.push_str(marker_end);
-    inject_content.push('\n');
-
-    // Read existing file or create new one
-    let existing = std::fs::read_to_string(&agents_path).unwrap_or_default();
-
-    // Check for mismatched markers (malformed content)
-    let has_start = existing.contains(marker_start);
-    let has_end = existing.contains(marker_end);
-    if has_start != has_end {
-        ui::print_warning(&format!(
-            "AGENTS.md has mismatched bottle markers (found {} but not {}). Appending new block instead.",
-            if has_start { "start" } else { "end" },
-            if has_start { "end" } else { "start" }
-        ));
-    }
-
-    // Check if we already have bottle-managed content
-    let new_content = if has_start && has_end {
-        // Replace existing bottle-managed section
-        let before = existing.split(marker_start).next().unwrap_or("");
-        let after = existing.split(marker_end).last().unwrap_or("");
-        format!("{}\n\n{}\n\n{}", before.trim_end(), inject_content, after.trim_start())
-    } else if existing.is_empty() {
-        // New file - add content at the start
-        format!("# AGENTS.md\n\n{}", inject_content)
-    } else {
-        // Append to existing file (also used for mismatched markers as safe fallback)
-        format!("{}\n\n{}", existing.trim_end(), inject_content)
-    };
-
-    // Write the file
-    std::fs::write(&agents_path, new_content).map_err(|e| {
-        BottleError::InstallError {
-            tool: "agents_md".to_string(),
-            reason: format!("Failed to write AGENTS.md: {}", e),
-        }
-    })?;
-
-    let section_count = agents_config.sections.len();
-    let has_url = agents_config.snippets_url.is_some();
-    let msg = match (section_count, has_url) {
-        (0, true) => "Injected snippets from URL".to_string(),
-        (n, false) => format!("Injected {} section(s)", n),
-        (n, true) => format!("Injected {} section(s) + URL snippets", n),
-    };
-    println!("  {} {}", style("AGENTS.md").cyan(), msg);
-    println!();
-
-    Ok(())
 }
 
 /// Install custom tools from the manifest
@@ -850,41 +811,6 @@ fn run_verify_command(verify: &str) -> Result<()> {
             verify, status
         )))
     }
-}
-
-/// Fetch content from a snippets URL
-fn fetch_snippets(url: &str) -> Result<String> {
-    use std::time::Duration;
-
-    // Enforce HTTPS for security (prevents MITM injection of malicious instructions)
-    if !url.starts_with("https://") {
-        return Err(BottleError::Other(format!(
-            "Snippets URL must use HTTPS: {}",
-            url
-        )));
-    }
-
-    // Build client with timeout
-    let client = reqwest::blocking::Client::builder()
-        .timeout(Duration::from_secs(30))
-        .build()
-        .map_err(|e| BottleError::Other(format!("Failed to create HTTP client: {}", e)))?;
-
-    let response = client.get(url).send().map_err(|e| {
-        BottleError::Other(format!("Failed to fetch {}: {}", url, e))
-    })?;
-
-    if !response.status().is_success() {
-        return Err(BottleError::Other(format!(
-            "Failed to fetch {}: HTTP {}",
-            url,
-            response.status()
-        )));
-    }
-
-    response
-        .text()
-        .map_err(|e| BottleError::Other(format!("Failed to read response from {}: {}", url, e)))
 }
 
 /// Install bespoke MCP servers from the manifest

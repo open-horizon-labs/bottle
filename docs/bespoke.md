@@ -150,9 +150,9 @@ Register arbitrary MCP servers with Claude Code and OpenCode:
 - If a required env var is not set, installation fails with a clear error message
 - Set the env vars before running `bottle install`
 
-### AGENTS.md Injection
+### AGENTS.md Snippets
 
-Inject custom guidance into project AGENTS.md files:
+Define custom guidance for AI agents to add to project AGENTS.md files:
 
 ```json
 {
@@ -173,15 +173,16 @@ Inject custom guidance into project AGENTS.md files:
 ```
 
 **Fields:**
-- `sections`: Array of inline sections to inject
+- `sections`: Array of inline sections to include
   - `heading`: Markdown heading (e.g., `## Section Title`)
   - `content`: Markdown content for the section
 - `snippets_url`: Optional HTTPS URL to fetch additional snippet content from
 
 **How it works:**
-- Sections are wrapped in `<!-- bottle:agents-md:start -->` and `<!-- bottle:agents-md:end -->` markers
-- Re-running `bottle install` updates the managed section without affecting other content
-- If AGENTS.md doesn't exist, it's created
+- During install/update, bottle saves the combined snippet to `~/.bottle/bottles/<name>/agents-md-snippet`
+- Run `bottle agents-md` to output the snippet for the active bottle
+- The AI agent is responsible for reading the snippet and applying it to AGENTS.md
+- This agent-driven approach allows intelligent placement and conflict resolution
 
 ### Custom Tools
 
@@ -340,7 +341,9 @@ Bespoke bottles:
 | Item | Location |
 |------|----------|
 | Bespoke bottles | `~/.bottle/bottles/<name>/manifest.json` |
-| Current state | `~/.bottle/state.json` |
+| Bottle state | `~/.bottle/bottles/<name>/state.json` |
+| AGENTS.md snippet | `~/.bottle/bottles/<name>/agents-md-snippet` |
+| Active bottle pointer | `~/.bottle/active` |
 | Curated manifests | Fetched from GitHub |
 
 ## Example: Testing a New wm Version

@@ -1,3 +1,4 @@
+use super::common::build_agents_md_snippet;
 use crate::error::{BottleError, Result};
 use crate::fetch::{fetch_bottle_manifest, fetch_tool_definition};
 use crate::install;
@@ -64,7 +65,10 @@ pub fn run(yes: bool) -> Result<()> {
         apply_updates(&state, &changes)?
     };
 
-    // 7. Save updated state (preserve integrations and custom tools across updates)
+    // 7. Re-build snippet from latest manifest (may have changed)
+    let snippet = build_agents_md_snippet(&latest).ok().flatten();
+
+    // 8. Save updated state (preserve integrations and custom tools across updates)
     let new_state = BottleState {
         bottle: state.bottle.clone(),
         bottle_version: latest.version.clone(),
@@ -78,7 +82,13 @@ pub fn run(yes: bool) -> Result<()> {
         .save()
         .map_err(|e| BottleError::Other(format!("Failed to save state: {}", e)))?;
 
-    // 8. Show success
+    // Save snippet alongside state if present
+    if let Some(snippet_content) = &snippet {
+        new_state.save_snippet(snippet_content)
+            .map_err(|e| BottleError::Other(format!("Failed to save AGENTS.md snippet: {}", e)))?;
+    }
+
+    // 9. Show success
     println!();
     ui::print_success(&format!(
         "Updated to {} {}",

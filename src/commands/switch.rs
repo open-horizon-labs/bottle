@@ -1,4 +1,4 @@
-use super::common::{check_prerequisites, fetch_or_load_manifest, MARKETPLACE};
+use super::common::{build_agents_md_snippet, check_prerequisites, fetch_or_load_manifest, MARKETPLACE};
 use crate::error::{BottleError, Result};
 use crate::fetch::fetch_tool_definition;
 use crate::install::{self, mcp, plugin};
@@ -56,7 +56,10 @@ pub fn run(bottle: &str, yes: bool) -> Result<()> {
     // 9. Handle plugins
     update_plugins(&new_manifest)?;
 
-    // 10. Save new state (preserve integrations and custom tools across bottle switches)
+    // 10. Build snippet for new bottle (if any)
+    let snippet = build_agents_md_snippet(&new_manifest).ok().flatten();
+
+    // 11. Save new state (preserve integrations and custom tools across bottle switches)
     let new_state = BottleState {
         bottle: new_manifest.name.clone(),
         bottle_version: new_manifest.version.clone(),
@@ -70,7 +73,13 @@ pub fn run(bottle: &str, yes: bool) -> Result<()> {
         .save()
         .map_err(|e| BottleError::Other(format!("Failed to save state: {}", e)))?;
 
-    // 11. Show success
+    // Save snippet alongside state if present
+    if let Some(snippet_content) = &snippet {
+        new_state.save_snippet(snippet_content)
+            .map_err(|e| BottleError::Other(format!("Failed to save AGENTS.md snippet: {}", e)))?;
+    }
+
+    // 12. Show success
     show_success(&state.bottle, &new_manifest);
 
     Ok(())

@@ -1,3 +1,4 @@
+pub mod agents_md;
 mod common;
 pub mod create;
 pub mod diff;
