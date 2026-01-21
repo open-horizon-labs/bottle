@@ -1,0 +1,7 @@
+# BOTTLE-BASED AGENTIC TOOLS
+
+This project uses a bottle-managed tool stack for agentic development.
+
+**For new developer setup**, see [`dev_tools/bottle/SETUP.md`](dev_tools/bottle/SETUP.md).
+
+The agent will guide you through authentication and project initialization.
