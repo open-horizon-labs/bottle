@@ -395,4 +395,69 @@ rm -rf ~/.bottle/bottles/mystack
 - **No compatibility guarantees**: If manifest format changes, you update it
 - **Local only**: Bespoke bottles aren't synced or shared
 
-For shared team configurations, consider contributing a new curated bottle or using version control for your manifest.
+For shared team configurations, see the Team Setup Pattern below.
+
+---
+
+## Team Setup Pattern
+
+For teams that want to share a bottle configuration via version control, use a **project-local bespoke bottle**. This pattern enables AI-assisted developer onboarding.
+
+### The Problem
+
+Setup is always painful. AI assistants can help—but only if they have context about team-specific tooling. Without that context, setup remains a docs-reading exercise.
+
+### The Solution
+
+A three-layer structure that separates concerns:
+
+```
+dev_tools/bottle/
+├── manifest.json   ← machine layer: tools, versions, MCP servers
+├── SETUP.md        ← agent layer: verification, troubleshooting, guidance
+├── README.md       ← human layer: quick start, what's installed
+└── bootstrap.sh    ← one-time orchestration (VPN, auth, bottle install)
+```
+
+**manifest.json** — structured data for `bottle install` and `bottle integrate`
+
+**SETUP.md** — prose guidance for AI assistants. Includes:
+- Environment verification commands
+- How to fix common issues
+- Tool usage cheatsheets
+
+**README.md** — human-readable quick start
+
+**bootstrap.sh** — optional script for first-time setup (auth flows, VPN checks)
+
+### How It Works
+
+1. New developer clones the repo
+2. Runs `bash dev_tools/bottle/bootstrap.sh` (or follows README)
+3. Opens AI coding assistant in the project
+4. AI reads SETUP.md, can verify setup and troubleshoot issues
+5. Setup becomes a conversation, not a docs hunt
+
+### Design Principles
+
+- **Bottle handles packages**: install, update, integrate
+- **AI handles guidance**: run verification, explain errors, respect preferences
+- **User stays in control**: taste and nuance belong to humans
+
+### Example
+
+See `bottles/example-team/` for a complete working example with:
+- manifest.json with tools, MCP servers, env vars
+- SETUP.md with verification and troubleshooting
+- README.md with quick start
+- bootstrap.sh for one-time setup
+
+### Using a Project-Local Bottle
+
+```bash
+# From project root
+bottle install --manifest dev_tools/bottle/manifest.json
+bottle integrate opencode --manifest dev_tools/bottle/manifest.json
+```
+
+The `--manifest` flag tells bottle to use the project-local manifest instead of a user-installed bottle.
