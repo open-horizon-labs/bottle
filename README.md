@@ -121,7 +121,7 @@ See platform-specific docs for manual update commands.
 
 ## Bespoke Bottles
 
-Want to pin specific tool versions? Create a custom bottle:
+Want to pin specific tool versions or create a team-shared configuration? Create a bespoke bottle:
 
 ```bash
 bottle create mystack --from stable
@@ -129,7 +129,27 @@ bottle create mystack --from stable
 bottle install mystack
 ```
 
-Bespoke bottles are user-maintained and won't auto-update. See [docs/bespoke.md](docs/bespoke.md) for a full walkthrough.
+Bespoke bottles support:
+- **Version pinning** - Lock specific versions you've tested together
+- **MCP servers** - Register Figma, Azure DevOps, or custom MCP servers
+- **Custom tools** - Include tools not in the curated bottles
+- **Team setup pattern** - Share via version control with AI-assisted onboarding
+
+### Team Setup Pattern
+
+For teams sharing a bottle via version control, use a project-local manifest:
+
+```
+dev_tools/bottle/
+├── manifest.json   ← tools, versions, MCP servers
+├── SETUP.md        ← AI assistant guidance (verification, troubleshooting)
+├── README.md       ← human quick start
+└── bootstrap.sh    ← one-time setup script
+```
+
+This enables AI-assisted developer onboarding - the AI reads SETUP.md and can guide new developers through setup, verify it's correct, and troubleshoot issues.
+
+See [docs/bespoke.md](docs/bespoke.md) for a full walkthrough and [bottles/example-team/](bottles/example-team/) for a working example.
 
 ## Individual Repos
 

@@ -1,0 +1,43 @@
+{
+  "name": "example-team",
+  "version": "2026.01.21",
+  "description": "Example team bottle - customize for your team",
+  "tools": {
+    "ba": "0.2.1",
+    "superego": "0.9.1",
+    "wm": "0.3.3",
+    "opencode": "latest"
+  },
+  "plugins": ["ba", "superego", "wm"],
+  "prerequisites": {
+    "node": "Required for MCP servers (uses npx)"
+  },
+  "opencode_plugins": {
+    "@cloud-atlas-ai/bottle": "0.2.6",
+    "ba-opencode": "0.2.1",
+    "superego-opencode": "0.9.1",
+    "wm-opencode": "0.1.0"
+  },
+  "mcp_servers": {
+    "figma": {
+      "command": "npx",
+      "args": ["-y", "figma-developer-mcp", "--stdio"],
+      "env": {
+        "FIGMA_API_KEY": "${FIGMA_API_KEY}"
+      },
+      "scope": "user"
+    }
+  },
+  "custom_tools": {
+    "azure-cli": {
+      "install": {
+        "brew": "azure-cli"
+      },
+      "version": "latest",
+      "verify": "az --version"
+    }
+  },
+  "env_vars": {
+    "EXAMPLE_PROJECT_ID": "your-project-id"
+  }
+}
