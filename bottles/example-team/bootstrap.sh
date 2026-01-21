@@ -16,7 +16,7 @@ echo "========================================"
 # 1. Install Bottle CLI (prefer cargo)
 #---------------------------------------
 echo ""
-echo "[1/3] Installing bottle..."
+echo "[1/4] Installing bottle..."
 
 if ! command -v bottle &> /dev/null; then
     if command -v cargo &> /dev/null; then
@@ -36,7 +36,7 @@ echo "✓ Bottle CLI installed"
 # 2. Install from Manifest
 #---------------------------------------
 echo ""
-echo "[2/3] Installing tools from manifest..."
+echo "[2/4] Installing tools from manifest..."
 
 bottle install --manifest "$MANIFEST"
 echo "✓ Tools installed"
@@ -45,11 +45,23 @@ echo "✓ Tools installed"
 # 3. Integrate with OpenCode
 #---------------------------------------
 echo ""
-echo "[3/3] Integrating with OpenCode..."
+echo "[3/4] Integrating with OpenCode..."
 
 cd "$PROJECT_ROOT"
 bottle integrate opencode --manifest "$MANIFEST"
 echo "✓ OpenCode integration configured"
+
+#---------------------------------------
+# 4. Initialize Project Tools
+#---------------------------------------
+echo ""
+echo "[4/4] Initializing project tools..."
+
+cd "$PROJECT_ROOT"
+ba init 2>/dev/null || true
+wm init 2>/dev/null || true
+sg init 2>/dev/null || true
+echo "✓ Project tools initialized"
 
 #---------------------------------------
 # Done
