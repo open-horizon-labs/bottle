@@ -30,6 +30,10 @@ enum Commands {
         #[arg(default_value = "stable")]
         bottle: String,
 
+        /// Path to a local manifest file (overrides bottle name lookup)
+        #[arg(long, value_name = "PATH")]
+        manifest: Option<std::path::PathBuf>,
+
         /// Skip confirmation prompt
         #[arg(short = 'y', long)]
         yes: bool,
@@ -79,6 +83,10 @@ enum Commands {
         /// Platform to integrate: claude_code, opencode, codex
         #[arg(value_enum)]
         platform: Option<PlatformArg>,
+
+        /// Path to a local manifest file (for project-local bottles)
+        #[arg(long, value_name = "PATH")]
+        manifest: Option<std::path::PathBuf>,
 
         /// List available and installed integrations
         #[arg(short, long)]
@@ -185,17 +193,18 @@ fn run() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Install { bottle, yes, dry_run, force } => commands::install::run(&bottle, yes, dry_run, force),
+        Commands::Install { bottle, manifest, yes, dry_run, force } => commands::install::run(&bottle, manifest.as_deref(), yes, dry_run, force),
         Commands::Status { check_updates } => commands::status::run(check_updates),
         Commands::Update { yes } => commands::update::run(yes),
         Commands::Switch { bottle, yes } => commands::switch::run(&bottle, yes),
         Commands::Eject { yes } => commands::eject::run(yes),
         Commands::Integrate {
             platform,
+            manifest,
             list,
             remove,
             dry_run,
-        } => commands::integrate::run(platform.map(|p| p.to_platform()), list, remove, dry_run),
+        } => commands::integrate::run(platform.map(|p| p.to_platform()), manifest.as_deref(), list, remove, dry_run),
         Commands::List => commands::list::run(),
         Commands::Diff { from, to } => commands::diff::run(&from, &to),
         Commands::Upgrade {

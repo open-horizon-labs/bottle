@@ -7,12 +7,17 @@ use chrono::Utc;
 use console::style;
 
 /// Add, remove, or list platform integrations
-pub fn run(platform: Option<Platform>, list: bool, remove: bool, dry_run: bool) -> Result<()> {
-    // Must have a bottle installed
-    let state = BottleState::load().ok_or(BottleError::NoBottleInstalled)?;
+pub fn run(platform: Option<Platform>, manifest_path: Option<&std::path::Path>, list: bool, remove: bool, dry_run: bool) -> Result<()> {
+    // For --manifest mode, we don't require a bottle to be installed
+    let state = if manifest_path.is_some() {
+        BottleState::load()
+    } else {
+        Some(BottleState::load().ok_or(BottleError::NoBottleInstalled)?)
+    };
 
     // Handle --list
     if list {
+        let state = state.ok_or(BottleError::NoBottleInstalled)?;
         return show_integrations(&state);
     }
 
@@ -26,9 +31,10 @@ pub fn run(platform: Option<Platform>, list: bool, remove: bool, dry_run: bool) 
     })?;
 
     if remove {
+        let state = state.ok_or(BottleError::NoBottleInstalled)?;
         remove_integration(&state, platform, dry_run)
     } else {
-        add_integration(&state, platform, dry_run)
+        add_integration(state.as_ref(), manifest_path, platform, dry_run)
     }
 }
 
@@ -85,7 +91,7 @@ fn show_integrations(state: &BottleState) -> Result<()> {
 }
 
 /// Add a platform integration
-fn add_integration(state: &BottleState, platform: Platform, dry_run: bool) -> Result<()> {
+fn add_integration(state: Option<&BottleState>, manifest_path: Option<&std::path::Path>, platform: Platform, dry_run: bool) -> Result<()> {
     // For Claude Code: clean up old @bottle marketplace entries first
     // This fixes the "Plugin not found in marketplace 'bottle'" error
     if platform == Platform::ClaudeCode {
@@ -94,7 +100,7 @@ fn add_integration(state: &BottleState, platform: Platform, dry_run: bool) -> Re
 
     // Check if actually installed (not just in state) - handles partial installs
     let actually_installed = integrate::is_installed(platform);
-    let in_state = state.integrations.contains_key(platform.key());
+    let in_state = state.map(|s| s.integrations.contains_key(platform.key())).unwrap_or(false);
 
     if actually_installed && in_state {
         ui::print_warning(&format!("{} integration is already installed.", platform));
@@ -127,7 +133,9 @@ fn add_integration(state: &BottleState, platform: Platform, dry_run: bool) -> Re
             println!("  Platform:  {} ({} not found)", style("not detected").yellow(), hint);
         }
         println!("  Action:    {}", describe_install_action(platform));
-        println!("  State:     Add {} to ~/.bottle/state.json", platform.key());
+        if state.is_some() {
+            println!("  State:     Add {} to ~/.bottle/state.json", platform.key());
+        }
         println!();
         println!("{}", style("No changes made.").dim());
         println!();
@@ -150,7 +158,8 @@ fn add_integration(state: &BottleState, platform: Platform, dry_run: bool) -> Re
 
     // Fetch manifest to get opencode_plugins versions (if available)
     let opencode_plugins = if platform == Platform::OpenCode {
-        fetch_or_load_manifest(&state.bottle)
+        let bottle_name = state.map(|s| s.bottle.as_str()).unwrap_or("local");
+        fetch_or_load_manifest(bottle_name, manifest_path)
             .ok()
             .map(|m| m.opencode_plugins)
             .filter(|p| !p.is_empty())
@@ -160,17 +169,19 @@ fn add_integration(state: &BottleState, platform: Platform, dry_run: bool) -> Re
 
     integrate::install(platform, opencode_plugins.as_ref())?;
 
-    // Update state
-    let mut new_state = state.clone();
-    new_state.integrations.insert(
-        platform.key().to_string(),
-        IntegrationState {
-            installed_at: Utc::now(),
-        },
-    );
-    new_state
-        .save()
-        .map_err(|e| BottleError::Other(format!("Failed to save state: {}", e)))?;
+    // Update state (skip if using --manifest without existing state)
+    if let Some(state) = state {
+        let mut new_state = state.clone();
+        new_state.integrations.insert(
+            platform.key().to_string(),
+            IntegrationState {
+                installed_at: Utc::now(),
+            },
+        );
+        new_state
+            .save()
+            .map_err(|e| BottleError::Other(format!("Failed to save state: {}", e)))?;
+    }
 
     // Success message with platform-specific hints
     println!();

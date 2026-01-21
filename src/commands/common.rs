@@ -8,8 +8,15 @@ use std::time::Duration;
 /// Marketplace identifier for plugins
 pub const MARKETPLACE: &str = "open-horizon-labs";
 
-/// Fetch manifest from bespoke location or GitHub
-pub fn fetch_or_load_manifest(bottle: &str) -> Result<BottleManifest> {
+/// Fetch manifest from explicit path, bespoke location, or GitHub
+pub fn fetch_or_load_manifest(bottle: &str, manifest_path: Option<&std::path::Path>) -> Result<BottleManifest> {
+    // If explicit manifest path provided, use it directly
+    if let Some(path) = manifest_path {
+        let contents = fs::read_to_string(path)
+            .map_err(|e| BottleError::Other(format!("Failed to read manifest at {}: {}", path.display(), e)))?;
+        return serde_json::from_str(&contents).map_err(BottleError::ParseError);
+    }
+
     // Check bespoke first (~/.bottle/bottles/<name>/)
     if let Some(home) = dirs::home_dir() {
         let bespoke_path = home

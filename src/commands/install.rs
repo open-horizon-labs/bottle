@@ -11,9 +11,9 @@ use std::collections::HashMap;
 use std::process::Command;
 
 /// Install a bottle (stable, edge, or bespoke)
-pub fn run(bottle: &str, yes: bool, dry_run: bool, force: bool) -> Result<()> {
-    // 1. Check if already installed (skip if --force)
-    if !force {
+pub fn run(bottle: &str, manifest_path: Option<&std::path::Path>, yes: bool, dry_run: bool, force: bool) -> Result<()> {
+    // 1. Check if already installed (skip if --force or using explicit manifest)
+    if !force && manifest_path.is_none() {
         if let Some(state) = BottleState::load() {
             if state.bottle == bottle && state.is_managed() {
                 ui::print_warning(&format!(
@@ -30,9 +30,9 @@ pub fn run(bottle: &str, yes: bool, dry_run: bool, force: bool) -> Result<()> {
         }
     }
 
-    // 2. Fetch manifest (local bespoke or remote curated)
+    // 2. Fetch manifest (explicit path, local bespoke, or remote curated)
     let spinner = ui::spinner("Fetching bottle manifest...");
-    let manifest = fetch_or_load_manifest(bottle)?;
+    let manifest = fetch_or_load_manifest(bottle, manifest_path)?;
     spinner.finish_and_clear();
 
     // 3. Check prerequisites
