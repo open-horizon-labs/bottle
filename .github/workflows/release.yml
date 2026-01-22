@@ -4,28 +4,51 @@ on:
   push:
     tags:
       - 'v*'
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
   workflow_dispatch:
     inputs:
       dry_run:
         description: 'Dry run (skip publishing)'
         type: boolean
         default: false
+      build_macos:
+        description: 'Build macOS binaries'
+        type: boolean
+        default: false
+      build_linux:
+        description: 'Build Linux binaries'
+        type: boolean
+        default: false
 
 concurrency:
   group: release-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # =============================================================================
   # PLAN: Centralized decision logic
   # =============================================================================
+  # This job runs first (~5s) and computes which builds are needed.
+  # All other jobs check plan outputs instead of duplicating condition logic.
+  #
+  # Labels (for PRs):
+  #   build:macos  - Build macOS binaries
+  #   build:linux  - Build Linux binaries
+  #   build:all    - Build everything
+  #   build-me     - Trigger build (required for labeled events)
+  #
   plan:
     name: Plan
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
       git_sha: ${{ steps.version.outputs.git_sha }}
-      is_dry_run: ${{ steps.version.outputs.is_dry_run }}
+      is_release: ${{ steps.decide.outputs.is_release }}
+      is_dry_run: ${{ steps.decide.outputs.is_dry_run }}
+      build_macos: ${{ steps.decide.outputs.build_macos }}
+      build_linux: ${{ steps.decide.outputs.build_linux }}
+      should_skip: ${{ steps.decide.outputs.should_skip }}
     steps:
       - name: Compute version
         id: version
@@ -33,6 +56,8 @@ jobs:
           # Version from tag (strip 'v' prefix)
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
             VERSION="${GITHUB_REF#refs/tags/v}"
+          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            VERSION="0.0.0-pr${{ github.event.pull_request.number }}"
           else
             VERSION="0.0.0-dev"
           fi
@@ -42,11 +67,78 @@ jobs:
           GIT_SHA="${GITHUB_SHA:0:7}"
           echo "git_sha=$GIT_SHA" >> $GITHUB_OUTPUT
 
-          # Dry run check
-          IS_DRY_RUN="${{ inputs.dry_run || 'false' }}"
+          echo "::notice::Build version: $VERSION ($GIT_SHA)"
+
+      - name: Decide what to build
+        id: decide
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_ACTION: ${{ github.event.action }}
+          LABEL_ADDED: ${{ github.event.label.name }}
+          HAS_LABEL_ALL: ${{ contains(github.event.pull_request.labels.*.name, 'build:all') }}
+          HAS_LABEL_MACOS: ${{ contains(github.event.pull_request.labels.*.name, 'build:macos') }}
+          HAS_LABEL_LINUX: ${{ contains(github.event.pull_request.labels.*.name, 'build:linux') }}
+          INPUT_MACOS: ${{ inputs.build_macos }}
+          INPUT_LINUX: ${{ inputs.build_linux }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          # Skip if triggered by a non-build label (only 'build-me' triggers builds)
+          if [[ "$EVENT_ACTION" == "labeled" && "$LABEL_ADDED" != "build-me" ]]; then
+            echo "::notice::Skipping: labeled event for '$LABEL_ADDED' (only 'build-me' triggers builds)"
+            echo "should_skip=true" >> $GITHUB_OUTPUT
+            echo "is_release=false" >> $GITHUB_OUTPUT
+            echo "is_dry_run=true" >> $GITHUB_OUTPUT
+            echo "build_macos=false" >> $GITHUB_OUTPUT
+            echo "build_linux=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "should_skip=false" >> $GITHUB_OUTPUT
+
+          # Is this a release?
+          IS_RELEASE=$([[ "$EVENT_NAME" == "push" && "${{ github.ref_type }}" == "tag" ]] && echo "true" || echo "false")
+          echo "is_release=$IS_RELEASE" >> $GITHUB_OUTPUT
+
+          # Dry run? (PRs are always dry run, workflow_dispatch can override)
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            IS_DRY_RUN="true"
+          elif [[ "$INPUT_DRY_RUN" == "true" ]]; then
+            IS_DRY_RUN="true"
+          else
+            IS_DRY_RUN="false"
+          fi
           echo "is_dry_run=$IS_DRY_RUN" >> $GITHUB_OUTPUT
 
-          echo "::notice::Release version: $VERSION ($GIT_SHA) dry_run=$IS_DRY_RUN"
+          # Helper: should we build everything?
+          should_build_all() {
+            [[ "$IS_RELEASE" == "true" ]] && return 0
+            [[ "$HAS_LABEL_ALL" == "true" ]] && return 0
+            return 1
+          }
+
+          # macOS builds
+          BUILD_MACOS="false"
+          if should_build_all; then BUILD_MACOS="true"; fi
+          if [[ "$HAS_LABEL_MACOS" == "true" ]]; then BUILD_MACOS="true"; fi
+          if [[ "$INPUT_MACOS" == "true" ]]; then BUILD_MACOS="true"; fi
+          echo "build_macos=$BUILD_MACOS" >> $GITHUB_OUTPUT
+
+          # Linux builds
+          BUILD_LINUX="false"
+          if should_build_all; then BUILD_LINUX="true"; fi
+          if [[ "$HAS_LABEL_LINUX" == "true" ]]; then BUILD_LINUX="true"; fi
+          if [[ "$INPUT_LINUX" == "true" ]]; then BUILD_LINUX="true"; fi
+          echo "build_linux=$BUILD_LINUX" >> $GITHUB_OUTPUT
+
+          # Summary
+          echo "### 📋 Build Plan" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Setting | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Release | $IS_RELEASE |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dry Run | $IS_DRY_RUN |" >> $GITHUB_STEP_SUMMARY
+          echo "| macOS | $BUILD_MACOS |" >> $GITHUB_STEP_SUMMARY
+          echo "| Linux | $BUILD_LINUX |" >> $GITHUB_STEP_SUMMARY
 
   # =============================================================================
   # BUILD: macOS targets (native)
@@ -54,6 +146,7 @@ jobs:
   build-macos:
     name: Build macOS (${{ matrix.arch }})
     needs: plan
+    if: needs.plan.outputs.build_macos == 'true' && needs.plan.outputs.should_skip != 'true'
     runs-on: macos-latest
     strategy:
       fail-fast: false
@@ -78,7 +171,7 @@ jobs:
       - uses: swatinem/rust-cache@v2
         with:
           shared-key: macos-${{ matrix.target }}
-          save-if: ${{ github.ref_type == 'tag' }}
+          save-if: ${{ needs.plan.outputs.is_release == 'true' }}
 
       - name: Build release binary
         run: cargo build --release --target ${{ matrix.target }}
@@ -103,6 +196,7 @@ jobs:
   build-linux:
     name: Build Linux (${{ matrix.arch }})
     needs: plan
+    if: needs.plan.outputs.build_linux == 'true' && needs.plan.outputs.should_skip != 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -127,7 +221,7 @@ jobs:
       - uses: swatinem/rust-cache@v2
         with:
           shared-key: zigbuild-${{ matrix.target }}
-          save-if: ${{ github.ref_type == 'tag' }}
+          save-if: ${{ needs.plan.outputs.is_release == 'true' }}
 
       - name: Install zig
         run: |
@@ -170,7 +264,7 @@ jobs:
     name: Release
     needs: [plan, build-macos, build-linux]
     runs-on: ubuntu-latest
-    if: ${{ needs.plan.outputs.is_dry_run != 'true' }}
+    if: needs.plan.outputs.is_release == 'true' && needs.plan.outputs.is_dry_run != 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -199,7 +293,7 @@ jobs:
     name: Publish Homebrew
     needs: [plan, release]
     runs-on: ubuntu-latest
-    if: ${{ needs.plan.outputs.is_dry_run != 'true' }}
+    if: needs.plan.outputs.is_release == 'true' && needs.plan.outputs.is_dry_run != 'true'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -274,7 +368,7 @@ jobs:
     name: Publish crates.io
     needs: [plan, release]
     runs-on: ubuntu-latest
-    if: ${{ needs.plan.outputs.is_dry_run != 'true' }}
+    if: needs.plan.outputs.is_release == 'true' && needs.plan.outputs.is_dry_run != 'true'
     steps:
       - uses: actions/checkout@v4
 
