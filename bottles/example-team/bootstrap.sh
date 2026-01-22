@@ -52,16 +52,19 @@ bottle integrate opencode --manifest "$MANIFEST"
 echo "✓ OpenCode integration configured"
 
 #---------------------------------------
-# Done
+# Done - Next Steps
 #---------------------------------------
 echo ""
 echo "========================================"
-echo "Setup Complete!"
+echo "Tools Installed!"
 echo "========================================"
 echo ""
-echo "To verify: bottle verify --manifest $MANIFEST"
+echo "Next: Start OpenCode and complete setup with the agent:"
 echo ""
-echo "To start OpenCode:"
 echo "  cd $PROJECT_ROOT"
 echo "  opencode"
+echo ""
+echo "Then tell the agent:"
+echo ""
+echo "  Follow dev_tools/bottle/SETUP.md to complete my setup"
 echo ""

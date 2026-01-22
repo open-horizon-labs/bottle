@@ -60,6 +60,14 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
+      - name: Bump version to match tag
+        if: ${{ !github.event.pull_request }}
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"  # Remove 'v' prefix if present
+          sed -i "s/^version = \".*\"/version = \"${VERSION}\"/" Cargo.toml
+          echo "Updated Cargo.toml to version ${VERSION}"
+          grep "^version" Cargo.toml
       - name: Install dist
         # we specify bash to get pipefail; it guards against the `curl` command
         # failing. otherwise `sh` won't catch that `curl` returned non-0
@@ -120,6 +128,15 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
+      - name: Bump version to match tag
+        if: ${{ needs.plan.outputs.publishing == 'true' }}
+        shell: bash
+        run: |
+          VERSION="${{ needs.plan.outputs.tag }}"
+          VERSION="${VERSION#v}"
+          sed -i "s/^version = \".*\"/version = \"${VERSION}\"/" Cargo.toml
+          echo "Updated Cargo.toml to version ${VERSION}"
+          grep "^version" Cargo.toml
       - name: Install Rust non-interactively if not already installed
         if: ${{ matrix.container }}
         run: |
@@ -183,6 +200,14 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
+      - name: Bump version to match tag
+        if: ${{ needs.plan.outputs.publishing == 'true' }}
+        run: |
+          VERSION="${{ needs.plan.outputs.tag }}"
+          VERSION="${VERSION#v}"
+          sed -i "s/^version = \".*\"/version = \"${VERSION}\"/" Cargo.toml
+          echo "Updated Cargo.toml to version ${VERSION}"
+          grep "^version" Cargo.toml
       - name: Install cached dist
         uses: actions/download-artifact@v4
         with:
@@ -233,6 +258,13 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
+      - name: Bump version to match tag
+        run: |
+          VERSION="${{ needs.plan.outputs.tag }}"
+          VERSION="${VERSION#v}"
+          sed -i "s/^version = \".*\"/version = \"${VERSION}\"/" Cargo.toml
+          echo "Updated Cargo.toml to version ${VERSION}"
+          grep "^version" Cargo.toml
       - name: Install cached dist
         uses: actions/download-artifact@v4
         with:

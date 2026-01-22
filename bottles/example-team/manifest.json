@@ -3,10 +3,9 @@
   "version": "2026.01.21",
   "description": "Example team bottle - customize for your team",
   "tools": {
-    "ba": "0.2.1",
-    "superego": "0.9.1",
-    "wm": "0.3.3",
-    "opencode": "latest"
+    "ba": "latest",
+    "superego": "latest",
+    "wm": "latest"
   },
   "plugins": ["ba", "superego", "wm"],
   "prerequisites": {
@@ -29,6 +28,13 @@
     }
   },
   "custom_tools": {
+    "opencode": {
+      "install": {
+        "brew": "opencode"
+      },
+      "version": "latest",
+      "verify": "opencode --version"
+    },
     "azure-cli": {
       "install": {
         "brew": "azure-cli"

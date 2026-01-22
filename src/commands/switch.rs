@@ -33,7 +33,7 @@ pub fn run(bottle: &str, yes: bool) -> Result<()> {
 
     // 4. Fetch new bottle manifest
     let spinner = ui::spinner("Fetching bottle manifest...");
-    let new_manifest = fetch_or_load_manifest(bottle)?;
+    let new_manifest = fetch_or_load_manifest(bottle, None)?;
     spinner.finish_and_clear();
 
     // 5. Check prerequisites
