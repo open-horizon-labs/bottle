@@ -1,5 +1,6 @@
 {
   "name": "@open-horizon-labs/bottle-opencode",
+  "_versionNote": "Version is set at publish time from git tag",
   "version": "0.1.0",
   "description": "Bottle snapshot manager plugin for OpenCode - CLI wrapper for the Open Horizon Labs tool stack",
   "type": "module",

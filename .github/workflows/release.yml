@@ -413,6 +413,7 @@ jobs:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
+      # Node 22 ships with npm 10.x, but OIDC trusted publishing requires npm 11.5.1+
       - name: Upgrade npm for OIDC support
         run: npm install -g npm@latest
 
@@ -433,6 +434,10 @@ jobs:
       - name: Build
         working-directory: opencode-plugin
         run: bun run build
+
+      - name: Verify build output
+        working-directory: opencode-plugin
+        run: test -f dist/index.js
 
       - name: Publish to npm
         working-directory: opencode-plugin
