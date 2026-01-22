@@ -1,4 +1,6 @@
-use super::common::{build_agents_md_snippet, check_prerequisites, fetch_or_load_manifest, MARKETPLACE};
+use super::common::{
+    build_agents_md_snippet, check_prerequisites, fetch_or_load_manifest, MARKETPLACE,
+};
 use crate::error::{BottleError, Result};
 use crate::fetch::fetch_tool_definition;
 use crate::install::{self, mcp, plugin};
@@ -81,7 +83,8 @@ pub fn run(bottle: &str, yes: bool) -> Result<()> {
 
     // Save snippet alongside state if present
     if let Some(snippet_content) = &snippet {
-        new_state.save_snippet(snippet_content)
+        new_state
+            .save_snippet(snippet_content)
             .map_err(|e| BottleError::Other(format!("Failed to save AGENTS.md snippet: {}", e)))?;
     }
 
@@ -94,11 +97,11 @@ pub fn run(bottle: &str, yes: bool) -> Result<()> {
 /// What changes need to be made
 #[derive(Debug)]
 struct SwitchPlan {
-    add: Vec<(String, String)>,             // (tool, version)
-    remove: Vec<String>,                    // tool name
-    upgrade: Vec<(String, String, String)>, // (tool, old_version, new_version)
+    add: Vec<(String, String)>,               // (tool, version)
+    remove: Vec<String>,                      // tool name
+    upgrade: Vec<(String, String, String)>,   // (tool, old_version, new_version)
     downgrade: Vec<(String, String, String)>, // (tool, old_version, new_version)
-    unchanged: Vec<(String, String)>,       // (tool, version)
+    unchanged: Vec<(String, String)>,         // (tool, version)
 }
 
 /// Calculate what changes are needed to switch bottles
@@ -131,7 +134,8 @@ fn calculate_switch_plan(state: &BottleState, new_manifest: &BottleManifest) -> 
         let new_version = new_manifest.tools.get(*tool).unwrap();
 
         if current_version == new_version {
-            plan.unchanged.push((tool.to_string(), current_version.clone()));
+            plan.unchanged
+                .push((tool.to_string(), current_version.clone()));
         } else {
             // Compare versions (simple string comparison for semver)
             match compare_versions(current_version, new_version) {
@@ -150,7 +154,8 @@ fn calculate_switch_plan(state: &BottleState, new_manifest: &BottleManifest) -> 
                     ));
                 }
                 std::cmp::Ordering::Equal => {
-                    plan.unchanged.push((tool.to_string(), current_version.clone()));
+                    plan.unchanged
+                        .push((tool.to_string(), current_version.clone()));
                 }
             }
         }
@@ -384,16 +389,13 @@ fn execute_switch(state: &BottleState, plan: &SwitchPlan) -> Result<HashMap<Stri
     // Handle tools no longer needed
     if !plan.remove.is_empty() {
         // Separate MCP servers (can be unregistered) from binaries (kept for safety)
-        let (mcp_tools, binary_tools): (Vec<_>, Vec<_>) = plan
-            .remove
-            .iter()
-            .partition(|tool| {
-                state
-                    .tools
-                    .get(*tool)
-                    .map(|s| matches!(s.method, InstallMethod::Mcp))
-                    .unwrap_or(false)
-            });
+        let (mcp_tools, binary_tools): (Vec<_>, Vec<_>) = plan.remove.iter().partition(|tool| {
+            state
+                .tools
+                .get(*tool)
+                .map(|s| matches!(s.method, InstallMethod::Mcp))
+                .unwrap_or(false)
+        });
 
         // Unregister MCP servers
         if !mcp_tools.is_empty() {
@@ -420,7 +422,11 @@ fn execute_switch(state: &BottleState, plan: &SwitchPlan) -> Result<HashMap<Stri
                 style("Binary tools no longer in bottle (kept installed)").dim()
             );
             for tool in &binary_tools {
-                println!("  {:<12} {}", tool, style("use cargo uninstall to remove").dim());
+                println!(
+                    "  {:<12} {}",
+                    tool,
+                    style("use cargo uninstall to remove").dim()
+                );
             }
             println!();
         }
@@ -467,10 +473,7 @@ fn update_plugins(new_manifest: &BottleManifest) -> Result<()> {
     println!();
 
     if !failures.is_empty() {
-        ui::print_warning(&format!(
-            "{} plugin(s) failed to install:",
-            failures.len()
-        ));
+        ui::print_warning(&format!("{} plugin(s) failed to install:", failures.len()));
         for (name, err) in &failures {
             println!("  {} - {}", style(name).red(), err);
         }

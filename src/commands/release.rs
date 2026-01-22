@@ -4,7 +4,7 @@ use chrono::Local;
 use console::style;
 use serde_json::Value;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 /// Tag and publish a bottle update (curator command)
@@ -162,15 +162,13 @@ fn format_commit_message(bottle: &str, version: &str, message: Option<&str>) -> 
 }
 
 /// Commit the manifest change
-fn git_commit(manifest_path: &PathBuf, message: &str) -> Result<()> {
+fn git_commit(manifest_path: &Path, message: &str) -> Result<()> {
     let path_str = manifest_path
         .to_str()
         .ok_or_else(|| BottleError::Other("Invalid path encoding".to_string()))?;
 
     // Stage the manifest
-    let status = Command::new("git")
-        .args(["add", path_str])
-        .status()?;
+    let status = Command::new("git").args(["add", path_str]).status()?;
 
     if !status.success() {
         return Err(BottleError::Other("Failed to stage manifest".to_string()));
@@ -191,9 +189,7 @@ fn git_commit(manifest_path: &PathBuf, message: &str) -> Result<()> {
 /// Create a git tag
 fn git_tag(tag_name: &str, message: Option<&str>) -> Result<()> {
     // Check if tag already exists
-    let output = Command::new("git")
-        .args(["tag", "-l", tag_name])
-        .output()?;
+    let output = Command::new("git").args(["tag", "-l", tag_name]).output()?;
 
     // Verify the command succeeded before trusting output
     if !output.status.success() {
@@ -233,9 +229,7 @@ fn git_tag(tag_name: &str, message: Option<&str>) -> Result<()> {
 /// Push commit and tag to origin
 fn git_push(tag_name: &str) -> Result<()> {
     // Push the commit
-    let output = Command::new("git")
-        .args(["push", "origin"])
-        .output()?;
+    let output = Command::new("git").args(["push", "origin"]).output()?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);

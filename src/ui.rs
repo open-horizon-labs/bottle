@@ -1,5 +1,5 @@
-use console::{style, Term};
-use dialoguer::{theme::ColorfulTheme, Confirm, Select};
+use console::style;
+use dialoguer::{theme::ColorfulTheme, Confirm};
 use indicatif::{ProgressBar, ProgressStyle};
 
 use crate::error::BottleError;
@@ -38,29 +38,6 @@ pub fn confirm(message: &str, default: bool) -> bool {
         .unwrap_or(default)
 }
 
-/// Select from a list of options
-pub fn select(prompt: &str, options: &[&str]) -> Option<usize> {
-    Select::with_theme(&ColorfulTheme::default())
-        .with_prompt(prompt)
-        .items(options)
-        .default(0)
-        .interact_on_opt(&Term::stderr())
-        .ok()
-        .flatten()
-}
-
-/// Create a progress bar for installations
-pub fn progress_bar(len: u64) -> ProgressBar {
-    let pb = ProgressBar::new(len);
-    pb.set_style(
-        ProgressStyle::default_bar()
-            .template("{prefix:.bold.dim} [{bar:40.cyan/blue}] {pos}/{len} {msg}")
-            .expect("Invalid progress bar template")
-            .progress_chars("━━─"),
-    );
-    pb
-}
-
 /// Create a spinner for indeterminate operations
 pub fn spinner(message: &str) -> ProgressBar {
     let pb = ProgressBar::new_spinner();
@@ -72,16 +49,6 @@ pub fn spinner(message: &str) -> ProgressBar {
     pb.set_message(message.to_string());
     pb.enable_steady_tick(std::time::Duration::from_millis(100));
     pb
-}
-
-/// Print tool status line
-pub fn print_tool_status(name: &str, version: &str, installed: bool) {
-    let status = if installed {
-        style("✓").green()
-    } else {
-        style("✗").red()
-    };
-    println!("  {:<12} {:<8} {}", name, version, status);
 }
 
 /// Print bottle header

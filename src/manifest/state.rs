@@ -96,13 +96,18 @@ impl BottleState {
     /// Get the active bottle name
     pub fn active_bottle() -> Option<String> {
         let path = Self::active_path()?;
-        std::fs::read_to_string(path).ok().map(|s| s.trim().to_string())
+        std::fs::read_to_string(path)
+            .ok()
+            .map(|s| s.trim().to_string())
     }
 
     /// Set the active bottle (also updates legacy symlink for backwards compatibility)
     pub fn set_active(bottle: &str) -> std::io::Result<()> {
         let path = Self::active_path().ok_or_else(|| {
-            std::io::Error::new(std::io::ErrorKind::NotFound, "Could not determine home directory")
+            std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "Could not determine home directory",
+            )
         })?;
 
         if let Some(parent) = path.parent() {
@@ -126,7 +131,10 @@ impl BottleState {
         let legacy_path = Self::bottle_dir()
             .map(|d| d.join("state.json"))
             .ok_or_else(|| {
-                std::io::Error::new(std::io::ErrorKind::NotFound, "Could not determine home directory")
+                std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    "Could not determine home directory",
+                )
             })?;
 
         // Target is relative: bottles/<name>/state.json
@@ -163,7 +171,10 @@ impl BottleState {
     /// Save state to disk (uses the bottle name from self)
     pub fn save(&self) -> std::io::Result<()> {
         let path = Self::state_path(&self.bottle).ok_or_else(|| {
-            std::io::Error::new(std::io::ErrorKind::NotFound, "Could not determine home directory")
+            std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "Could not determine home directory",
+            )
         })?;
 
         if let Some(parent) = path.parent() {
@@ -182,7 +193,10 @@ impl BottleState {
     /// Save AGENTS.md snippet for this bottle
     pub fn save_snippet(&self, content: &str) -> std::io::Result<()> {
         let path = Self::snippet_path(&self.bottle).ok_or_else(|| {
-            std::io::Error::new(std::io::ErrorKind::NotFound, "Could not determine home directory")
+            std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "Could not determine home directory",
+            )
         })?;
 
         if let Some(parent) = path.parent() {

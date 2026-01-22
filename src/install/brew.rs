@@ -22,8 +22,3 @@ pub fn install(package: &str, _version: &str) -> Result<()> {
         })
     }
 }
-
-/// Check if Homebrew is available
-pub fn is_available() -> bool {
-    which::which("brew").is_ok()
-}

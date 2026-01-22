@@ -27,9 +27,6 @@ pub enum BottleError {
     #[error("Tool not found: {0}")]
     ToolNotFound(String),
 
-    #[error("State file corrupted: {0}")]
-    StateCorrupted(String),
-
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
 

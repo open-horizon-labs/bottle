@@ -1,21 +1,10 @@
 [workspace]
 members = ["cargo:."]
 
-# Config for 'dist'
+# Note: We use custom GitHub Actions workflows instead of cargo-dist generated CI.
+# See .github/workflows/release.yml and .github/workflows/ci.yml
+# This file is kept for reference but CI generation is disabled.
+
 [dist]
-# The preferred dist version to use in CI (Cargo.toml SemVer syntax)
-cargo-dist-version = "0.30.3"
-# CI backends to support
-ci = "github"
-# The installers to generate for each app
-installers = ["homebrew"]
-# A GitHub repo to push Homebrew formulas to
-tap = "open-horizon-labs/homebrew-tap"
-# Target platforms to build apps for (Rust target-triple syntax)
+# Target platforms (for reference)
 targets = ["aarch64-apple-darwin", "x86_64-apple-darwin"]
-# Publish jobs to run in CI
-publish-jobs = ["homebrew"]
-# Build artifacts on PRs so we can test before shipping
-pr-run-mode = "upload"
-# Allow custom modifications to CI workflow (version bump step)
-allow-dirty = ["ci"]

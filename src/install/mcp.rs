@@ -92,13 +92,14 @@ pub fn register_bespoke(name: &str, server: &McpServerDef) -> Result<()> {
     }
 
     // Build and run the command
-    let status = Command::new("claude")
-        .args(&args)
-        .status()
-        .map_err(|e| BottleError::InstallError {
-            tool: name.to_string(),
-            reason: format!("Failed to run claude mcp add: {}", e),
-        })?;
+    let status =
+        Command::new("claude")
+            .args(&args)
+            .status()
+            .map_err(|e| BottleError::InstallError {
+                tool: name.to_string(),
+                reason: format!("Failed to run claude mcp add: {}", e),
+            })?;
 
     if status.success() {
         Ok(())
@@ -155,10 +156,12 @@ pub fn register_bespoke_opencode(servers: &HashMap<String, McpServerDef>) -> Res
         .entry("mcp")
         .or_insert_with(|| json!({}));
 
-    let mcp_obj = mcp_servers.as_object_mut().ok_or_else(|| BottleError::InstallError {
-        tool: "opencode mcp".to_string(),
-        reason: "mcp is not an object".to_string(),
-    })?;
+    let mcp_obj = mcp_servers
+        .as_object_mut()
+        .ok_or_else(|| BottleError::InstallError {
+            tool: "opencode mcp".to_string(),
+            reason: "mcp is not an object".to_string(),
+        })?;
 
     // Add each server using OpenCode's format
     for (name, server) in servers {
@@ -194,7 +197,11 @@ pub fn register_bespoke_opencode(servers: &HashMap<String, McpServerDef>) -> Res
     if let Some(parent) = config_path.parent() {
         fs::create_dir_all(parent).map_err(|e| BottleError::InstallError {
             tool: "opencode mcp".to_string(),
-            reason: format!("Failed to create config directory {}: {}", parent.display(), e),
+            reason: format!(
+                "Failed to create config directory {}: {}",
+                parent.display(),
+                e
+            ),
         })?;
     }
 
@@ -236,15 +243,6 @@ pub fn register(name: &str, package: &str, version: &str) -> Result<()> {
             reason: format!("claude mcp add exited with code {}", status),
         })
     }
-}
-
-/// Check if an MCP server is registered
-pub fn is_registered(name: &str) -> bool {
-    Command::new("claude")
-        .args(["mcp", "list"])
-        .output()
-        .map(|o| String::from_utf8_lossy(&o.stdout).contains(name))
-        .unwrap_or(false)
 }
 
 /// Unregister an MCP server

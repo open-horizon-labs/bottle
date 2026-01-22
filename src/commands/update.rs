@@ -97,16 +97,14 @@ pub fn run(yes: bool) -> Result<()> {
 
     // Save snippet alongside state if present
     if let Some(snippet_content) = &snippet {
-        new_state.save_snippet(snippet_content)
+        new_state
+            .save_snippet(snippet_content)
             .map_err(|e| BottleError::Other(format!("Failed to save AGENTS.md snippet: {}", e)))?;
     }
 
     // 10. Show success
     println!();
-    ui::print_success(&format!(
-        "Updated to {} {}",
-        state.bottle, latest.version
-    ));
+    ui::print_success(&format!("Updated to {} {}", state.bottle, latest.version));
 
     Ok(())
 }
@@ -312,7 +310,10 @@ fn apply_updates(
     // state.tools.clone() and we only modify tools in `changes`, unchanged
     // tools should always remain in the map.
     debug_assert!(
-        state.tools.keys().all(|tool| changes.contains_key(tool) || tools.contains_key(tool)),
+        state
+            .tools
+            .keys()
+            .all(|tool| changes.contains_key(tool) || tools.contains_key(tool)),
         "Unchanged tools were unexpectedly removed from state"
     );
 
@@ -346,7 +347,11 @@ fn update_integrations(state: &BottleState, manifest: &BottleManifest) -> Result
             Ok(()) => println!("{}", style("updated").green()),
             Err(e) => {
                 println!("{}", style("failed").red());
-                ui::print_warning(&format!("Failed to update {}: {}", platform.display_name(), e));
+                ui::print_warning(&format!(
+                    "Failed to update {}: {}",
+                    platform.display_name(),
+                    e
+                ));
             }
         }
     }

@@ -1,7 +1,7 @@
-use super::common::{check_prerequisites, fetch_or_load_manifest, MARKETPLACE};
+use super::common::{check_prerequisites, fetch_or_load_manifest};
 use crate::error::{BottleError, Result};
 use crate::fetch::fetch_tool_definition;
-use crate::install::{self, plugin};
+use crate::install;
 use crate::manifest::bottle::BottleManifest;
 use crate::manifest::state::{BottleState, CustomInstallMethod, CustomToolState, Mode, ToolState};
 use crate::ui;
@@ -11,7 +11,13 @@ use std::collections::HashMap;
 use std::process::Command;
 
 /// Install a bottle (stable, edge, or bespoke)
-pub fn run(bottle: &str, manifest_path: Option<&std::path::Path>, yes: bool, dry_run: bool, force: bool) -> Result<()> {
+pub fn run(
+    bottle: &str,
+    manifest_path: Option<&std::path::Path>,
+    yes: bool,
+    dry_run: bool,
+    force: bool,
+) -> Result<()> {
     // 1. Check if already installed (skip if --force or using explicit manifest)
     if !force && manifest_path.is_none() {
         if let Some(state) = BottleState::load() {
@@ -75,11 +81,14 @@ pub fn run(bottle: &str, manifest_path: Option<&std::path::Path>, yes: bool, dry
         integrations: HashMap::new(),
         custom_tools: custom_tool_states,
     };
-    state.save().map_err(|e| BottleError::Other(format!("Failed to save state: {}", e)))?;
+    state
+        .save()
+        .map_err(|e| BottleError::Other(format!("Failed to save state: {}", e)))?;
 
     // Save snippet alongside state if present
     if let Some(snippet_content) = &snippet {
-        state.save_snippet(snippet_content)
+        state
+            .save_snippet(snippet_content)
             .map_err(|e| BottleError::Other(format!("Failed to save AGENTS.md snippet: {}", e)))?;
     }
 
@@ -131,7 +140,12 @@ fn show_dry_run_plan(manifest: &BottleManifest) {
         let current = get_tool_version(name);
         match current {
             Some(installed_ver) if installed_ver == **target_version => {
-                println!("  {:<12} {} {}", name, style("current").green(), style(target_version).dim());
+                println!(
+                    "  {:<12} {} {}",
+                    name,
+                    style("current").green(),
+                    style(target_version).dim()
+                );
             }
             Some(installed_ver) => {
                 let arrow = match compare_versions(&installed_ver, target_version) {
@@ -139,10 +153,21 @@ fn show_dry_run_plan(manifest: &BottleManifest) {
                     "downgrade" => style("↓").red(),
                     _ => style("→").yellow(),
                 };
-                println!("  {:<12} {} {} {}", name, arrow, style(&installed_ver).dim(), target_version);
+                println!(
+                    "  {:<12} {} {} {}",
+                    name,
+                    arrow,
+                    style(&installed_ver).dim(),
+                    target_version
+                );
             }
             None => {
-                println!("  {:<12} {} {}", name, style("install").yellow(), target_version);
+                println!(
+                    "  {:<12} {} {}",
+                    name,
+                    style("install").yellow(),
+                    target_version
+                );
             }
         }
     }
@@ -150,7 +175,11 @@ fn show_dry_run_plan(manifest: &BottleManifest) {
 
     // Show plugins available via integrate
     if !manifest.plugins.is_empty() {
-        println!("{} {}:", style("Plugins").bold(), style("(via bottle integrate)").dim());
+        println!(
+            "{} {}:",
+            style("Plugins").bold(),
+            style("(via bottle integrate)").dim()
+        );
         for plugin in &manifest.plugins {
             println!("  {}", plugin);
         }
@@ -178,7 +207,11 @@ fn show_dry_run_plan(manifest: &BottleManifest) {
             // Show env vars that need to be set
             for (key, value) in &server.env {
                 if value.contains("${") {
-                    println!("    {} {}", style("env:").dim(), style(format!("{}={}", key, value)).yellow());
+                    println!(
+                        "    {} {}",
+                        style("env:").dim(),
+                        style(format!("{}={}", key, value)).yellow()
+                    );
                 }
             }
         }
@@ -196,7 +229,11 @@ fn show_dry_run_plan(manifest: &BottleManifest) {
             if let Some(url) = &agents_config.snippets_url {
                 println!("  {} {}", style("Snippets URL:").dim(), style(url).cyan());
             }
-            println!("  {} ~/.bottle/bottles/{}/agents-md-snippet", style("Saved to:").dim(), manifest.name);
+            println!(
+                "  {} ~/.bottle/bottles/{}/agents-md-snippet",
+                style("Saved to:").dim(),
+                manifest.name
+            );
             println!();
         }
     }
@@ -231,7 +268,11 @@ fn show_dry_run_plan(manifest: &BottleManifest) {
     }
 
     // Show detected platforms for integration
-    println!("{} {}:", style("Platform Integrations").bold(), style("(optional, run after install)").dim());
+    println!(
+        "{} {}:",
+        style("Platform Integrations").bold(),
+        style("(optional, run after install)").dim()
+    );
     println!();
     show_claude_code_integration();
     show_opencode_integration();
@@ -240,13 +281,24 @@ fn show_dry_run_plan(manifest: &BottleManifest) {
 
     // Show state changes
     println!("{}:", style("State changes").bold());
-    println!("  Create ~/.bottle/bottles/{}/state.json with:", manifest.name);
+    println!(
+        "  Create ~/.bottle/bottles/{}/state.json with:",
+        manifest.name
+    );
     println!("    bottle: {}", manifest.name);
     println!("    version: {}", manifest.version);
     println!("    mode: managed");
     println!("  Set active bottle: ~/.bottle/active → {}", manifest.name);
-    if manifest.agents_md.as_ref().map(|a| !a.sections.is_empty() || a.snippets_url.is_some()).unwrap_or(false) {
-        println!("  Save AGENTS.md snippet: ~/.bottle/bottles/{}/agents-md-snippet", manifest.name);
+    if manifest
+        .agents_md
+        .as_ref()
+        .map(|a| !a.sections.is_empty() || a.snippets_url.is_some())
+        .unwrap_or(false)
+    {
+        println!(
+            "  Save AGENTS.md snippet: ~/.bottle/bottles/{}/agents-md-snippet",
+            manifest.name
+        );
     }
     println!();
 
@@ -257,12 +309,20 @@ fn show_dry_run_plan(manifest: &BottleManifest) {
 fn show_claude_code_integration() {
     let detected = crate::integrate::claude_code::is_detected();
     if detected {
-        println!("  {} {}", style("Claude Code").cyan().bold(), style("(~/.claude/ detected)").dim());
+        println!(
+            "  {} {}",
+            style("Claude Code").cyan().bold(),
+            style("(~/.claude/ detected)").dim()
+        );
         println!("    {} bottle integrate claude_code", style("→").dim());
         println!("    Adds /bottle commands: status, update, switch, integrate, list");
         println!("    Plugin: bottle@open-horizon-labs");
     } else {
-        println!("  {} {}", style("Claude Code").dim(), style("not detected").dim());
+        println!(
+            "  {} {}",
+            style("Claude Code").dim(),
+            style("not detected").dim()
+        );
     }
     println!();
 }
@@ -270,12 +330,20 @@ fn show_claude_code_integration() {
 fn show_opencode_integration() {
     let detected = crate::integrate::opencode::is_detected();
     if detected {
-        println!("  {} {}", style("OpenCode").cyan().bold(), style("(~/.opencode/ detected)").dim());
+        println!(
+            "  {} {}",
+            style("OpenCode").cyan().bold(),
+            style("(~/.opencode/ detected)").dim()
+        );
         println!("    {} bottle integrate opencode", style("→").dim());
         println!("    Adds bottle-* tools to OpenCode");
         println!("    Config: adds @cloud-atlas-ai/bottle to plugins");
     } else {
-        println!("  {} {}", style("OpenCode").dim(), style("not detected").dim());
+        println!(
+            "  {} {}",
+            style("OpenCode").dim(),
+            style("not detected").dim()
+        );
     }
     println!();
 }
@@ -283,7 +351,11 @@ fn show_opencode_integration() {
 fn show_codex_integration() {
     let detected = crate::integrate::codex::is_detected();
     if detected {
-        println!("  {} {}", style("Codex").cyan().bold(), style("(~/.codex/ detected)").dim());
+        println!(
+            "  {} {}",
+            style("Codex").cyan().bold(),
+            style("(~/.codex/ detected)").dim()
+        );
         println!("    {} bottle integrate codex", style("→").dim());
         println!("    Adds $bottle commands as Codex skill");
         println!("    Skill: ~/.codex/skills/bottle/SKILL.md");
@@ -295,11 +367,7 @@ fn show_codex_integration() {
 /// Compare two version strings, returns "upgrade", "downgrade", or "update"
 fn compare_versions(current: &str, target: &str) -> &'static str {
     // Simple semver comparison - split by dots and compare numerically
-    let parse = |v: &str| -> Vec<u32> {
-        v.split('.')
-            .filter_map(|s| s.parse().ok())
-            .collect()
-    };
+    let parse = |v: &str| -> Vec<u32> { v.split('.').filter_map(|s| s.parse().ok()).collect() };
 
     let current_parts = parse(current);
     let target_parts = parse(target);
@@ -339,7 +407,12 @@ fn get_tool_version(tool: &str) -> Option<String> {
             // Parse "tool x.y.z" or "x.y.z" format
             stdout
                 .split_whitespace()
-                .find(|s| s.chars().next().map(|c| c.is_ascii_digit()).unwrap_or(false))
+                .find(|s| {
+                    s.chars()
+                        .next()
+                        .map(|c| c.is_ascii_digit())
+                        .unwrap_or(false)
+                })
                 .map(|s| s.trim().to_string())
         })
 }
@@ -362,43 +435,6 @@ fn is_mcp_registered(name: &str) -> bool {
         .output()
         .map(|o| String::from_utf8_lossy(&o.stdout).contains(name))
         .unwrap_or(false)
-}
-
-/// Get installed version of a Claude Code plugin
-/// Path structure: ~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/
-fn get_plugin_version(plugin: &str) -> Option<String> {
-    let cache = dirs::home_dir()?.join(".claude/plugins/cache");
-
-    // Check if plugin is a marketplace name (e.g., superego/superego/0.9.0)
-    let marketplace_path = cache.join(plugin);
-    if marketplace_path.exists() {
-        if let Some(ver) = find_plugin_version(&marketplace_path, plugin) {
-            return Some(ver);
-        }
-    }
-
-    // Check inside all marketplaces for the plugin
-    for entry in std::fs::read_dir(&cache).ok()?.filter_map(|e| e.ok()) {
-        let plugin_path = entry.path().join(plugin);
-        if plugin_path.exists() {
-            if let Some(ver) = find_plugin_version(&entry.path(), plugin) {
-                return Some(ver);
-            }
-        }
-    }
-
-    None
-}
-
-/// Find version directory for a plugin within a marketplace
-fn find_plugin_version(marketplace_path: &std::path::Path, plugin: &str) -> Option<String> {
-    let plugin_path = marketplace_path.join(plugin);
-    std::fs::read_dir(&plugin_path)
-        .ok()?
-        .filter_map(|e| e.ok())
-        .filter(|e| e.path().is_dir())
-        .filter_map(|e| e.file_name().into_string().ok())
-        .next()
 }
 
 /// Install all tools from the manifest
@@ -451,10 +487,7 @@ fn install_tools(manifest: &BottleManifest) -> Result<HashMap<String, ToolState>
     println!();
 
     if !failures.is_empty() {
-        ui::print_warning(&format!(
-            "{} tool(s) failed to install:",
-            failures.len()
-        ));
+        ui::print_warning(&format!("{} tool(s) failed to install:", failures.len()));
         for (name, err) in &failures {
             println!("  {} - {}", style(name).red(), err);
         }
@@ -538,14 +571,21 @@ fn install_custom_tools(manifest: &BottleManifest) -> Result<HashMap<String, Cus
                     CustomInstallMethod::Npm => "npm",
                     CustomInstallMethod::Binary => "binary",
                 };
-                println!("{} {}", style("installed").green(), style(format!("({})", method_name)).dim());
+                println!(
+                    "{} {}",
+                    style("installed").green(),
+                    style(format!("({})", method_name)).dim()
+                );
 
                 // Track in state
-                installed.insert(name.clone(), CustomToolState {
-                    version: tool.version.clone(),
-                    installed_at: Utc::now(),
-                    method,
-                });
+                installed.insert(
+                    name.clone(),
+                    CustomToolState {
+                        version: tool.version.clone(),
+                        installed_at: Utc::now(),
+                        method,
+                    },
+                );
 
                 // Run verify command only after successful install
                 if let Some(verify) = &tool.verify {
@@ -583,7 +623,10 @@ fn install_custom_tools(manifest: &BottleManifest) -> Result<HashMap<String, Cus
 }
 
 /// Install a single custom tool, trying methods in order
-fn install_custom_tool(name: &str, tool: &crate::manifest::bottle::CustomToolDef) -> Result<CustomInstallMethod> {
+fn install_custom_tool(
+    name: &str,
+    tool: &crate::manifest::bottle::CustomToolDef,
+) -> Result<CustomInstallMethod> {
     let install = &tool.install;
 
     // Try brew first
@@ -632,13 +675,12 @@ fn install_custom_tool(name: &str, tool: &crate::manifest::bottle::CustomToolDef
                 args.push(&version_arg);
             }
 
-            let status = Command::new("cargo")
-                .args(&args)
-                .status()
-                .map_err(|e| BottleError::InstallError {
+            let status = Command::new("cargo").args(&args).status().map_err(|e| {
+                BottleError::InstallError {
                     tool: name.to_string(),
                     reason: format!("cargo install failed: {}", e),
-                })?;
+                }
+            })?;
 
             if status.success() {
                 return Ok(CustomInstallMethod::Cargo);
@@ -688,18 +730,10 @@ fn expand_binary_url(url: &str) -> String {
     let arch = std::env::consts::ARCH;
     let os = std::env::consts::OS;
 
-    // Map Rust arch names to common download names
-    let arch_name = match arch {
-        "x86_64" => "x86_64",
-        "aarch64" => "aarch64",
-        "arm" => "arm",
-        _ => arch,
-    };
-
     // Alternative arch name for Apple Silicon (many releases use "arm64" instead of "aarch64")
     let arm64_name = match arch {
         "aarch64" => "arm64",
-        _ => arch_name,
+        _ => arch,
     };
 
     let os_name = match os {
@@ -709,10 +743,10 @@ fn expand_binary_url(url: &str) -> String {
         _ => os,
     };
 
-    url.replace("{arch}", arch_name)
+    url.replace("{arch}", arch)
         .replace("{arm64}", arm64_name)
         .replace("{os}", os_name)
-        .replace("{platform}", &format!("{}-{}", os_name, arch_name))
+        .replace("{platform}", &format!("{}-{}", os_name, arch))
 }
 
 /// Install a tool from a binary URL (raw binary only, no archive support)
@@ -737,10 +771,13 @@ fn install_from_binary_url(name: &str, url: &str) -> Result<()> {
         })?;
 
     // Download the binary
-    let response = client.get(url).send().map_err(|e| BottleError::InstallError {
-        tool: name.to_string(),
-        reason: format!("Failed to download from {}: {}", url, e),
-    })?;
+    let response = client
+        .get(url)
+        .send()
+        .map_err(|e| BottleError::InstallError {
+            tool: name.to_string(),
+            reason: format!("Failed to download from {}: {}", url, e),
+        })?;
 
     if !response.status().is_success() {
         return Err(BottleError::InstallError {
@@ -779,8 +816,13 @@ fn install_from_binary_url(name: &str, url: &str) -> Result<()> {
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        if let Err(e) = std::fs::set_permissions(&bin_path, std::fs::Permissions::from_mode(0o755)) {
-            eprintln!("Warning: could not set executable permissions on {}: {}", bin_path.display(), e);
+        if let Err(e) = std::fs::set_permissions(&bin_path, std::fs::Permissions::from_mode(0o755))
+        {
+            eprintln!(
+                "Warning: could not set executable permissions on {}: {}",
+                bin_path.display(),
+                e
+            );
         }
     }
 
@@ -874,46 +916,6 @@ fn install_mcp_servers(manifest: &BottleManifest) -> Result<()> {
     Ok(())
 }
 
-/// Install all plugins from the manifest
-fn install_plugins(manifest: &BottleManifest) -> Result<()> {
-    if manifest.plugins.is_empty() {
-        return Ok(());
-    }
-
-    println!("{}:", style("Installing plugins").bold());
-
-    let mut failures: Vec<(String, BottleError)> = Vec::new();
-
-    for plugin_name in &manifest.plugins {
-        print!("  {:<12} ", plugin_name);
-
-        match plugin::install(plugin_name, MARKETPLACE) {
-            Ok(()) => {
-                println!("{}", style("installed").green());
-            }
-            Err(e) => {
-                println!("{}", style("failed").red());
-                failures.push((plugin_name.clone(), e));
-            }
-        }
-    }
-
-    println!();
-
-    if !failures.is_empty() {
-        ui::print_warning(&format!(
-            "{} plugin(s) failed to install:",
-            failures.len()
-        ));
-        for (name, err) in &failures {
-            println!("  {} - {}", style(name).red(), err);
-        }
-        println!();
-    }
-
-    Ok(())
-}
-
 /// Display success message with next steps
 fn show_success(manifest: &BottleManifest) {
     println!();
@@ -923,8 +925,14 @@ fn show_success(manifest: &BottleManifest) {
     ));
     println!();
     println!("{}:", style("Next steps").bold());
-    println!("  {} - Check installed tools", style("bottle status").cyan());
-    println!("  {} - Initialize ba for task tracking", style("ba init").cyan());
+    println!(
+        "  {} - Check installed tools",
+        style("bottle status").cyan()
+    );
+    println!(
+        "  {} - Initialize ba for task tracking",
+        style("ba init").cyan()
+    );
     println!("  {} - Initialize working memory", style("wm init").cyan());
     println!();
 }
