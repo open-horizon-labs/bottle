@@ -1,6 +1,6 @@
 # SETUP.md - Example Team
 
-AI assistant guidance for environment setup and troubleshooting.
+This file is for AI assistants (Claude Code, OpenCode, etc.) to read when helping with environment setup and troubleshooting.
 
 ## Environment Check
 
@@ -67,7 +67,7 @@ wm dive-prep "intent" # Prepare context for session
 wm show               # Show current context
 ```
 
-### Metacognitive Review (sg)
+### Metacognitive Review (`sg`)
 ```bash
 sg review             # Review before commit
 ```
