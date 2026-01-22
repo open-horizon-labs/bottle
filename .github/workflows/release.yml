@@ -49,20 +49,20 @@ jobs:
           echo "::notice::Release version: $VERSION ($GIT_SHA) dry_run=$IS_DRY_RUN"
 
   # =============================================================================
-  # BUILD: Compile for each target
+  # BUILD: macOS targets (native)
   # =============================================================================
-  build:
-    name: Build (${{ matrix.target }})
+  build-macos:
+    name: Build macOS (${{ matrix.arch }})
     needs: plan
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
         include:
           - target: aarch64-apple-darwin
-            os: macos-latest
+            arch: arm64
           - target: x86_64-apple-darwin
-            os: macos-latest
+            arch: x64
     steps:
       - uses: actions/checkout@v4
 
@@ -70,8 +70,6 @@ jobs:
         run: |
           VERSION="${{ needs.plan.outputs.version }}"
           perl -i -pe "s/^version = \".*\"/version = \"${VERSION}\"/" Cargo.toml
-          echo "Set version to $VERSION"
-          grep "^version" Cargo.toml
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -79,7 +77,8 @@ jobs:
 
       - uses: swatinem/rust-cache@v2
         with:
-          key: ${{ matrix.target }}
+          shared-key: macos-${{ matrix.target }}
+          save-if: ${{ github.ref_type == 'tag' }}
 
       - name: Build release binary
         run: cargo build --release --target ${{ matrix.target }}
@@ -99,11 +98,77 @@ jobs:
           path: dist/bottle-${{ needs.plan.outputs.version }}-${{ matrix.target }}.*
 
   # =============================================================================
+  # BUILD: Linux targets (zigbuild for cross-compilation)
+  # =============================================================================
+  build-linux:
+    name: Build Linux (${{ matrix.arch }})
+    needs: plan
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-musl
+            arch: x64
+          - target: aarch64-unknown-linux-musl
+            arch: arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set version in Cargo.toml
+        run: |
+          VERSION="${{ needs.plan.outputs.version }}"
+          perl -i -pe "s/^version = \".*\"/version = \"${VERSION}\"/" Cargo.toml
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          shared-key: zigbuild-${{ matrix.target }}
+          save-if: ${{ github.ref_type == 'tag' }}
+
+      - name: Install zig
+        run: |
+          curl -L https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz | tar -xJ
+          sudo mv zig-linux-x86_64-0.13.0 /opt/zig
+          echo "/opt/zig" >> $GITHUB_PATH
+
+      - name: Cache cargo-zigbuild
+        id: cache-zigbuild
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/cargo-zigbuild
+          key: cargo-zigbuild-0.20
+
+      - name: Install cargo-zigbuild
+        if: steps.cache-zigbuild.outputs.cache-hit != 'true'
+        run: cargo install cargo-zigbuild --locked
+
+      - name: Build with zigbuild
+        run: cargo zigbuild --release --target ${{ matrix.target }}
+
+      - name: Package binary
+        run: |
+          mkdir -p dist
+          cp target/${{ matrix.target }}/release/bottle dist/
+          cd dist
+          tar -czvf bottle-${{ needs.plan.outputs.version }}-${{ matrix.target }}.tar.gz bottle
+          sha256sum bottle-${{ needs.plan.outputs.version }}-${{ matrix.target }}.tar.gz > bottle-${{ needs.plan.outputs.version }}-${{ matrix.target }}.tar.gz.sha256
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bottle-${{ matrix.target }}
+          path: dist/bottle-${{ needs.plan.outputs.version }}-${{ matrix.target }}.*
+
+  # =============================================================================
   # RELEASE: Create GitHub release and upload artifacts
   # =============================================================================
   release:
     name: Release
-    needs: [plan, build]
+    needs: [plan, build-macos, build-linux]
     runs-on: ubuntu-latest
     if: ${{ needs.plan.outputs.is_dry_run != 'true' }}
     steps:
@@ -151,8 +216,10 @@ jobs:
       - name: Update Homebrew formula
         run: |
           VERSION="${{ needs.plan.outputs.version }}"
-          ARM64_SHA=$(cat artifacts/bottle-${VERSION}-aarch64-apple-darwin.tar.gz.sha256 | awk '{print $1}')
-          X64_SHA=$(cat artifacts/bottle-${VERSION}-x86_64-apple-darwin.tar.gz.sha256 | awk '{print $1}')
+          ARM64_MAC_SHA=$(cat artifacts/bottle-${VERSION}-aarch64-apple-darwin.tar.gz.sha256 | awk '{print $1}')
+          X64_MAC_SHA=$(cat artifacts/bottle-${VERSION}-x86_64-apple-darwin.tar.gz.sha256 | awk '{print $1}')
+          X64_LINUX_SHA=$(cat artifacts/bottle-${VERSION}-x86_64-unknown-linux-musl.tar.gz.sha256 | awk '{print $1}')
+          ARM64_LINUX_SHA=$(cat artifacts/bottle-${VERSION}-aarch64-unknown-linux-musl.tar.gz.sha256 | awk '{print $1}')
 
           cat > homebrew-tap/Formula/bottle.rb << EOF
           class Bottle < Formula
@@ -164,10 +231,20 @@ jobs:
             on_macos do
               if Hardware::CPU.arm?
                 url "https://github.com/open-horizon-labs/bottle/releases/download/v${VERSION}/bottle-${VERSION}-aarch64-apple-darwin.tar.gz"
-                sha256 "${ARM64_SHA}"
+                sha256 "${ARM64_MAC_SHA}"
               else
                 url "https://github.com/open-horizon-labs/bottle/releases/download/v${VERSION}/bottle-${VERSION}-x86_64-apple-darwin.tar.gz"
-                sha256 "${X64_SHA}"
+                sha256 "${X64_MAC_SHA}"
+              end
+            end
+
+            on_linux do
+              if Hardware::CPU.arm?
+                url "https://github.com/open-horizon-labs/bottle/releases/download/v${VERSION}/bottle-${VERSION}-aarch64-unknown-linux-musl.tar.gz"
+                sha256 "${ARM64_LINUX_SHA}"
+              else
+                url "https://github.com/open-horizon-labs/bottle/releases/download/v${VERSION}/bottle-${VERSION}-x86_64-unknown-linux-musl.tar.gz"
+                sha256 "${X64_LINUX_SHA}"
               end
             end
 
