@@ -1,13 +1,13 @@
 # Bespoke Bottles
 
-Bespoke bottles let you create custom tool configurations with pinned versions, independent of curated bottle updates.
+While `stable` and `edge` bottles are curated by Open Horizon Labs and update automatically, a bespoke bottle is one you create and maintain yourself. You control exactly which tools and versions it contains.
 
 ## When to Use Bespoke Bottles
 
 - **Version pinning**: Lock specific versions you've tested together
 - **Custom tool sets**: Include only the tools you need
 - **Experimentation**: Test new versions before they hit stable
-- **Offline/air-gapped**: Pre-configure manifests for environments without internet
+- **Full ownership**: Define and maintain your own toolstack, independent of upstream releases
 
 ## Creating a Bespoke Bottle
 
@@ -64,16 +64,24 @@ This copies the current stable manifest as your starting point:
 }
 ```
 
+**Manifest fields:**
+- `tools`: CLI tools to install (e.g., `ba`, `wm`). These are the actual binaries.
+- `plugins`: Claude Code plugins to configure. Often matches your tools list.
+- `opencode_plugins`: OpenCode-specific plugins (separate from Claude Code).
+- `prerequisites`: Dependencies users need before installing (informational).
+
 ## Editing the Manifest
 
 Edit `~/.bottle/bottles/mystack/manifest.json` to customize:
 
 ### Pin a Specific Version
 
+Pin `wm` to an older version you've tested:
+
 ```json
 {
   "tools": {
-    "wm": "0.2.2",  // Pin to older version
+    "wm": "0.2.2",
     "ba": "0.2.1",
     "superego": "0.9.0"
   }
@@ -82,18 +90,21 @@ Edit `~/.bottle/bottles/mystack/manifest.json` to customize:
 
 ### Remove Tools You Don't Need
 
+Remove `wm` and `oh-mcp` by omitting them from `tools`, and update the `plugins` list to match:
+
 ```json
 {
   "tools": {
     "ba": "0.2.1",
     "superego": "0.9.0"
-    // Removed wm and oh-mcp
   },
-  "plugins": ["ba", "superego"]  // Update plugins list too
+  "plugins": ["ba", "superego"]
 }
 ```
 
 ### Add a Tool Not in Stable
+
+Add `datasphere` to your tool set:
 
 ```json
 {
@@ -101,7 +112,7 @@ Edit `~/.bottle/bottles/mystack/manifest.json` to customize:
     "ba": "0.2.1",
     "wm": "0.3.1",
     "superego": "0.9.0",
-    "datasphere": "0.1.0"  // Added datasphere
+    "datasphere": "0.1.0"
   },
   "plugins": ["ba", "superego", "wm", "datasphere"]
 }
