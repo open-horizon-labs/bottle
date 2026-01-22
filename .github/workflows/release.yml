@@ -65,7 +65,7 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v}"  # Remove 'v' prefix if present
-          sed -i "s/^version = \".*\"/version = \"${VERSION}\"/" Cargo.toml
+          perl -i -pe "s/^version = \".*\"/version = \"${VERSION}\"/" Cargo.toml
           echo "Updated Cargo.toml to version ${VERSION}"
           grep "^version" Cargo.toml
       - name: Install dist
@@ -134,7 +134,7 @@ jobs:
         run: |
           VERSION="${{ needs.plan.outputs.tag }}"
           VERSION="${VERSION#v}"
-          sed -i "s/^version = \".*\"/version = \"${VERSION}\"/" Cargo.toml
+          perl -i -pe "s/^version = \".*\"/version = \"${VERSION}\"/" Cargo.toml
           echo "Updated Cargo.toml to version ${VERSION}"
           grep "^version" Cargo.toml
       - name: Install Rust non-interactively if not already installed
@@ -205,7 +205,7 @@ jobs:
         run: |
           VERSION="${{ needs.plan.outputs.tag }}"
           VERSION="${VERSION#v}"
-          sed -i "s/^version = \".*\"/version = \"${VERSION}\"/" Cargo.toml
+          perl -i -pe "s/^version = \".*\"/version = \"${VERSION}\"/" Cargo.toml
           echo "Updated Cargo.toml to version ${VERSION}"
           grep "^version" Cargo.toml
       - name: Install cached dist
@@ -262,7 +262,7 @@ jobs:
         run: |
           VERSION="${{ needs.plan.outputs.tag }}"
           VERSION="${VERSION#v}"
-          sed -i "s/^version = \".*\"/version = \"${VERSION}\"/" Cargo.toml
+          perl -i -pe "s/^version = \".*\"/version = \"${VERSION}\"/" Cargo.toml
           echo "Updated Cargo.toml to version ${VERSION}"
           grep "^version" Cargo.toml
       - name: Install cached dist
