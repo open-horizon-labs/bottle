@@ -17,3 +17,5 @@ targets = ["aarch64-apple-darwin", "x86_64-apple-darwin"]
 publish-jobs = ["homebrew"]
 # Build artifacts on PRs so we can test before shipping
 pr-run-mode = "upload"
+# Allow custom modifications to CI workflow (version bump step)
+allow-dirty = ["ci"]
