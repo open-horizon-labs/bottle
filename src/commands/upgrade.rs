@@ -41,10 +41,17 @@ pub fn run(bottle: &str, tool: &str, version: &str) -> Result<()> {
         style(tool).cyan(),
         style(bottle).cyan()
     );
-    println!("  {} → {}", style(&old_version).dim(), style(version).green());
+    println!(
+        "  {} → {}",
+        style(&old_version).dim(),
+        style(version).green()
+    );
     println!();
     println!("{}:", style("Next steps").bold());
-    println!("  {} - Verify manifest is valid", style("bottle validate").cyan());
+    println!(
+        "  {} - Verify manifest is valid",
+        style("bottle validate").cyan()
+    );
     println!("  {} - Tag and publish", style("bottle release").cyan());
     println!();
 

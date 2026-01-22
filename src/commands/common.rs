@@ -9,11 +9,19 @@ use std::time::Duration;
 pub const MARKETPLACE: &str = "open-horizon-labs";
 
 /// Fetch manifest from explicit path, bespoke location, or GitHub
-pub fn fetch_or_load_manifest(bottle: &str, manifest_path: Option<&std::path::Path>) -> Result<BottleManifest> {
+pub fn fetch_or_load_manifest(
+    bottle: &str,
+    manifest_path: Option<&std::path::Path>,
+) -> Result<BottleManifest> {
     // If explicit manifest path provided, use it directly
     if let Some(path) = manifest_path {
-        let contents = fs::read_to_string(path)
-            .map_err(|e| BottleError::Other(format!("Failed to read manifest at {}: {}", path.display(), e)))?;
+        let contents = fs::read_to_string(path).map_err(|e| {
+            BottleError::Other(format!(
+                "Failed to read manifest at {}: {}",
+                path.display(),
+                e
+            ))
+        })?;
         return serde_json::from_str(&contents).map_err(BottleError::ParseError);
     }
 
@@ -26,8 +34,9 @@ pub fn fetch_or_load_manifest(bottle: &str, manifest_path: Option<&std::path::Pa
             .join("manifest.json");
 
         if bespoke_path.exists() {
-            let contents = fs::read_to_string(&bespoke_path)
-                .map_err(|e| BottleError::Other(format!("Failed to read bespoke manifest: {}", e)))?;
+            let contents = fs::read_to_string(&bespoke_path).map_err(|e| {
+                BottleError::Other(format!("Failed to read bespoke manifest: {}", e))
+            })?;
             return serde_json::from_str(&contents).map_err(BottleError::ParseError);
         }
     }
@@ -107,7 +116,10 @@ pub fn build_agents_md_snippet(manifest: &BottleManifest) -> Result<Option<Strin
 
     // Build snippet content
     let mut snippet = String::new();
-    snippet.push_str(&format!("<!-- Bottle snippet for {} -->\n\n", manifest.name));
+    snippet.push_str(&format!(
+        "<!-- Bottle snippet for {} -->\n\n",
+        manifest.name
+    ));
 
     // Add inline sections
     for section in &agents_config.sections {
@@ -121,7 +133,7 @@ pub fn build_agents_md_snippet(manifest: &BottleManifest) -> Result<Option<Strin
     if let Some(url) = &agents_config.snippets_url {
         let content = fetch_snippets_url(url)?;
         snippet.push_str(&content);
-        snippet.push_str("\n");
+        snippet.push('\n');
     }
 
     Ok(Some(snippet))
@@ -143,9 +155,10 @@ fn fetch_snippets_url(url: &str) -> Result<String> {
         .build()
         .map_err(|e| BottleError::Other(format!("Failed to create HTTP client: {}", e)))?;
 
-    let response = client.get(url).send().map_err(|e| {
-        BottleError::Other(format!("Failed to fetch {}: {}", url, e))
-    })?;
+    let response = client
+        .get(url)
+        .send()
+        .map_err(|e| BottleError::Other(format!("Failed to fetch {}: {}", url, e)))?;
 
     if !response.status().is_success() {
         return Err(BottleError::Other(format!(

@@ -15,8 +15,10 @@ use error::Result;
 #[command(author = "Open Horizon Labs")]
 #[command(version)]
 #[command(about = "Curated snapshot manager for the Open Horizon Labs tool stack")]
-#[command(long_about = "Bottle provides one-command installation, coherent versioning, and seamless updates \
-for users who want a batteries-included experience with the Open Horizon Labs tools.")]
+#[command(
+    long_about = "Bottle provides one-command installation, coherent versioning, and seamless updates \
+for users who want a batteries-included experience with the Open Horizon Labs tools."
+)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -193,7 +195,13 @@ fn run() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Install { bottle, manifest, yes, dry_run, force } => commands::install::run(&bottle, manifest.as_deref(), yes, dry_run, force),
+        Commands::Install {
+            bottle,
+            manifest,
+            yes,
+            dry_run,
+            force,
+        } => commands::install::run(&bottle, manifest.as_deref(), yes, dry_run, force),
         Commands::Status { check_updates } => commands::status::run(check_updates),
         Commands::Update { yes } => commands::update::run(yes),
         Commands::Switch { bottle, yes } => commands::switch::run(&bottle, yes),
@@ -204,7 +212,13 @@ fn run() -> Result<()> {
             list,
             remove,
             dry_run,
-        } => commands::integrate::run(platform.map(|p| p.to_platform()), manifest.as_deref(), list, remove, dry_run),
+        } => commands::integrate::run(
+            platform.map(|p| p.to_platform()),
+            manifest.as_deref(),
+            list,
+            remove,
+            dry_run,
+        ),
         Commands::List => commands::list::run(),
         Commands::Diff { from, to } => commands::diff::run(&from, &to),
         Commands::Upgrade {
@@ -213,7 +227,9 @@ fn run() -> Result<()> {
             version,
         } => commands::upgrade::run(&bottle, &tool, &version),
         Commands::Validate { bottle } => commands::validate::run(&bottle),
-        Commands::Release { bottle, message } => commands::release::run(&bottle, message.as_deref()),
+        Commands::Release { bottle, message } => {
+            commands::release::run(&bottle, message.as_deref())
+        }
         Commands::Create { name, from } => commands::create::run(&name, from.as_deref()),
         Commands::AgentsMd => commands::agents_md::run(),
     }

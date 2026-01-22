@@ -31,11 +31,10 @@ fn load_bespoke_manifest(name: &str) -> Result<BottleManifest> {
         .ok_or_else(|| BottleError::Other("Could not determine home directory".to_string()))?
         .join("manifest.json");
 
-    let contents = std::fs::read_to_string(&path).map_err(|_| {
-        BottleError::BottleNotFound(format!("bespoke bottle '{}' not found", name))
-    })?;
+    let contents = std::fs::read_to_string(&path)
+        .map_err(|_| BottleError::BottleNotFound(format!("bespoke bottle '{}' not found", name)))?;
 
-    serde_json::from_str(&contents).map_err(|e| BottleError::ParseError(e))
+    serde_json::from_str(&contents).map_err(BottleError::ParseError)
 }
 
 /// Create a new bespoke bottle
@@ -137,10 +136,7 @@ pub fn run(name: &str, from: Option<&str>) -> Result<()> {
 
     // Try to open in editor
     if let Ok(editor) = std::env::var("EDITOR") {
-        println!(
-            "Opening manifest in {}...",
-            style(&editor).cyan()
-        );
+        println!("Opening manifest in {}...", style(&editor).cyan());
         let _ = Command::new(&editor).arg(&manifest_path).status();
         println!();
     }

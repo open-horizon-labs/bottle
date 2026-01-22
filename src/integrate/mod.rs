@@ -71,7 +71,10 @@ pub fn detect_platforms() -> Vec<DetectionResult> {
 
 /// Install an integration for a platform
 /// For OpenCode, pass the opencode_plugins map from the manifest for versioned installs
-pub fn install(platform: Platform, opencode_plugins: Option<&HashMap<String, String>>) -> Result<()> {
+pub fn install(
+    platform: Platform,
+    opencode_plugins: Option<&HashMap<String, String>>,
+) -> Result<()> {
     match platform {
         Platform::ClaudeCode => claude_code::install(),
         Platform::OpenCode => opencode::install(opencode_plugins),
@@ -90,7 +93,10 @@ pub fn remove(platform: Platform) -> Result<()> {
 
 /// Update an integration for a platform
 /// For OpenCode, pass the opencode_plugins map from the manifest for versioned updates
-pub fn update(platform: Platform, opencode_plugins: Option<&HashMap<String, String>>) -> Result<()> {
+pub fn update(
+    platform: Platform,
+    opencode_plugins: Option<&HashMap<String, String>>,
+) -> Result<()> {
     match platform {
         Platform::ClaudeCode => claude_code::update(),
         Platform::OpenCode => {

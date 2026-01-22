@@ -7,7 +7,13 @@ use chrono::Utc;
 use console::style;
 
 /// Add, remove, or list platform integrations
-pub fn run(platform: Option<Platform>, manifest_path: Option<&std::path::Path>, list: bool, remove: bool, dry_run: bool) -> Result<()> {
+pub fn run(
+    platform: Option<Platform>,
+    manifest_path: Option<&std::path::Path>,
+    list: bool,
+    remove: bool,
+    dry_run: bool,
+) -> Result<()> {
     // For --manifest mode, we don't require a bottle to be installed
     let state = if manifest_path.is_some() {
         BottleState::load()
@@ -91,7 +97,12 @@ fn show_integrations(state: &BottleState) -> Result<()> {
 }
 
 /// Add a platform integration
-fn add_integration(state: Option<&BottleState>, manifest_path: Option<&std::path::Path>, platform: Platform, dry_run: bool) -> Result<()> {
+fn add_integration(
+    state: Option<&BottleState>,
+    manifest_path: Option<&std::path::Path>,
+    platform: Platform,
+    dry_run: bool,
+) -> Result<()> {
     // For Claude Code: clean up old @bottle marketplace entries first
     // This fixes the "Plugin not found in marketplace 'bottle'" error
     if platform == Platform::ClaudeCode {
@@ -100,7 +111,9 @@ fn add_integration(state: Option<&BottleState>, manifest_path: Option<&std::path
 
     // Check if actually installed (not just in state) - handles partial installs
     let actually_installed = integrate::is_installed(platform);
-    let in_state = state.map(|s| s.integrations.contains_key(platform.key())).unwrap_or(false);
+    let in_state = state
+        .map(|s| s.integrations.contains_key(platform.key()))
+        .unwrap_or(false);
 
     if actually_installed && in_state {
         ui::print_warning(&format!("{} integration is already installed.", platform));
@@ -119,22 +132,34 @@ fn add_integration(state: Option<&BottleState>, manifest_path: Option<&std::path
     let detections = integrate::detect_platforms();
     let detection = detections.iter().find(|d| d.platform == platform);
     let detected = detection.map(|d| d.detected).unwrap_or(false);
-    let hint = detection.map(|d| d.detection_hint.as_str()).unwrap_or("unknown");
+    let hint = detection
+        .map(|d| d.detection_hint.as_str())
+        .unwrap_or("unknown");
 
     // Dry run: show what would happen
     if dry_run {
         println!();
         println!("{}", style("[DRY RUN]").yellow().bold());
-        println!("Would install {} integration:", style(platform.display_name()).cyan());
+        println!(
+            "Would install {} integration:",
+            style(platform.display_name()).cyan()
+        );
         println!();
         if detected {
             println!("  Platform:  {} ({})", style("detected").green(), hint);
         } else {
-            println!("  Platform:  {} ({} not found)", style("not detected").yellow(), hint);
+            println!(
+                "  Platform:  {} ({} not found)",
+                style("not detected").yellow(),
+                hint
+            );
         }
         println!("  Action:    {}", describe_install_action(platform));
         if state.is_some() {
-            println!("  State:     Add {} to ~/.bottle/state.json", platform.key());
+            println!(
+                "  State:     Add {} to ~/.bottle/state.json",
+                platform.key()
+            );
         }
         println!();
         println!("{}", style("No changes made.").dim());
@@ -198,10 +223,7 @@ fn add_integration(state: Option<&BottleState>, manifest_path: Option<&std::path
             println!("  Restart OpenCode to load the bottle ecosystem plugins.");
         }
         Platform::Codex => {
-            println!(
-                "  Use {} commands in Codex.",
-                style("$bottle").cyan()
-            );
+            println!("  Use {} commands in Codex.", style("$bottle").cyan());
         }
     }
     println!();
@@ -221,11 +243,17 @@ fn remove_integration(state: &BottleState, platform: Platform, dry_run: bool) ->
     if dry_run {
         println!();
         println!("{}", style("[DRY RUN]").yellow().bold());
-        println!("Would remove {} integration:", style(platform.display_name()).cyan());
+        println!(
+            "Would remove {} integration:",
+            style(platform.display_name()).cyan()
+        );
         println!();
         println!("  Installed: {}", style("yes").green());
         println!("  Action:    {}", describe_remove_action(platform));
-        println!("  State:     Remove {} from ~/.bottle/state.json", platform.key());
+        println!(
+            "  State:     Remove {} from ~/.bottle/state.json",
+            platform.key()
+        );
         println!();
         println!("{}", style("No changes made.").dim());
         println!();
@@ -259,7 +287,9 @@ fn remove_integration(state: &BottleState, platform: Platform, dry_run: bool) ->
 fn describe_install_action(platform: Platform) -> &'static str {
     match platform {
         Platform::ClaudeCode => "Install all plugins: bottle, ba, superego, wm, oh-mcp, miranda",
-        Platform::OpenCode => "Add bottle ecosystem plugins to opencode.json (bottle, ba, wm, superego)",
+        Platform::OpenCode => {
+            "Add bottle ecosystem plugins to opencode.json (bottle, ba, wm, superego)"
+        }
         Platform::Codex => "Create ~/.codex/skills/bottle/SKILL.md",
     }
 }

@@ -173,10 +173,7 @@ fn cleanup_settings(home: &std::path::Path) {
             .collect();
 
         if !old_keys.is_empty() {
-            eprintln!(
-                "Cleaning up old settings entries: {}",
-                old_keys.join(", ")
-            );
+            eprintln!("Cleaning up old settings entries: {}", old_keys.join(", "));
             for key in old_keys {
                 enabled.remove(&key);
             }
@@ -233,7 +230,12 @@ pub fn update() -> Result<()> {
     let status = Command::new("claude")
         .args(["plugin", "marketplace", "update", MARKETPLACE_NAME])
         .status()
-        .map_err(|e| BottleError::Other(format!("Failed to run claude plugin marketplace update: {}", e)))?;
+        .map_err(|e| {
+            BottleError::Other(format!(
+                "Failed to run claude plugin marketplace update: {}",
+                e
+            ))
+        })?;
 
     if !status.success() {
         return Err(BottleError::Other(format!(
@@ -252,10 +254,12 @@ pub fn update() -> Result<()> {
                 &format!("{}@{}", plugin, MARKETPLACE_NAME),
             ])
             .status()
-            .map_err(|e| BottleError::Other(format!(
-                "Failed to run claude plugin update for {}: {}",
-                plugin, e
-            )))?;
+            .map_err(|e| {
+                BottleError::Other(format!(
+                    "Failed to run claude plugin update for {}: {}",
+                    plugin, e
+                ))
+            })?;
 
         if !status.success() {
             failures.push(plugin.to_string());

@@ -99,11 +99,9 @@ pub fn install(opencode_plugins: Option<&HashMap<String, String>>) -> Result<()>
             tool: "opencode integration".to_string(),
             reason: format!("Failed to read opencode.json: {}", e),
         })?;
-        serde_json::from_str(&contents).map_err(|e| {
-            BottleError::InstallError {
-                tool: "opencode integration".to_string(),
-                reason: format!("Failed to parse opencode.json: {}", e),
-            }
+        serde_json::from_str(&contents).map_err(|e| BottleError::InstallError {
+            tool: "opencode integration".to_string(),
+            reason: format!("Failed to parse opencode.json: {}", e),
         })?
     } else {
         // Create new config with schema
@@ -122,10 +120,12 @@ pub fn install(opencode_plugins: Option<&HashMap<String, String>>) -> Result<()>
         .entry("plugin")
         .or_insert_with(|| json!([]));
 
-    let plugin_array = plugin.as_array_mut().ok_or_else(|| BottleError::InstallError {
-        tool: "opencode integration".to_string(),
-        reason: "plugin field is not an array".to_string(),
-    })?;
+    let plugin_array = plugin
+        .as_array_mut()
+        .ok_or_else(|| BottleError::InstallError {
+            tool: "opencode integration".to_string(),
+            reason: "plugin field is not an array".to_string(),
+        })?;
 
     // Build package list: use versioned if manifest provided, otherwise defaults
     let packages: Vec<String> = if let Some(plugins) = opencode_plugins {
@@ -189,12 +189,11 @@ pub fn remove() -> Result<()> {
         reason: format!("Failed to read opencode.json: {}", e),
     })?;
 
-    let mut config: Value = serde_json::from_str(&contents).map_err(|e| {
-        BottleError::InstallError {
+    let mut config: Value =
+        serde_json::from_str(&contents).map_err(|e| BottleError::InstallError {
             tool: "opencode integration".to_string(),
             reason: format!("Failed to parse opencode.json: {}", e),
-        }
-    })?;
+        })?;
 
     // Get plugin array
     let Some(plugin) = config.get_mut("plugin").and_then(|p| p.as_array_mut()) else {

@@ -12,13 +12,14 @@ pub fn install(package: &str, version: &str) -> Result<()> {
         args.push(format!("{}@{}", package, version));
     }
 
-    let status = Command::new("cargo")
-        .args(&args)
-        .status()
-        .map_err(|e| BottleError::InstallError {
-            tool: package.to_string(),
-            reason: format!("Failed to run cargo: {}", e),
-        })?;
+    let status =
+        Command::new("cargo")
+            .args(&args)
+            .status()
+            .map_err(|e| BottleError::InstallError {
+                tool: package.to_string(),
+                reason: format!("Failed to run cargo: {}", e),
+            })?;
 
     if status.success() {
         Ok(())

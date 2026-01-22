@@ -93,15 +93,3 @@ pub struct BottleManifest {
     #[serde(default)]
     pub custom_tools: HashMap<String, CustomToolDef>,
 }
-
-impl BottleManifest {
-    /// Get the list of tool names
-    pub fn tool_names(&self) -> Vec<&str> {
-        self.tools.keys().map(|s| s.as_str()).collect()
-    }
-
-    /// Get the version of a specific tool
-    pub fn tool_version(&self, tool: &str) -> Option<&str> {
-        self.tools.get(tool).map(|s| s.as_str())
-    }
-}

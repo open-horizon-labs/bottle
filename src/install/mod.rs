@@ -30,11 +30,3 @@ pub fn install_tool(tool: &ToolDefinition, version: &str) -> Result<InstallMetho
         }
     }
 }
-
-/// Check if a tool is installed
-pub fn check_tool(tool: &ToolDefinition) -> bool {
-    match tool.tool_type {
-        ToolType::Binary => which::which(tool.binary_name()).is_ok(),
-        ToolType::Mcp => mcp::is_registered(&tool.name),
-    }
-}

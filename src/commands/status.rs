@@ -13,11 +13,21 @@ pub fn run(check_updates: bool) -> Result<()> {
             println!("{}", style("No bottle installed.").dim());
             println!();
             println!("Install a bottle with:");
-            println!("  {} {}", style("bottle install").cyan(), style("stable").dim());
+            println!(
+                "  {} {}",
+                style("bottle install").cyan(),
+                style("stable").dim()
+            );
             println!();
             println!("Available bottles:");
-            println!("  {}  Production-ready Open Horizon Labs stack", style("stable").cyan());
-            println!("  {}    Latest features, may be unstable", style("edge").cyan());
+            println!(
+                "  {}  Production-ready Open Horizon Labs stack",
+                style("stable").cyan()
+            );
+            println!(
+                "  {}    Latest features, may be unstable",
+                style("edge").cyan()
+            );
             return Ok(());
         }
     };
@@ -45,12 +55,7 @@ pub fn run(check_updates: bool) -> Result<()> {
         } else {
             style("missing").red()
         };
-        println!(
-            "  {:<12} {:<8} {}",
-            name,
-            tool_state.version,
-            status_icon
-        );
+        println!("  {:<12} {:<8} {}", name, tool_state.version, status_icon);
     }
     println!();
 
@@ -98,9 +103,7 @@ fn check_mcp_registered(name: &str) -> bool {
     Command::new("claude")
         .args(["mcp", "list"])
         .output()
-        .map(|output| {
-            String::from_utf8_lossy(&output.stdout).contains(name)
-        })
+        .map(|output| String::from_utf8_lossy(&output.stdout).contains(name))
         .unwrap_or(false)
 }
 
@@ -167,11 +170,7 @@ fn check_for_updates(state: &BottleState) -> Result<()> {
     // Check for removed tools
     for tool in state.tools.keys() {
         if !latest.tools.contains_key(tool) {
-            println!(
-                "    {:<12} {}",
-                tool,
-                style("(removed)").red()
-            );
+            println!("    {:<12} {}", tool, style("(removed)").red());
         }
     }
 

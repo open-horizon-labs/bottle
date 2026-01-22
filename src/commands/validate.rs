@@ -65,7 +65,11 @@ pub fn run(bottle: &str) -> Result<()> {
                 bottle
             )))
         } else {
-            println!("{} {} bottle is valid (with warnings).", style("✓").green().bold(), bottle);
+            println!(
+                "{} {} bottle is valid (with warnings).",
+                style("✓").green().bold(),
+                bottle
+            );
             println!();
             Ok(())
         }
@@ -105,7 +109,10 @@ fn check_tool_definitions(manifest: &Value, errors: &mut Vec<String>) {
     for tool_name in tools.keys() {
         let def_path = PathBuf::from(format!("tools/{}.json", tool_name));
         if !def_path.exists() {
-            errors.push(format!("Tool '{}' has no definition at tools/{}.json", tool_name, tool_name));
+            errors.push(format!(
+                "Tool '{}' has no definition at tools/{}.json",
+                tool_name, tool_name
+            ));
         }
     }
 }
@@ -166,7 +173,10 @@ fn check_mcp_servers(manifest: &Value, errors: &mut Vec<String>, warnings: &mut 
     for (name, server) in servers {
         // command is required
         if server.get("command").and_then(|c| c.as_str()).is_none() {
-            errors.push(format!("MCP server '{}' missing required 'command' field", name));
+            errors.push(format!(
+                "MCP server '{}' missing required 'command' field",
+                name
+            ));
         }
 
         // scope must be "user" or "project" if present
@@ -257,12 +267,18 @@ fn check_custom_tools(manifest: &Value, errors: &mut Vec<String>, warnings: &mut
     for (name, tool) in tools {
         // install is required
         let Some(install) = tool.get("install") else {
-            errors.push(format!("Custom tool '{}' missing required 'install' field", name));
+            errors.push(format!(
+                "Custom tool '{}' missing required 'install' field",
+                name
+            ));
             continue;
         };
 
         if !install.is_object() {
-            errors.push(format!("Custom tool '{}' 'install' must be an object", name));
+            errors.push(format!(
+                "Custom tool '{}' 'install' must be an object",
+                name
+            ));
             continue;
         }
 
@@ -281,7 +297,10 @@ fn check_custom_tools(manifest: &Value, errors: &mut Vec<String>, warnings: &mut
 
         // version is required
         if tool.get("version").and_then(|v| v.as_str()).is_none() {
-            errors.push(format!("Custom tool '{}' missing required 'version' field", name));
+            errors.push(format!(
+                "Custom tool '{}' missing required 'version' field",
+                name
+            ));
         } else if let Some(v) = tool.get("version").and_then(|v| v.as_str()) {
             if !looks_like_semver(v) && v != "latest" {
                 warnings.push(format!(

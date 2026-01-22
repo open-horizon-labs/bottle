@@ -26,7 +26,10 @@ pub fn run(yes: bool) -> Result<()> {
     );
     println!();
     println!("{}:", style("What this means").bold());
-    println!("  {} All installed tools remain in place", style("•").blue());
+    println!(
+        "  {} All installed tools remain in place",
+        style("•").blue()
+    );
     println!("  {} MCP servers stay registered", style("•").blue());
     println!("  {} Plugins remain installed", style("•").blue());
     println!(
@@ -59,15 +62,13 @@ pub fn run(yes: bool) -> Result<()> {
     println!();
 
     // Confirm unless --yes was passed
-    if !yes {
-        if !ui::confirm("Eject from bottle management?", false) {
-            return Err(BottleError::Cancelled);
-        }
+    if !yes && !ui::confirm("Eject from bottle management?", false) {
+        return Err(BottleError::Cancelled);
     }
 
     // Set mode to ejected and save
     state.mode = Mode::Ejected;
-    state.save().map_err(|e| BottleError::IoError(e))?;
+    state.save().map_err(BottleError::IoError)?;
 
     ui::print_success("Ejected from bottle management");
     println!();
