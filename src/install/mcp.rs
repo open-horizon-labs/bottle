@@ -145,24 +145,29 @@ pub fn register_bespoke_opencode(servers: &HashMap<String, McpServerDef>) -> Res
         })
     };
 
-    // Get or create mcp_servers object
+    // Get or create mcp object (OpenCode's key for MCP servers)
     let mcp_servers = config
         .as_object_mut()
         .ok_or_else(|| BottleError::InstallError {
             tool: "opencode mcp".to_string(),
             reason: "opencode.json is not an object".to_string(),
         })?
-        .entry("mcp_servers")
+        .entry("mcp")
         .or_insert_with(|| json!({}));
 
     let mcp_obj = mcp_servers.as_object_mut().ok_or_else(|| BottleError::InstallError {
         tool: "opencode mcp".to_string(),
-        reason: "mcp_servers is not an object".to_string(),
+        reason: "mcp is not an object".to_string(),
     })?;
 
-    // Add each server
+    // Add each server using OpenCode's format
     for (name, server) in servers {
-        let expanded_args: Vec<String> = server.args.iter().map(|a| expand_env_vars(a)).collect();
+        // Build command array: [command, ...args]
+        let mut command_arr: Vec<String> = vec![server.command.clone()];
+        for arg in &server.args {
+            command_arr.push(expand_env_vars(arg));
+        }
+
         let mut expanded_env: HashMap<String, String> = HashMap::new();
         for (k, v) in &server.env {
             expanded_env.insert(k.clone(), expand_env_vars(v));
@@ -171,9 +176,10 @@ pub fn register_bespoke_opencode(servers: &HashMap<String, McpServerDef>) -> Res
         mcp_obj.insert(
             name.clone(),
             json!({
-                "command": server.command,
-                "args": expanded_args,
-                "env": expanded_env
+                "type": "local",
+                "command": command_arr,
+                "environment": expanded_env,
+                "enabled": true
             }),
         );
     }
