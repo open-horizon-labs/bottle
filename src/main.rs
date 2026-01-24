@@ -81,6 +81,9 @@ enum Commands {
     },
 
     /// Add or remove platform integrations (Claude Code, OpenCode, Codex)
+    ///
+    /// Multiple Claude directories? Set CLAUDE_CONFIG_DIR to target a specific one:
+    ///   CLAUDE_CONFIG_DIR=~/.claude-work bottle integrate claude_code
     Integrate {
         /// Platform to integrate: claude_code, opencode, codex
         #[arg(value_enum)]
@@ -162,13 +165,13 @@ enum Commands {
 /// Platform integration targets
 #[derive(Debug, Clone, Copy, ValueEnum)]
 pub enum PlatformArg {
-    /// Claude Code plugin (detected via ~/.claude/)
+    /// Claude Code plugins for ~/.claude (set CLAUDE_CONFIG_DIR to target other directories)
     #[value(name = "claude_code")]
     ClaudeCode,
-    /// OpenCode plugin (detected via opencode.json)
+    /// OpenCode plugins (opencode.json)
     #[value(name = "opencode")]
     OpenCode,
-    /// Codex skill (detected via ~/.codex/)
+    /// Codex skill (~/.codex/)
     #[value(name = "codex")]
     Codex,
 }
