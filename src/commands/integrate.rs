@@ -54,42 +54,66 @@ fn show_integrations(state: &BottleState) -> Result<()> {
 
     for detection in &detections {
         let platform = detection.platform;
-        let installed = state.integrations.contains_key(platform.key());
         let detected = detection.detected;
 
-        let status = if installed {
-            style("installed").green()
-        } else if detected {
-            style("detected").yellow()
+        // For Claude Code with multiple directories, show each one
+        if platform == Platform::ClaudeCode && !detection.directories.is_empty() {
+            for dir in &detection.directories {
+                let status = if dir.installed {
+                    style("installed").green()
+                } else {
+                    style("available").yellow()
+                };
+                println!(
+                    "  {:<12} {} {}",
+                    platform.display_name(),
+                    status,
+                    style(format!("({})", dir.display_path)).dim()
+                );
+            }
         } else {
-            style("not detected").dim()
-        };
+            // Original single-line output for other platforms or when no directories detected
+            let installed = state.integrations.contains_key(platform.key());
 
-        let hint = if detected {
-            format!("({})", detection.detection_hint)
-        } else {
-            format!("({} not found)", detection.detection_hint)
-        };
+            let status = if installed {
+                style("installed").green()
+            } else if detected {
+                style("available").yellow()
+            } else {
+                style("not found").dim()
+            };
 
-        println!(
-            "  {:<12} {} {}",
-            platform.display_name(),
-            status,
-            style(hint).dim()
-        );
+            let hint = if detected {
+                format!("({})", detection.detection_hint)
+            } else {
+                format!("({})", detection.detection_hint)
+            };
+
+            println!(
+                "  {:<12} {} {}",
+                platform.display_name(),
+                status,
+                style(hint).dim()
+            );
+        }
     }
 
     println!();
     println!("{}:", style("Commands").dim());
     println!(
-        "  {} {} - Add an integration",
-        style("bottle integrate").cyan(),
-        style("<platform>").dim()
+        "  {} {}",
+        style("bottle integrate <platform>").cyan(),
+        style("Add integration").dim()
     );
     println!(
-        "  {} {} - Remove an integration",
-        style("bottle integrate --remove").cyan(),
-        style("<platform>").dim()
+        "  {} {}",
+        style("bottle integrate --remove <platform>").cyan(),
+        style("Remove integration").dim()
+    );
+    println!(
+        "  {} {}",
+        style("CLAUDE_CONFIG_DIR=~/.claude-work bottle integrate claude_code").cyan(),
+        style("Target other Claude directory").dim()
     );
     println!();
 

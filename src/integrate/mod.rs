@@ -40,31 +40,56 @@ impl fmt::Display for Platform {
     }
 }
 
+/// Information about a detected directory for a platform
+#[derive(Debug, Clone)]
+pub struct DirectoryInfo {
+    pub path: std::path::PathBuf,
+    pub display_path: String,
+    pub installed: bool,
+}
+
 /// Detection result for a platform
 #[derive(Debug)]
 pub struct DetectionResult {
     pub platform: Platform,
     pub detected: bool,
     pub detection_hint: String,
+    /// For platforms with multiple directories (like Claude Code)
+    pub directories: Vec<DirectoryInfo>,
 }
 
 /// Detect which platforms are available on this system
 pub fn detect_platforms() -> Vec<DetectionResult> {
+    // Build Claude Code directories list
+    let claude_directories: Vec<DirectoryInfo> = claude_code::detect_directories()
+        .into_iter()
+        .map(|p| DirectoryInfo {
+            installed: claude_code::is_installed_at(&p),
+            display_path: format!("~/{}", p.file_name().unwrap_or_default().to_string_lossy()),
+            path: p,
+        })
+        .collect();
+
+    let claude_detected = !claude_directories.is_empty() || claude_code::is_detected();
+
     vec![
         DetectionResult {
             platform: Platform::ClaudeCode,
-            detected: claude_code::is_detected(),
-            detection_hint: "~/.claude/".to_string(),
+            detected: claude_detected,
+            detection_hint: "~/.claude*/".to_string(),
+            directories: claude_directories,
         },
         DetectionResult {
             platform: Platform::OpenCode,
             detected: opencode::is_detected(),
             detection_hint: "opencode.json".to_string(),
+            directories: vec![],
         },
         DetectionResult {
             platform: Platform::Codex,
             detected: codex::is_detected(),
             detection_hint: "~/.codex/".to_string(),
+            directories: vec![],
         },
     ]
 }

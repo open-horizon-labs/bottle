@@ -3,6 +3,7 @@
 //! Installs/removes the bottle plugins for Claude Code.
 
 use crate::error::{BottleError, Result};
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 /// Marketplace repo (owner/repo format for GitHub)
@@ -16,16 +17,59 @@ const OLD_MARKETPLACE_NAME: &str = "bottle";
 const ALL_PLUGINS: &[&str] = &["bottle", "ba", "superego", "wm", "oh-mcp", "miranda"];
 
 /// Check if Claude Code is detected (has config directory)
+/// Respects CLAUDE_CONFIG_DIR env var if set
 pub fn is_detected() -> bool {
+    if let Ok(dir) = std::env::var("CLAUDE_CONFIG_DIR") {
+        return Path::new(&dir).exists();
+    }
     dirs::home_dir()
         .map(|h| h.join(".claude").exists())
         .unwrap_or(false)
 }
 
+/// Detect all Claude Code directories (~/.claude*)
+pub fn detect_directories() -> Vec<PathBuf> {
+    let home = match dirs::home_dir() {
+        Some(h) => h,
+        None => return vec![],
+    };
+
+    let mut dirs = Vec::new();
+    if let Ok(entries) = std::fs::read_dir(&home) {
+        for entry in entries.flatten() {
+            let name = entry.file_name();
+            let name_str = name.to_string_lossy();
+            // Match .claude and .claude-* directories
+            if name_str == ".claude"
+                || (name_str.starts_with(".claude-") && entry.path().is_dir())
+            {
+                // Exclude session/temp directories
+                if !name_str.contains("session") {
+                    dirs.push(entry.path());
+                }
+            }
+        }
+    }
+    dirs.sort();
+    dirs
+}
+
 /// Check if ALL bottle plugins are installed in Claude Code
-/// Reads ~/.claude/plugins/installed_plugins.json directly
+/// Respects CLAUDE_CONFIG_DIR env var if set
 pub fn is_installed() -> bool {
+    if let Ok(dir) = std::env::var("CLAUDE_CONFIG_DIR") {
+        return is_installed_at(Path::new(&dir));
+    }
     let installed = get_installed_plugins();
+    ALL_PLUGINS.iter().all(|plugin| {
+        let key = format!("{}@{}", plugin, MARKETPLACE_NAME);
+        installed.contains(&key)
+    })
+}
+
+/// Check if ALL bottle plugins are installed in a specific Claude directory
+pub fn is_installed_at(config_dir: &Path) -> bool {
+    let installed = get_installed_plugins_at(config_dir);
     ALL_PLUGINS.iter().all(|plugin| {
         let key = format!("{}@{}", plugin, MARKETPLACE_NAME);
         installed.contains(&key)
@@ -37,6 +81,20 @@ fn get_installed_plugins() -> Vec<String> {
     dirs::home_dir()
         .map(|h| h.join(".claude/plugins/installed_plugins.json"))
         .and_then(|path| std::fs::read_to_string(path).ok())
+        .and_then(|content| serde_json::from_str::<serde_json::Value>(&content).ok())
+        .and_then(|json| {
+            json.get("plugins")
+                .and_then(|p| p.as_object())
+                .map(|plugins| plugins.keys().cloned().collect())
+        })
+        .unwrap_or_default()
+}
+
+/// Get list of currently installed plugin keys from a specific Claude directory
+fn get_installed_plugins_at(config_dir: &Path) -> Vec<String> {
+    let path = config_dir.join("plugins/installed_plugins.json");
+    std::fs::read_to_string(path)
+        .ok()
         .and_then(|content| serde_json::from_str::<serde_json::Value>(&content).ok())
         .and_then(|json| {
             json.get("plugins")

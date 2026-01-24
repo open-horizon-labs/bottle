@@ -12,6 +12,15 @@ bottle install stable
 bottle integrate claude_code  # or: codex, opencode
 ```
 
+### Multiple Claude Code Directories
+
+If you have multiple Claude Code directories (e.g., `~/.claude` for personal use and `~/.claude-work` for work), use the `CLAUDE_CONFIG_DIR` environment variable:
+
+```bash
+bottle integrate --list                                      # shows all detected directories
+CLAUDE_CONFIG_DIR=~/.claude-work bottle integrate claude_code  # integrate specific directory
+```
+
 Then initialize in your project:
 ```
 /bottle:init          # Claude Code
