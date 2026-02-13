@@ -105,19 +105,28 @@ Use `[branch]` for stacked PRs where this issue depends on another in-flight PR.
       - Commit
     - Push all changes
     - Repeat until CodeRabbit has no new comments
-17. Return to main repo and signal completion (if `$MIRANDA_PORT` is set):
+17. Verify CI is green:
+    ```bash
+    gh pr checks <pr-number> --watch --fail-on-error
+    ```
+    If CI fails:
+    - Read the failing check logs
+    - Attempt to fix the issue
+    - Stage changes, run code checks, run `sg review`
+    - Commit and push
+    - Wait for CI again: `gh pr checks <pr-number> --watch --fail-on-error`
+    - Max 3 CI fix attempts. If still failing, signal `status: "error"` with the failure reason.
+18. Return to main repo and signal completion:
     ```bash
     cd <original-dir>
-    curl -sS -X POST "http://localhost:${MIRANDA_PORT}/complete" \
-      -H "Content-Type: application/json" \
-      -d "{\"session\": \"$TMUX_SESSION\", \"status\": \"success\", \"pr\": \"<pr-url>\"}"
     ```
-    **CRITICAL:** Signal BEFORE cleanup. If still in worktree when it's deleted, curl fails.
-18. Cleanup worktree:
+    Call `signal_completion(status: "success", pr: "<pr-url>")` to notify the orchestrator.
+    **CRITICAL:** Signal BEFORE cleanup.
+19. Cleanup worktree:
     ```bash
     git worktree remove .worktrees/issue-<number>
     ```
-19. Exit and report PR URL
+20. Exit and report PR URL
 
 ## Git Workflow
 
@@ -141,29 +150,21 @@ Everything before is autonomous.
 
 ## Exit Conditions
 
-- **Success**: PR created, all issues in tree will close on merge
+- **Success**: PR created, CI green, all issues in tree will close on merge
 - **Blocked**: An issue needs human decision - stop and report
 - **Safety**: Max 10 issue iterations (prevent runaway)
 
 ## Completion Signaling (MANDATORY)
-
-**CRITICAL: You MUST signal completion when done.** If `$MIRANDA_PORT` is set, you are running under Miranda and MUST curl the completion endpoint. This is the LAST thing you do.
-
-```bash
-# Run this as your FINAL action:
-curl -sS -X POST "http://localhost:${MIRANDA_PORT}/complete" \
-  -H "Content-Type: application/json" \
-  -d "{\"session\": \"$TMUX_SESSION\", \"status\": \"success\", \"pr\": \"<pr-url>\"}"
-```
-
+**CRITICAL: You MUST signal completion when done.** Call the `signal_completion` tool as your FINAL action.
 **Signal based on outcome:**
-| Outcome | Status | Payload |
-|---------|--------|---------|
-| PR created & reviewed | `success` | `"pr": "<url>"` |
-| Unrecoverable failure | `error` | `"error": "<reason>"` |
-| Needs human decision | `error` | `"error": "Blocked: <reason>"` |
+| Outcome | Call |
+|---------|------|
+| PR created, reviewed, CI green | `signal_completion(status: "success", pr: "<pr-url>")` |
+| Unrecoverable failure | `signal_completion(status: "error", error: "<reason>")` |
+| Needs human decision | `signal_completion(status: "blocked", blocker: "<reason>")` |
+**If you do not signal, the orchestrator will not know you are done and the session becomes orphaned.**
 
-**If you don't signal, Miranda won't know you're done and the session becomes orphaned.**
+**Fallback:** If the `signal_completion` tool is not available, output your completion status as your final message in the format: `COMPLETION: status=<status> pr=<url>` or `COMPLETION: status=<status> error=<reason>`.
 
 ## Example
 
@@ -216,9 +217,10 @@ CodeRabbit found 2 issues:
 [commit] fix: add nil check per CodeRabbit
 Pushing...
 CodeRabbit review passed.
-
+Waiting for CI checks...
+CI passed (3/3 checks green).
 Returning to main repo...
-Signaling completion to Miranda...
+signal_completion(status: "success", pr: "https://github.com/org/repo/pull/99")
 Cleaning up worktree...
 Done.
 ```

@@ -157,27 +157,16 @@ When in doubt, address it. Better to over-fix than under-fix.
 - **Safety**: Max 10 issue iterations (prevent runaway)
 
 ## Completion Signaling (MANDATORY)
+**CRITICAL: You MUST signal completion when done.** Call the `signal_completion` tool as your FINAL action.
+**Signal based on outcome:**
+| Outcome | Call |
+|---------|------|
+| All comments addressed | `signal_completion(status: "success", pr: "<pr-url>")` |
+| Needs human decision | `signal_completion(status: "blocked", blocker: "<reason>")` |
+| Unrecoverable failure | `signal_completion(status: "error", error: "<reason>")` |
+**If you do not signal, the orchestrator will not know you are done and the session becomes orphaned.**
 
-**CRITICAL: You MUST signal completion when done.** This is the LAST thing you do.
-
-```bash
-# On success:
-curl -sS -X POST "http://localhost:${MIRANDA_PORT}/complete" \
-  -H "Content-Type: application/json" \
-  -d "{\"session\": \"$TMUX_SESSION\", \"status\": \"success\", \"pr\": \"<PR-URL>\"}"
-
-# On blocked (needs human):
-curl -sS -X POST "http://localhost:${MIRANDA_PORT}/complete" \
-  -H "Content-Type: application/json" \
-  -d "{\"session\": \"$TMUX_SESSION\", \"status\": \"blocked\", \"blocker\": \"<reason>\"}"
-
-# On error:
-curl -sS -X POST "http://localhost:${MIRANDA_PORT}/complete" \
-  -H "Content-Type: application/json" \
-  -d "{\"session\": \"$TMUX_SESSION\", \"status\": \"error\", \"error\": \"<reason>\"}"
-```
-
-**If you don't signal, Miranda won't know you're done and the session becomes orphaned.**
+**Fallback:** If the `signal_completion` tool is not available, output your completion status as your final message in the format: `COMPLETION: status=<status> pr=<url>` or `COMPLETION: status=<status> error=<reason>`.
 
 ## Example
 
@@ -228,7 +217,7 @@ To github.com:org/repo.git
    f1e2d3c..a1b2c3d  issue/123 -> issue/123
 
 Cleaning up worktree...
-Signaling blocked (comment 4 needs decision)...
+signal_completion(status: "blocked", blocker: "Comment about validate() function needs decision")
 
 Done.
   Addressed: 3 comments
@@ -279,7 +268,7 @@ Committing all fixes...
 
 Pushing...
 Cleaning up worktree...
-Signaling success...
+signal_completion(status: "success", pr: "https://github.com/org/repo/pull/43")
 
 Done.
   Addressed: 1 comment

@@ -166,12 +166,8 @@ When no session file exists (current behavior):
    )"
    ```
 
-5. **Signal completion** (if `$MIRANDA_PORT` is set):
-   ```bash
-   curl -sS -X POST "http://localhost:${MIRANDA_PORT}/complete" \
-     -H "Content-Type: application/json" \
-     -d "{\"session\": \"$TMUX_SESSION\", \"status\": \"success\"}"
-   ```
+5. **Signal completion**: Call `signal_completion(status: "success")` to notify the orchestrator.
+   **Fallback:** If `signal_completion` is not available, output `COMPLETION: status=success` as your final message.
 
 ## Issue Quality Guidelines
 
@@ -297,12 +293,12 @@ Add dark mode theming system with toggle and persistence.
 
 ## Exit Conditions
 
-| Outcome | Signal |
-|---------|--------|
-| Issue(s) created successfully | `status: "success"` |
-| User cancelled during questions | `status: "error", error: "User cancelled"` |
-| Failed to create issue | `status: "error", error: "<reason>"` |
-| Session file missing solution-space | `status: "error", error: "Session missing Solution Space - run /solution-space first"` |
+| Outcome | Call |
+|---------|------|
+| Issue(s) created successfully | `signal_completion(status: "success")` |
+| User cancelled during questions | `signal_completion(status: "error", error: "User cancelled")` |
+| Failed to create issue | `signal_completion(status: "error", error: "<reason>")` |
+| Session file missing solution-space | `signal_completion(status: "error", error: "Session missing Solution Space - run /solution-space first")` |
 
 ## Task Mode Example
 
@@ -353,7 +349,7 @@ Detect when tmux sessions stop responding and notify the user.
 - Use tmux has-session to check liveness
 - Consider: what if tmux server itself is down?
 
-Signaling completion...
+signal_completion(status: "success")
 Done. Issue #67 ready for /oh-task.
 ```
 
